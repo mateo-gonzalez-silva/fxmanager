@@ -4,59 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FX Manager | Escuderías</title>
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #111; color: white; margin: 0; padding: 20px; text-transform: uppercase; }
-        h1 { text-align: center; font-style: italic; border-bottom: 2px solid #333; padding-bottom: 10px; }
-        
-        .grid-equipos {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 40px;
-            max-width: 1200px;
-            margin: 40px auto;
-        }
-
-        .equipo-card {
-            background-color: #1a1a1a;
-            border-radius: 12px;
-            padding: 20px;
-            position: relative;
-            /* Línea superior con el color del equipo */
-            border-top: 6px solid #555; 
-        }
-
-        .equipo-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .equipo-nombre { font-size: 24px; font-weight: 900; margin: 0; font-style: italic; }
-        
-        .coche-box {
-            width: 100%;
-            height: 150px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        .coche-box img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain; /* Para que el coche no se deforme */
-            filter: drop-shadow(0 10px 10px rgba(0,0,0,0.8)); /* Sombra realista debajo del coche */
-        }
-    </style>
+    <link rel="stylesheet" href="modern.css">
 </head>
 <body>
 
-    <h1>Campeonato de Constructores</h1>
-    
-    <div id="contenedor-equipos" class="grid-equipos">
-        <p style="text-align: center; width: 100%;">Preparando los boxes...</p>
-    </div>
+        <main class="container">
+            <h1 style="text-align:center;font-style:italic;">Campeonato de Constructores</h1>
+            <div id="contenedor-equipos" class="grid-equipos">
+                <p style="text-align: center; width: 100%;">Preparando los boxes...</p>
+            </div>
+        </main>
+        <nav class="bottom-nav">
+            <a href="equipos.html" class="active"><span>Equipos</span></a>
+            <a href="clasificacion.html"><span>Clasificación</span></a>
+            <a href="pilotos.html"><span>Pilotos</span></a>
+            <a href="seleccion.html"><span>Elección</span></a>
+        </nav>
 
     <script type="module" src="equipos.js"></script>
 </body>

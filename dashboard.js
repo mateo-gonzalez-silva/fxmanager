@@ -55,8 +55,12 @@ function escucharCambiosDelEquipo() {
         datosEquipo = docSnap.data();
         
         // Valores por defecto si la base de datos está vacía
-        if(!datosEquipo.nivel_motor) datosEquipo.nivel_motor = 1;
-        if(!datosEquipo.nivel_chasis) datosEquipo.nivel_chasis = 1;
+            if(!datosEquipo.nivel_motor) datosEquipo.nivel_motor = 1;
+            if(!datosEquipo.nivel_chasis) datosEquipo.nivel_chasis = 1;
+            // Mostrar barra de navegación si el usuario tiene equipo
+            const header = document.getElementById('header-equipo');
+            const nav = document.getElementById('bottomNav');
+            if(header && nav && header.style.display!=="none") nav.style.display="flex";
 
         pintarInterfaz();
     });

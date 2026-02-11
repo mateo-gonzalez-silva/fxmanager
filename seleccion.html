@@ -4,52 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FX Manager | Elegir Equipo</title>
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #111; color: white; text-align: center; padding: 20px; }
-        h1 { color: #e10600; font-style: italic; }
-        .grid-equipos {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            max-width: 1000px;
-            margin: 30px auto;
-        }
-        .equipo-card {
-            background-color: #222;
-            padding: 20px;
-            border-radius: 8px;
-            border: 2px solid #444;
-            transition: 0.3s;
-        }
-        .equipo-card h2 { margin-top: 0; }
-        .btn-elegir {
-            background-color: #00C851;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            width: 100%;
-            margin-top: 15px;
-        }
-        .btn-elegir:hover { background-color: #007E33; }
-        .btn-ocupado {
-            background-color: #555;
-            color: #999;
-            cursor: not-allowed;
-        }
-    </style>
+    <link rel="stylesheet" href="modern.css">
 </head>
 <body>
 
-    <h1>SELECCIÓN DE ESCUDERÍA</h1>
-    <p>Elige tu equipo para esta temporada. ¡Solo puede quedar uno!</p>
-    <p id="mensaje-estado" style="color: yellow;"></p>
-
-    <div id="equipos-container" class="grid-equipos">
-        <p>Cargando garajes...</p>
-    </div>
+        <main class="container" style="text-align:center;">
+            <h1 style="color:var(--accent);font-style:italic;">SELECCIÓN DE ESCUDERÍA</h1>
+            <p>Elige tu equipo para esta temporada. ¡Solo puede quedar uno!</p>
+            <p id="mensaje-estado" style="color: #e6b800;"></p>
+            <div id="equipos-container" class="grid-equipos">
+                <p>Cargando garajes...</p>
+            </div>
+        </main>
+        <nav class="bottom-nav">
+            <a href="equipos.html"><span>Equipos</span></a>
+            <a href="clasificacion.html"><span>Clasificación</span></a>
+            <a href="pilotos.html"><span>Pilotos</span></a>
+            <a href="seleccion.html" class="active"><span>Elección</span></a>
+        </nav>
 
     <script type="module" src="seleccion.js"></script>
 </body>

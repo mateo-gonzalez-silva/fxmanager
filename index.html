@@ -4,104 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FX Manager | Login</title>
-    <style>
-        /* Diseño oscuro estilo F1 */
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #111; /* Fondo casi negro */
-            color: white;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-        .login-container {
-            background-color: #222;
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(225, 6, 0, 0.2);
-            width: 100%;
-            max-width: 350px;
-            text-align: center;
-        }
-        .login-container h1 {
-            color: #e10600; /* Rojo F1 */
-            margin-bottom: 5px;
-            font-style: italic;
-        }
-        .login-container p {
-            color: #aaa;
-            margin-bottom: 25px;
-            font-size: 14px;
-        }
-        .input-group {
-            margin-bottom: 15px;
-            text-align: left;
-        }
-        .input-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-size: 13px;
-            color: #ccc;
-        }
-        .input-group input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #444;
-            border-radius: 5px;
-            background-color: #333;
-            color: white;
-            box-sizing: border-box;
-        }
-        .input-group input:focus {
-            outline: none;
-            border-color: #e10600; /* Borde rojo al escribir */
-        }
-        button {
-            width: 100%;
-            padding: 12px;
-            background-color: #e10600;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            margin-top: 10px;
-        }
-        button:hover {
-            background-color: #b30500;
-        }
-        #mensaje {
-            margin-top: 15px;
-            font-size: 14px;
-            min-height: 20px;
-        }
-    </style>
+    <link rel="stylesheet" href="modern.css">
 </head>
 <body>
 
-    <div class="login-container">
-        <h1>FX MANAGER</h1>
-        <p>Acceso al Paddock</p>
-
+    <main class="login-container">
+        <h1 style="color:var(--accent);font-style:italic;">FX MANAGER</h1>
+        <p style="color:#888;">Acceso al Paddock</p>
         <div class="input-group">
             <label for="email">Correo del Team Manager</label>
             <input type="email" id="email" placeholder="team@fxmanager.com" required>
         </div>
-
         <div class="input-group">
             <label for="password">Contraseña (Telemetría)</label>
             <input type="password" id="password" placeholder="••••••••" required>
         </div>
-
         <button id="btnLogin">Arrancar Motor</button>
-
         <div id="mensaje"></div>
-    </div>
+        <a href="register.html" class="login-link" style="display:block;margin-top:18px;font-size:13px;color:#888;text-align:center;">¿No tienes licencia? Regístrate aquí</a>
+    </main>
+    <nav class="bottom-nav">
+      <a href="equipos.html"><span>Equipos</span></a>
+      <a href="clasificacion.html"><span>Clasificación</span></a>
+      <a href="pilotos.html"><span>Pilotos</span></a>
+      <a href="seleccion.html"><span>Elección</span></a>
+    </nav>
 
     <script type="module" src="app.js"></script>
 </body>

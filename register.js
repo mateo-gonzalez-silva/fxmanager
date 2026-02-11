@@ -33,7 +33,7 @@ btnRegistro.addEventListener('click', async () => {
         return;
     }
 
-    mensaje.style.color = "yellow";
+    mensaje.style.color = "#e6b800";
     mensaje.innerText = "Procesando solicitud en la FIA...";
 
     try {

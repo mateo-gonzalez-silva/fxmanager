@@ -31,14 +31,13 @@ if (btnLogin) {
             mensaje.innerText = "Faltan datos en boxes. Rellena todo.";
             return;
         }
-
-        mensaje.style.color = "yellow";
+        mensaje.style.color = "#e6b800";
         mensaje.innerText = "Conectando con la FIA...";
 
         // Intentar iniciar sesión
         signInWithEmailAndPassword(auth, email, password)
             .then((userCredential) => {
-                mensaje.style.color = "#00C851"; // Verde
+                mensaje.style.color = "#00C851";
                 mensaje.innerText = "¡Acceso concedido! Entrando...";
                 
                 // Redirigir al dashboard tras 1 segundo
@@ -47,7 +46,7 @@ if (btnLogin) {
                 }, 1000);
             })
             .catch((error) => {
-                mensaje.style.color = "#ff4444"; // Rojo
+                mensaje.style.color = "#ff4444";
                 if (error.code === 'auth/invalid-credential') {
                     mensaje.innerText = "Correo o contraseña incorrectos.";
                 } else {
