@@ -104,9 +104,15 @@ async function cargarEquiposEnSelects() {
 document.getElementById('btnActualizarEquipo').addEventListener('click', async () => {
     const idEquipo = document.getElementById('select-equipo-editar').value;
     const color = document.getElementById('input-color-equipo').value;
-    const urlCoche = document.getElementById('input-foto-coche').value;
+    let urlCoche = document.getElementById('input-foto-coche').value;
 
     if (!idEquipo) { alert("Selecciona un equipo primero."); return; }
+
+    // MAGIA DE RUTAS: Si no empieza por http y no está vacío, asumimos que está en la carpeta del repo
+    if (urlCoche !== "" && !urlCoche.startsWith("http")) {
+        // Asegúrate de que el nombre de la carpeta coincide con la tuya (assets/img o images)
+        urlCoche = "assets/img/" + urlCoche; 
+    }
 
     try {
         const equipoRef = doc(db, "equipos", idEquipo);
@@ -114,33 +120,37 @@ document.getElementById('btnActualizarEquipo').addEventListener('click', async (
             color: color,
             coche_url: urlCoche
         });
-        alert("¡Diseño de escudería guardado! Ve a la página de Equipos para verlo.");
+        alert("¡Diseño de escudería guardado!");
+        document.getElementById('input-foto-coche').value = ""; // Limpiar
     } catch (error) {
         console.error("Error actualizando equipo: ", error);
-        alert("Error al actualizar la base de datos.");
     }
 });
 
 // --- 5. FICHAR PILOTO ---
 document.getElementById('btnGuardarPiloto').addEventListener('click', async () => {
     const nombre = document.getElementById('p-nombre').value;
-    const apellido = document.getElementById('p-apellido').value.toUpperCase(); // Siempre en mayúsculas
+    const apellido = document.getElementById('p-apellido').value.toUpperCase();
     const numero = document.getElementById('p-numero').value;
     const bandera = document.getElementById('p-bandera').value;
     const equipoId = document.getElementById('p-equipo').value;
-    const foto = document.getElementById('p-foto').value;
+    let foto = document.getElementById('p-foto').value;
 
     if (!nombre || !apellido || !numero || !equipoId) {
         alert("Faltan datos obligatorios del piloto.");
         return;
     }
 
+    // MAGIA DE RUTAS PARA EL PILOTO
+    if (foto !== "" && !foto.startsWith("http")) {
+        foto = "assets/img/" + foto; 
+    }
+
     try {
-        // En lugar de updateDoc, usamos addDoc para crear un documento NUEVO en la colección pilotos
         await addDoc(collection(db, "pilotos"), {
             nombre: nombre,
             apellido: apellido,
-            numero: parseInt(numero), // Guardarlo como número
+            numero: parseInt(numero),
             bandera: bandera,
             equipo_id: equipoId,
             foto_url: foto
@@ -148,7 +158,7 @@ document.getElementById('btnGuardarPiloto').addEventListener('click', async () =
 
         alert(`¡${apellido} fichado correctamente!`);
         
-        // Limpiamos el formulario para meter el siguiente rápido
+        // Limpiamos el formulario
         document.getElementById('p-nombre').value = "";
         document.getElementById('p-apellido').value = "";
         document.getElementById('p-numero').value = "";
@@ -156,7 +166,6 @@ document.getElementById('btnGuardarPiloto').addEventListener('click', async () =
 
     } catch (error) {
         console.error("Error fichando piloto: ", error);
-        alert("Error al intentar fichar al piloto.");
     }
 });
 
