@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FX Manager | Registro</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #111;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .register-container {
+            background-color: #1e1e1e;
+            padding: 40px;
+            border-radius: 10px;
+            border: 1px solid #333;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            width: 100%;
+            max-width: 350px;
+            text-align: center;
+        }
+        h1 { color: #e10600; font-style: italic; margin-bottom: 5px; }
+        p { color: #aaa; font-size: 14px; margin-bottom: 25px; }
+        
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            background-color: #333;
+            border: 1px solid #444;
+            color: white;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        input:focus { outline: none; border-color: #e10600; }
+        
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #e10600;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover { background-color: #c40500; }
+        
+        .login-link {
+            display: block;
+            margin-top: 20px;
+            font-size: 13px;
+            color: #888;
+            text-decoration: none;
+        }
+        .login-link:hover { text-decoration: underline; color: white; }
+        
+        #mensaje { margin-top: 15px; font-size: 13px; min-height: 20px;}
+    </style>
+</head>
+<body>
+
+    <div class="register-container">
+        <h1>NUEVA LICENCIA</h1>
+        <p>Solicitud de Superlicencia de Manager</p>
+
+        <input type="text" id="nombreManager" placeholder="Nombre y Apellido (Manager)" required>
+        <input type="email" id="email" placeholder="Correo electrónico" required>
+        <input type="password" id="password" placeholder="Contraseña (Mín. 6 caracteres)" required>
+
+        <button id="btnRegistro">Obtener Licencia</button>
+        
+        <p id="mensaje"></p>
+
+        <a href="index.html" class="login-link">¿Ya tienes licencia? Inicia sesión aquí</a>
+    </div>
+
+    <script type="module" src="register.js"></script>
+</body>
+</html>
