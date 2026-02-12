@@ -8,16 +8,16 @@
 </head>
 <body>
 
-    <main class="container" style="max-width: 900px;">
-        <div style="text-align: center; margin-bottom: 40px;">
-            <h1 style="font-style: italic; font-size: 36px;">FX MANAGER</h1>
-            <p style="color: var(--text-muted); font-size: 14px;">Temporada 2026 | Gestor de Escuderías</p>
+    <main class="container" style="max-width: 1000px;">
+        <div style="text-align: center; margin-bottom: 48px;">
+            <h1 style="font-style: italic; font-size: 40px; letter-spacing: 2px;">FX MANAGER</h1>
+            <p style="color: var(--text-secondary); font-size: 13px; letter-spacing: 1px; text-transform: uppercase;">Temporada 2026 | Gestor de Escuderías</p>
         </div>
 
-        <!-- ESTADO DE LA CARRERA -->
-        <div id="carrera-estado" class="panel" style="text-align: center; margin-bottom: 32px;">
-            <h2 id="carrera-titulo" style="margin-bottom: 20px;">Próxima Carrera</h2>
-            <div id="contador-container" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px;">
+        <!-- CARRERA ESTADO -->
+        <div id="carrera-estado" class="panel" style="text-align: center; margin-bottom: 40px;">
+            <h2 id="carrera-titulo" style="margin-bottom: 24px; letter-spacing: 1px;">Próxima Carrera</h2>
+            <div id="contador-container" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px;">
                 <div class="contador-box">
                     <div class="contador-numero" id="dias">0</div>
                     <div class="contador-label">Días</div>
@@ -35,32 +35,26 @@
                     <div class="contador-label">Segundos</div>
                 </div>
             </div>
-            <div id="info-gp" style="border-top: 1px solid var(--border); padding-top: 16px; color: var(--text-muted);">
-                <p style="margin: 0; font-size: 14px;" id="nombre-gp">Cargando información de la FIA...</p>
+            <div id="info-gp" style="border-top: 1px solid var(--border); padding-top: 20px;">
+                <p style="margin: 0; font-size: 14px; letter-spacing: 0.5px;" id="nombre-gp">Cargando información...</p>
             </div>
         </div>
 
-        <!-- CLASIFICACIÓN TOP 5 / TOP 3 -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+        <!-- CLASIFICACIÓN -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 40px;">
             <div class="panel">
-                <h2 style="font-size: 18px; margin-top: 0;">Pilotos Top 5</h2>
-                <div id="top-pilotos" style="display: flex; flex-direction: column; gap: 10px;">
-                    <p style="color: var(--text-muted); text-align: center;">Cargando clasificación...</p>
-                </div>
+                <h2 style="font-size: 18px; margin-top: 0; letter-spacing: 1px;">🏎️ Top 5 Pilotos</h2>
+                <div id="top-pilotos" style="display: flex; flex-direction: column; gap: 8px;"></div>
             </div>
 
             <div class="panel">
-                <h2 style="font-size: 18px; margin-top: 0;">Escuderías Top 3</h2>
-                <div id="top-equipos" style="display: flex; flex-direction: column; gap: 10px;">
-                    <p style="color: var(--text-muted); text-align: center;">Cargando clasificación...</p>
-                </div>
+                <h2 style="font-size: 18px; margin-top: 0; letter-spacing: 1px;">🏁 Top 3 Equipos</h2>
+                <div id="top-equipos" style="display: flex; flex-direction: column; gap: 8px;"></div>
             </div>
         </div>
 
-        <div style="margin-top: 40px; text-align: center;">
-            <button id="btnIrAlDashboard" style="padding: 14px 32px; font-size: 16px; display: inline-block;">
-                Acceder al Paddock
-            </button>
+        <div style="text-align: center;">
+            <button id="btnIrAlDashboard" style="padding: 14px 40px; font-size: 14px;">Acceder al Paddock →</button>
         </div>
     </main>
 
@@ -85,7 +79,7 @@
                 <path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/>
             </svg>
         </a>
-        <a href="dashboard.html" title="Mi Equipo">
+        <a href="dashboard.html" title="Dashboard">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M3 13h2v8H3zm4-8h2v16H7zm4-2h2v18h-2zm4-2h2v20h-2zm4 4h2v16h-2z"/>
             </svg>
