@@ -232,6 +232,23 @@
             <button id="btnGuardarCarrera" class="btn btn-primary" style="width: 100%;">Guardar Cambios</button>
         </div>
     </div>
+
+    <!-- MODAL RESULTADOS -->
+    <div id="modalResultados" class="modal">
+        <div class="modal-content card">
+             <header class="card-header">
+                <h2 id="resultados-titulo">Gestionar Resultados</h2>
+                <button class="close-modal" onclick="cerrarModal('modalResultados')">×</button>
+            </header>
+            <p>Resultados para el <strong id="resultados-gp-nombre">Gran Premio</strong>.</p>
+            
+            <div id="resultados-editor" style="max-height: 400px; overflow-y: auto; margin-top: 16px;">
+                <!-- El JS generará aquí las filas para los resultados -->
+            </div>
+            
+            <button id="btnGuardarResultados" class="btn btn-primary" style="width: 100%; margin-top: 20px;">Guardar Resultados</button>
+        </div>
+    </div>
     
     <footer style="text-align: center; padding: 20px 0; border-top: 1px solid var(--border-color); margin-top: 40px;">
         <p>&copy; 2024 F1 Manager. Todos los derechos reservados.</p>

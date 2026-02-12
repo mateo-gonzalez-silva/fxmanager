@@ -1,12 +1,12 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, addDoc, deleteDoc, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, addDoc, deleteDoc, query, where, orderBy, writeBatch, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAE1PLVdULmXqkscQb9jK8gAkXbjIBETbk",
   authDomain: "fxmanager-c5868.firebaseapp.com",
   projectId: "fxmanager-c5868",
-  storageBucket: "fxmanager-c5868.firebasestorage.app",
+  storageBucket: "fxmanager-c5868.appspot.com",
   messagingSenderId: "652487009924",
   appId: "1:652487009924:web:c976804d6b48c4dda004d1",
   measurementId: "G-XK03CWHZEK"
@@ -17,6 +17,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 const CORREO_ADMIN = "mateogonsilva@gmail.com";
+const puntosSistema = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
 
 let usuarioActual = null;
 let estadoActual = "abierto";
@@ -57,7 +58,7 @@ function setupTabs() {
     });
 }
 
-// --- ESTADO CAMPEONATO ---
+// --- ESTADO CAMPEONATO (Off-season / En curso) ---
 async function leerEstadoCampeonato() {
     try {
         const docRef = doc(db, "configuracion", "campeonato");
@@ -65,12 +66,12 @@ async function leerEstadoCampeonato() {
         if (docSnap.exists()) {
             estadoActual = docSnap.data().estado;
         } else {
-            await setDoc(docRef, { estado: "abierto" });
-            estadoActual = "abierto";
+            await setDoc(docRef, { estado: "offseason" });
+            estadoActual = "offseason";
         }
         actualizarTextoEstado();
     } catch (e) {
-        console.error("Error:", e);
+        console.error("Error al leer estado del campeonato:", e);
     }
 }
 
@@ -78,19 +79,19 @@ function actualizarTextoEstado() {
     const texto = document.getElementById('estado-texto');
     const boton = document.getElementById('btnToggleCampeonato');
     
-    if (estadoActual === "abierto") {
-        texto.textContent = "🟢 MERCADO ABIERTO";
+    if (estadoActual === "curso") {
+        texto.textContent = "EN CURSO";
         texto.style.color = "var(--success)";
-        boton.textContent = "Cerrar Mercado";
+        boton.textContent = "Finalizar Temporada (Off-season)";
     } else {
-        texto.textContent = "🔴 MERCADO CERRADO";
-        texto.style.color = "var(--danger)";
-        boton.textContent = "Abrir Mercado";
+        texto.textContent = "OFF-SEASON";
+        texto.style.color = "var(--warning)";
+        boton.textContent = "Iniciar Temporada (En Curso)";
     }
 }
 
 document.getElementById('btnToggleCampeonato').addEventListener('click', async () => {
-    const nuevoEstado = estadoActual === "abierto" ? "cerrado" : "abierto";
+    const nuevoEstado = estadoActual === "curso" ? "offseason" : "curso";
     await setDoc(doc(db, "configuracion", "campeonato"), { estado: nuevoEstado });
     estadoActual = nuevoEstado;
     actualizarTextoEstado();
@@ -99,33 +100,28 @@ document.getElementById('btnToggleCampeonato').addEventListener('click', async (
 // --- EQUIPOS ---
 async function cargarEquipos() {
     const tbody = document.querySelector('#tabla-equipos tbody');
-    tbody.innerHTML = '';
+    tbody.innerHTML = '<tr><td colspan="4">Cargando...</td></tr>';
     equiposData = {};
-
-    try {
-        const snap = await getDocs(collection(db, "equipos"));
-        snap.forEach(doc => {
-            equiposData[doc.id] = { id: doc.id, ...doc.data() };
-        });
-
-        Object.values(equiposData).forEach(eq => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td><strong style="color: var(--accent);">${eq.nombre}</strong></td>
-                <td>$${(eq.presupuesto || 0).toLocaleString()}</td>
-                <td>${eq.owner_uid ? '✓ ASIGNADO' : '⊘ LIBRE'}</td>
-                <td>
-                    <div class="table-actions">
-                        <button class="btn-sm" onclick="editarEquipo('${doc.id}')">Editar</button>
-                        <button class="btn-sm btn-danger" onclick="eliminarEquipo('${doc.id}')">×</button>
-                    </div>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
-    } catch (e) {
-        console.error("Error:", e);
-    }
+    const snap = await getDocs(collection(db, "equipos"));
+    tbody.innerHTML = '';
+    snap.forEach(doc => {
+        const eq = { id: doc.id, ...doc.data() };
+        equiposData[doc.id] = eq;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><strong style="color: ${eq.color || 'var(--accent)'};">${eq.nombre}</strong></td>
+            <td>$${(eq.presupuesto || 0).toLocaleString()}</td>
+            <td>${eq.owner_uid ? '✓ Asignado' : '⊘ Libre'}</td>
+            <td>
+                <div class="table-actions">
+                    <button class="btn-sm" onclick="editarEquipo('${doc.id}')">Editar</button>
+                    <button class="btn-sm btn-danger" onclick="eliminarEquipo('${doc.id}')">×</button>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+    actualizarSelectEquipos();
 }
 
 window.editarEquipo = (id) => {
@@ -139,8 +135,8 @@ window.editarEquipo = (id) => {
 
 document.getElementById('btnNuevoEquipo').addEventListener('click', () => {
     document.getElementById('eq-nombre').value = '';
-    document.getElementById('eq-color').value = '#00d9ff';
-    document.getElementById('eq-presupuesto').value = '';
+    document.getElementById('eq-color').value = '#c0c0c0';
+    document.getElementById('eq-presupuesto').value = 1000000;
     editandoID = null;
     abrirModal('modalEquipo');
 });
@@ -149,66 +145,53 @@ document.getElementById('btnGuardarEquipo').addEventListener('click', async () =
     const nombre = document.getElementById('eq-nombre').value.trim();
     const color = document.getElementById('eq-color').value;
     const presupuesto = parseFloat(document.getElementById('eq-presupuesto').value) || 0;
-
-    if (!nombre) { alert('✗ Nombre requerido'); return; }
+    if (!nombre) return;
 
     try {
         if (editandoID) {
             await updateDoc(doc(db, "equipos", editandoID), { nombre, color, presupuesto });
         } else {
             const nuevoId = nombre.toLowerCase().replace(/\s+/g, '-');
-            await setDoc(doc(db, "equipos", nuevoId), { nombre, color, presupuesto, owner_uid: "" });
+            await setDoc(doc(db, "equipos", nuevoId), { nombre, color, presupuesto, owner_uid: "", mejoras: { motor: 1, chasis: 1 } });
         }
         cerrarModal('modalEquipo');
         await cargarEquipos();
-    } catch (e) {
-        alert('✗ Error: ' + e.message);
-    }
+    } catch (e) { console.error(e); }
 });
 
 window.eliminarEquipo = async (id) => {
-    if (confirm('¿Eliminar equipo? Esta acción no se puede deshacer.')) {
-        try {
-            await deleteDoc(doc(db, "equipos", id));
-            await cargarEquipos();
-        } catch (e) {
-            alert('✗ Error: ' + e.message);
-        }
+    if (confirm('¿Eliminar equipo?')) {
+        await deleteDoc(doc(db, "equipos", id));
+        await cargarEquipos();
     }
 };
 
 // --- PILOTOS ---
 async function cargarPilotos() {
     const tbody = document.querySelector('#tabla-pilotos tbody');
-    tbody.innerHTML = '';
+    tbody.innerHTML = '<tr><td colspan="5">Cargando...</td></tr>';
     pilotosData = {};
-
-    try {
-        const snap = await getDocs(collection(db, "pilotos"));
-        snap.forEach(doc => {
-            pilotosData[doc.id] = { id: doc.id, ...doc.data() };
-        });
-
-        Object.values(pilotosData).forEach(p => {
-            const eqNombre = equiposData[p.equipo_id]?.nombre || 'N/A';
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td><strong>${p.numero}</strong></td>
-                <td>${p.apellido} <span style="color: var(--text-secondary);">${p.nombre}</span></td>
-                <td>${eqNombre}</td>
-                <td><strong style="color: var(--success);">${p.puntos || 0}</strong></td>
-                <td>
-                    <div class="table-actions">
-                        <button class="btn-sm" onclick="editarPiloto('${p.id}')">Editar</button>
-                        <button class="btn-sm btn-danger" onclick="eliminarPiloto('${p.id}')">×</button>
-                    </div>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
-    } catch (e) {
-        console.error("Error:", e);
-    }
+    const snap = await getDocs(query(collection(db, "pilotos"), orderBy("apellido")));
+    tbody.innerHTML = '';
+    snap.forEach(doc => {
+        const p = { id: doc.id, ...doc.data() };
+        pilotosData[doc.id] = p;
+        const eqNombre = equiposData[p.equipo_id]?.nombre || 'Sin equipo';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><strong>${p.numero}</strong></td>
+            <td>${p.bandera || ''} ${p.apellido}, ${p.nombre}</td>
+            <td>${eqNombre}</td>
+            <td><strong>${p.puntos || 0}</strong></td>
+            <td>
+                <div class="table-actions">
+                    <button class="btn-sm" onclick="editarPiloto('${p.id}')">Editar</button>
+                    <button class="btn-sm btn-danger" onclick="eliminarPiloto('${p.id}')">×</button>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
 }
 
 window.editarPiloto = (id) => {
@@ -227,21 +210,23 @@ document.getElementById('btnNuevoPiloto').addEventListener('click', () => {
     document.getElementById('p-apellido').value = '';
     document.getElementById('p-numero').value = '';
     document.getElementById('p-bandera').value = '';
+    document.getElementById('p-equipo').value = '';
     editandoID = null;
     abrirModal('modalPiloto');
 });
 
 document.getElementById('btnGuardarPiloto').addEventListener('click', async () => {
-    const nombre = document.getElementById('p-nombre').value.trim();
-    const apellido = document.getElementById('p-apellido').value.trim();
-    const numero = parseInt(document.getElementById('p-numero').value);
-    const bandera = document.getElementById('p-bandera').value.trim();
-    const equipoId = document.getElementById('p-equipo').value;
-
-    if (!nombre || !apellido || !numero || !equipoId) { alert('✗ Completa todos los campos'); return; }
+    const datos = {
+        nombre: document.getElementById('p-nombre').value.trim(),
+        apellido: document.getElementById('p-apellido').value.trim(),
+        numero: parseInt(document.getElementById('p-numero').value),
+        bandera: document.getElementById('p-bandera').value.trim(),
+        equipo_id: document.getElementById('p-equipo').value,
+        puntos: pilotosData[editandoID]?.puntos || 0
+    };
+    if (!datos.nombre || !datos.apellido || !datos.numero) return;
 
     try {
-        const datos = { nombre, apellido, numero, bandera, equipo_id: equipoId, puntos: pilotosData[editandoID]?.puntos || 0 };
         if (editandoID) {
             await updateDoc(doc(db, "pilotos", editandoID), datos);
         } else {
@@ -249,58 +234,46 @@ document.getElementById('btnGuardarPiloto').addEventListener('click', async () =
         }
         cerrarModal('modalPiloto');
         await cargarPilotos();
-    } catch (e) {
-        alert('✗ Error: ' + e.message);
-    }
+    } catch (e) { console.error(e); }
 });
 
 window.eliminarPiloto = async (id) => {
     if (confirm('¿Eliminar piloto?')) {
-        try {
-            await deleteDoc(doc(db, "pilotos", id));
-            await cargarPilotos();
-        } catch (e) {
-            alert('✗ Error: ' + e.message);
-        }
+        await deleteDoc(doc(db, "pilotos", id));
+        await cargarPilotos();
     }
 };
 
 // --- CARRERAS ---
 async function cargarCarreras() {
     const tbody = document.querySelector('#tabla-carreras tbody');
-    tbody.innerHTML = '';
+    tbody.innerHTML = '<tr><td colspan="6">Cargando...</td></tr>';
     carrerasData = {};
-
-    try {
-        const q = query(collection(db, "carreras"), orderBy("orden"));
-        const snap = await getDocs(q);
-        snap.forEach(doc => {
-            carrerasData[doc.id] = { id: doc.id, ...doc.data() };
-        });
-
-        Object.values(carrerasData).forEach(c => {
-            const estado = c.estado === "completada" ? '✓ COMPLETADA' : '⧗ PENDIENTE';
-            const color = c.estado === "completada" ? 'var(--success)' : 'var(--warning)';
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td><strong>${c.orden || 'N/A'}</strong></td>
-                <td>${c.nombre_gp || 'N/A'}</td>
-                <td>${c.circuito || 'N/A'}</td>
-                <td>${new Date(c.fecha).toLocaleDateString('es-ES')}</td>
-                <td><span class="badge" style="color: ${color}; border-color: ${color};">${estado}</span></td>
-                <td>
-                    <div class="table-actions">
-                        <button class="btn-sm" onclick="editarCarrera('${c.id}')">Editar</button>
-                        <button class="btn-sm btn-danger" onclick="eliminarCarrera('${c.id}')">×</button>
-                    </div>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
-    } catch (e) {
-        console.error("Error:", e);
-    }
-};
+    const snap = await getDocs(query(collection(db, "carreras"), orderBy("orden")));
+    tbody.innerHTML = '';
+    snap.forEach(doc => {
+        const c = { id: doc.id, ...doc.data() };
+        carrerasData[doc.id] = c;
+        const estado = c.estado === "completada" ? '✓ Completada' : '⧗ Pendiente';
+        const color = c.estado === "completada" ? 'var(--success)' : 'var(--text-secondary)';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><strong>${c.orden}</strong></td>
+            <td>${c.bandera || ''} ${c.nombre_gp}</td>
+            <td>${c.circuito}</td>
+            <td>${new Date(c.fecha).toLocaleDateString()}</td>
+            <td><strong style="color:${color};">${estado}</strong></td>
+            <td>
+                <div class="table-actions">
+                    <button class="btn-sm" onclick="editarCarrera('${c.id}')">Editar</button>
+                    <button class="btn-sm btn-success" onclick="gestionarResultados('${c.id}')">Resultados</button>
+                    <button class="btn-sm btn-danger" onclick="eliminarCarrera('${c.id}')">×</button>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
 
 window.editarCarrera = (id) => {
     const c = carrerasData[id];
@@ -314,26 +287,27 @@ window.editarCarrera = (id) => {
 };
 
 document.getElementById('btnNuevaCarrera').addEventListener('click', () => {
-    document.getElementById('cr-orden').value = '';
+    document.getElementById('cr-orden').value = Object.keys(carrerasData).length + 1;
     document.getElementById('cr-nombre').value = '';
     document.getElementById('cr-circuito').value = '';
-    document.getElementById('cr-fecha').value = '';
+    document.getElementById('cr-fecha').value = new Date().toISOString().slice(0, 16);
     document.getElementById('cr-bandera').value = '';
     editandoID = null;
     abrirModal('modalCarrera');
 });
 
 document.getElementById('btnGuardarCarrera').addEventListener('click', async () => {
-    const orden = parseInt(document.getElementById('cr-orden').value);
-    const nombre_gp = document.getElementById('cr-nombre').value.trim();
-    const circuito = document.getElementById('cr-circuito').value.trim();
-    const fecha = document.getElementById('cr-fecha').value;
-    const bandera = document.getElementById('cr-bandera').value;
-
-    if (!orden || !nombre_gp || !circuito || !fecha) { alert('✗ Completa todos los campos'); return; }
+    const datos = {
+        orden: parseInt(document.getElementById('cr-orden').value),
+        nombre_gp: document.getElementById('cr-nombre').value.trim(),
+        circuito: document.getElementById('cr-circuito').value.trim(),
+        fecha: document.getElementById('cr-fecha').value,
+        bandera: document.getElementById('cr-bandera').value.trim(),
+        estado: carrerasData[editandoID]?.estado || "pendiente"
+    };
+    if (!datos.orden || !datos.nombre_gp || !datos.circuito || !datos.fecha) return;
 
     try {
-        const datos = { orden, nombre_gp, circuito, fecha, bandera, estado: "pendiente" };
         if (editandoID) {
             await updateDoc(doc(db, "carreras", editandoID), datos);
         } else {
@@ -341,89 +315,160 @@ document.getElementById('btnGuardarCarrera').addEventListener('click', async () 
         }
         cerrarModal('modalCarrera');
         await cargarCarreras();
-    } catch (e) {
-        alert('✗ Error: ' + e.message);
-    }
+    } catch (e) { console.error(e); }
 });
 
 window.eliminarCarrera = async (id) => {
-    if (confirm('¿Eliminar carrera?')) {
-        try {
-            await deleteDoc(doc(db, "carreras", id));
-            await cargarCarreras();
-        } catch (e) {
-            alert('✗ Error: ' + e.message);
-        }
+    if (confirm('¿Eliminar carrera? Se recalcularán los puntos.')) {
+        await deleteDoc(doc(db, "carreras", id));
+        await recalcularPuntos();
+        await cargarCarreras();
+        await cargarPilotos();
     }
 };
 
-// --- CAMBIOS USUARIOS ---
-async function cargarCambiosUsuarios() {
-    const tbody = document.querySelector('#tabla-cambios tbody');
-    tbody.innerHTML = '';
+// --- RESULTADOS & PUNTOS ---
+window.gestionarResultados = async (id) => {
+    editandoID = id;
+    const carrera = carrerasData[id];
+    document.getElementById('resultados-gp-nombre').textContent = carrera.nombre_gp;
+    const editor = document.getElementById('resultados-editor');
+    editor.innerHTML = 'Cargando...';
+
+    const carreraDoc = await getDoc(doc(db, "carreras", id));
+    const resultadosActuales = carreraDoc.data().resultados || {};
+
+    const pilotosArray = Object.values(pilotosData).sort((a, b) => a.apellido.localeCompare(b.apellido));
+    editor.innerHTML = '';
+    pilotosArray.forEach(p => {
+        const posActual = resultadosActuales[p.id] || '';
+        editor.innerHTML += `
+            <div class="resultado-row">
+                <label for="res-${p.id}">${p.bandera} ${p.apellido}, ${p.nombre}</label>
+                <input type="number" id="res-${p.id}" data-piloto-id="${p.id}" value="${posActual}" placeholder="Pos.">
+            </div>
+        `;
+    });
+    abrirModal('modalResultados');
+};
+
+document.getElementById('btnGuardarResultados').addEventListener('click', async () => {
+    if (!editandoID) return;
+    const boton = document.getElementById('btnGuardarResultados');
+    boton.disabled = true;
+    boton.textContent = 'Guardando...';
+
+    const resultadosAGuardar = {};
+    const inputs = document.querySelectorAll('#resultados-editor input');
+    let hasResults = false;
+    inputs.forEach(input => {
+        if (input.value) {
+            resultadosAGuardar[input.dataset.pilotoId] = parseInt(input.value);
+            hasResults = true;
+        }
+    });
 
     try {
-        const snap = await getDocs(collection(db, "registro_cambios"));
-        const cambios = [];
-        snap.forEach(doc => cambios.push(doc.data()));
-        cambios.reverse();
-
-        cambios.slice(0, 50).forEach(cambio => {
-            const estado = cambio.aplicado_en_ac ? '✓ APLICADO' : '⧗ PENDIENTE';
-            const color = cambio.aplicado_en_ac ? 'var(--success)' : 'var(--warning)';
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td><strong>${cambio.equipo_nombre}</strong></td>
-                <td>${cambio.mejora}</td>
-                <td>Nivel ${cambio.nuevo_nivel}</td>
-                <td>${new Date(cambio.fecha).toLocaleDateString('es-ES')}</td>
-                <td><span class="badge" style="color: ${color}; border-color: ${color};">${estado}</span></td>
-            `;
-            tbody.appendChild(tr);
+        await updateDoc(doc(db, "carreras", editandoID), {
+            resultados: resultadosAGuardar,
+            estado: hasResults ? "completada" : "pendiente"
         });
+
+        await recalcularPuntos();
+
+        alert('Resultados guardados y puntos actualizados.');
+        cerrarModal('modalResultados');
+        await cargarCarreras();
+        await cargarPilotos();
     } catch (e) {
-        console.error("Error:", e);
+        alert('Error al guardar: ' + e.message);
+        console.error(e);
+    } finally {
+        boton.disabled = false;
+        boton.textContent = 'Guardar Resultados';
+    }
+});
+
+async function recalcularPuntos() {
+    console.log("Recalculando todos los puntos...");
+    try {
+        await runTransaction(db, async (transaction) => {
+            const pilotosSnapshot = await getDocs(collection(db, "pilotos"));
+            const puntosTotales = {};
+            pilotosSnapshot.forEach(p => {
+                puntosTotales[p.id] = 0;
+            });
+
+            const q = query(collection(db, "carreras"), where("estado", "==", "completada"));
+            const carrerasCompletadasSnap = await getDocs(q);
+
+            carrerasCompletadasSnap.forEach(carreraDoc => {
+                const resultados = carreraDoc.data().resultados;
+                if (resultados) {
+                    Object.entries(resultados).forEach(([pilotoId, pos]) => {
+                        if (puntosTotales.hasOwnProperty(pilotoId) && pos > 0 && pos <= puntosSistema.length) {
+                            puntosTotales[pilotoId] += puntosSistema[pos - 1];
+                        }
+                    });
+                }
+            });
+            
+            pilotosSnapshot.docs.forEach(pilotoDoc => {
+                const newPuntos = puntosTotales[pilotoDoc.id];
+                if (pilotoDoc.data().puntos !== newPuntos) {
+                    transaction.update(pilotoDoc.ref, { puntos: newPuntos });
+                }
+            });
+        });
+        console.log("Transacción de puntos completada.");
+    } catch (error) {
+        console.error("Error en la transacción de puntos:", error);
+        throw error;
     }
 }
 
-// Funciones auxiliares
-function abrirModal(id) {
-    document.getElementById(id).classList.add('active');
+
+// --- CAMBIOS (LOG) ---
+async function cargarCambiosUsuarios() {
+    const tbody = document.querySelector('#tabla-cambios tbody');
+    tbody.innerHTML = '<tr><td colspan="5">Cargando...</td></tr>';
+    const snap = await getDocs(query(collection(db, "registro_cambios"), orderBy("fecha", "desc")));
+    tbody.innerHTML = '';
+    snap.forEach(doc => {
+        const c = doc.data();
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><strong>${c.equipo_nombre}</strong></td>
+            <td>${c.mejora}</td>
+            <td>Nivel ${c.nuevo_nivel}</td>
+            <td>${new Date(c.fecha.seconds * 1000).toLocaleString()}</td>
+            <td><strong style="color:var(--success)">APLICADO</strong></td>
+        `;
+        tbody.appendChild(tr);
+    });
 }
 
+// --- UTILIDADES ---
+function abrirModal(id) {
+    document.getElementById(id).style.display = 'flex';
+}
 window.cerrarModal = (id) => {
-    document.getElementById(id).classList.remove('active');
+    document.getElementById(id).style.display = 'none';
 };
-
-// Cerrar modal al hacer clic fuera
 document.querySelectorAll('.modal').forEach(modal => {
     modal.addEventListener('click', (e) => {
         if (e.target === modal) cerrarModal(modal.id);
     });
 });
 
-// --- CERRAR SESIÓN ---
-document.getElementById('btnCerrarSesion').addEventListener('click', () => {
-    signOut(auth).then(() => window.location.href = "index.html");
-});
-
-// Actualizar modales con select de equipos
-async function actualizarSelectEquipos() {
-    const selects = [document.getElementById('p-equipo')];
-    selects.forEach(select => {
-        select.innerHTML = '<option value="">Selecciona equipo...</option>';
-        Object.values(equiposData).forEach(eq => {
-            const option = document.createElement('option');
-            option.value = eq.id;
-            option.textContent = eq.nombre;
-            select.appendChild(option);
-        });
+function actualizarSelectEquipos() {
+    const select = document.getElementById('p-equipo');
+    select.innerHTML = '<option value="">-- Sin equipo --</option>';
+    Object.values(equiposData).forEach(eq => {
+        select.innerHTML += `<option value="${eq.id}">${eq.nombre}</option>`;
     });
 }
 
-// Llamar cuando se cargan equipos
-const originalCargarEquipos = cargarEquipos;
-window.cargarEquipos = async () => {
-    await originalCargarEquipos();
-    await actualizarSelectEquipos();
-};
+document.getElementById('btnCerrarSesion').addEventListener('click', () => {
+    signOut(auth);
+});
