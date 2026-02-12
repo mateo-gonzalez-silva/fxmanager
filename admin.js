@@ -1,7 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, updateDoc, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-// NUEVO: Importamos Storage
+import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, addDoc, deleteDoc, query, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
 
 const firebaseConfig = {
@@ -17,36 +16,56 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const storage = getStorage(app); // NUEVO: Encendemos el disco duro
+const storage = getStorage(app);
 
-// --- 1. SEGURIDAD: VERIFICAR QUE ERES TÚ ---
-const CORREO_ADMIN = "mateogonsilva@gmail.com"; // <--- PON TU CORREO AQUÍ
+const CORREO_ADMIN = "mateogonsilva@gmail.com";
 
+let usuarioActual = null;
+let estadoActual = "abierto";
+let equiposData = {};
+let carrerasData = {};
+
+// --- SEGURIDAD ---
 onAuthStateChanged(auth, (user) => {
     if (user) {
         if (user.email !== CORREO_ADMIN) {
-            alert("¡Acceso denegado! No eres la FIA.");
-            window.location.href = "dashboard.html";
+            alert("Acceso denegado");
+            window.location.href = "index.html";
         } else {
-            iniciarPanelAdmin();
+            usuarioActual = user;
+            iniciarAdmin();
         }
     } else {
         window.location.href = "index.html";
     }
 });
 
-function iniciarPanelAdmin() {
+async function iniciarAdmin() {
     leerEstadoCampeonato();
-    cargarEquiposEnSelects(); // Cargamos las listas desplegables
+    cargarEquipos();
+    cargarPilotos();
+    cargarCarreras();
+    cargarCambiosUsuarios();
+    setupTabs();
 }
 
-// --- 2. CONTROL DEL CAMPEONATO ---
-let estadoActual = "abierto";
+// --- TABS ---
+function setupTabs() {
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tabName = btn.dataset.tab;
+            document.querySelectorAll('.tab-content').forEach(tab => tab.style.display = 'none');
+            document.getElementById(`tab-${tabName}`).style.display = 'block';
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        });
+    });
+}
 
+// --- ESTADO DEL CAMPEONATO ---
 async function leerEstadoCampeonato() {
     const docRef = doc(db, "configuracion", "campeonato");
     const docSnap = await getDoc(docRef);
-
     if (docSnap.exists()) {
         estadoActual = docSnap.data().estado;
         actualizarTextoEstado();
@@ -58,214 +77,134 @@ function actualizarTextoEstado() {
     const boton = document.getElementById('btnToggleCampeonato');
     
     if (estadoActual === "abierto") {
-        texto.innerText = "MERCADO ABIERTO (Verde)";
-        texto.style.color = "#00C851";
-        boton.innerText = "Cerrar Mercado para Carrera";
-        boton.style.backgroundColor = "#ff4444";
+        texto.innerText = "MERCADO ABIERTO";
+        texto.style.color = "#059669";
+        boton.innerText = "Cerrar Mercado";
     } else {
-        texto.innerText = "MERCADO CERRADO (Rojo)";
-        texto.style.color = "#ff4444";
+        texto.innerText = "MERCADO CERRADO";
+        texto.style.color = "#dc2626";
         boton.innerText = "Abrir Mercado";
-        boton.style.backgroundColor = "#00C851";
     }
 }
 
 document.getElementById('btnToggleCampeonato').addEventListener('click', async () => {
     const nuevoEstado = estadoActual === "abierto" ? "cerrado" : "abierto";
-    const docRef = doc(db, "configuracion", "campeonato");
-    await updateDoc(docRef, { estado: nuevoEstado });
+    await setDoc(doc(db, "configuracion", "campeonato"), { estado: nuevoEstado });
     estadoActual = nuevoEstado;
     actualizarTextoEstado();
 });
 
-// --- 3. CARGAR EQUIPOS EN LOS DESPLEGABLES ---
-async function cargarEquiposEnSelects() {
-    const selectEditar = document.getElementById('select-equipo-editar');
-    const selectPiloto = document.getElementById('p-equipo');
-    
-    selectEditar.innerHTML = "<option value=''>Elige una escudería...</option>";
-    selectPiloto.innerHTML = "<option value=''>Elige una escudería...</option>";
+// --- EQUIPOS ---
+async function cargarEquipos() {
+    const tbody = document.querySelector('#tabla-equipos tbody');
+    tbody.innerHTML = '';
 
-    const querySnapshot = await getDocs(collection(db, "equipos"));
-    
-    querySnapshot.forEach((documento) => {
-        const id = documento.id;
-        const nombre = documento.data().nombre;
+    const snap = await getDocs(collection(db, "equipos"));
+    snap.forEach(doc => {
+        equiposData[doc.id] = { id: doc.id, ...doc.data() };
+        const eq = equiposData[doc.id];
         
-        const option1 = document.createElement("option");
-        option1.value = id; option1.text = nombre;
-        selectEditar.appendChild(option1);
-
-        const option2 = document.createElement("option");
-        option2.value = id; option2.text = nombre;
-        selectPiloto.appendChild(option2);
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><strong>${eq.nombre}</strong></td>
+            <td>$${(eq.presupuesto || 0).toLocaleString()}</td>
+            <td>${eq.owner_uid ? '✓ Asignado' : 'Libre'}</td>
+            <td>
+                <div class="table-actions">
+                    <button class="btn-sm" onclick="editarEquipo('${doc.id}')">Editar</button>
+                    <button class="btn-sm btn-danger" onclick="eliminarEquipo('${doc.id}')">Eliminar</button>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(tr);
     });
 }
 
-// --- 4. ACTUALIZAR EQUIPO (FOTOS Y COLOR) ---
-document.getElementById('btnActualizarEquipo').addEventListener('click', async () => {
-    const idEquipo = document.getElementById('select-equipo-editar').value;
-    const color = document.getElementById('input-color-equipo').value;
-    const archivoCoche = document.getElementById('input-foto-coche').files[0]; // Capturamos el archivo
-
-    if (!idEquipo) { alert("Selecciona un equipo primero."); return; }
-
-    try {
-        const equipoRef = doc(db, "equipos", idEquipo);
-        let datosAActualizar = { color: color };
-
-        // Si el admin ha seleccionado una foto...
-        if (archivoCoche) {
-            alert("Subiendo diseño a la FIA, espera un momento...");
-            // Creamos la ruta en el Storage (ej: coches/ferrari.png)
-            const storageRef = ref(storage, 'coches/' + idEquipo + '_' + archivoCoche.name);
-            // Subimos el archivo
-            await uploadBytes(storageRef, archivoCoche);
-            // Obtenemos la URL pública de la foto
-            const urlDescarga = await getDownloadURL(storageRef);
-            // La añadimos a los datos que vamos a guardar
-            datosAActualizar.coche_url = urlDescarga; 
-        }
-
-        // Guardamos en la base de datos
-        await updateDoc(equipoRef, datosAActualizar);
-        alert("¡Diseño guardado correctamente!");
-        document.getElementById('input-foto-coche').value = ""; // Limpiamos el input
-        
-    } catch (error) {
-        console.error("Error actualizando equipo: ", error);
-        alert("Hubo un error al subir la foto.");
-    }
-});
-
-// --- 5. FICHAR PILOTO ---
-document.getElementById('btnGuardarPiloto').addEventListener('click', async () => {
-    const nombre = document.getElementById('p-nombre').value;
-    const apellido = document.getElementById('p-apellido').value.toUpperCase();
-    const numero = document.getElementById('p-numero').value;
-    const bandera = document.getElementById('p-bandera').value;
-    const equipoId = document.getElementById('p-equipo').value;
-    const archivoFoto = document.getElementById('p-foto').files[0]; // Capturamos el archivo
-
-    if (!nombre || !apellido || !numero || !equipoId) {
-        alert("Faltan datos obligatorios del piloto.");
-        return;
-    }
-
-    try {
-        let urlFotoFinal = "https://media.formula1.com/d_default_fallback_profile.png/content/dam/fom-website/drivers/M/MAXVER01_Max_Verstappen/maxver01.png.transform/2col/image.png"; // Foto por defecto
-
-        // Si has subido una foto...
-        if (archivoFoto) {
-            alert("Subiendo la foto del piloto...");
-            const storageRef = ref(storage, 'pilotos/' + apellido + '_' + archivoFoto.name);
-            await uploadBytes(storageRef, archivoFoto);
-            urlFotoFinal = await getDownloadURL(storageRef);
-        }
-
-        // Guardamos todo en Firestore
-        await addDoc(collection(db, "pilotos"), {
-            nombre: nombre,
-            apellido: apellido,
-            numero: parseInt(numero),
-            bandera: bandera,
-            equipo_id: equipoId,
-            foto_url: urlFotoFinal
-        });
-
-        alert(`¡${apellido} fichado correctamente!`);
-        
-        // Limpiamos
-        document.getElementById('p-nombre').value = "";
-        document.getElementById('p-apellido').value = "";
-        document.getElementById('p-numero').value = "";
-        document.getElementById('p-foto').value = "";
-
-    } catch (error) {
-        console.error("Error fichando piloto: ", error);
-        alert("Error al intentar subir la foto.");
-    }
-});
-
-// --- 6. CERRAR SESIÓN ---
-document.getElementById('btnCerrarSesion').addEventListener('click', () => {
-    signOut(auth).then(() => {
-        window.location.href = "index.html";
-    });
-});
-
-// Añade esta llamada dentro de iniciarPanelAdmin()
-// iniciarPanelAdmin() { ... cargarPilotosEnSelect(); }
-
-async function cargarPilotosEnSelect() {
-    const selectPiloto = document.getElementById('select-piloto');
-    selectPiloto.innerHTML = "<option value=''>Elige un piloto...</option>";
-
-    const querySnapshot = await getDocs(collection(db, "pilotos"));
-    
-    querySnapshot.forEach((documento) => {
-        const id = documento.id;
-        const apellido = documento.data().apellido;
-        const option = document.createElement("option");
-        option.value = id; 
-        option.text = apellido;
-        selectPiloto.appendChild(option);
-    });
-}
-
-// --- 6. SUBIR RESULTADOS DE CARRERA Y PAGAR PREMIOS ---
-
-// Diccionario oficial de puntos de la FIA
-const PUNTOS_F1 = {
-    1: 25, 2: 18, 3: 15, 4: 12, 5: 10,
-    6: 8,  7: 6,  8: 4,  9: 2,  10: 1
+window.editarEquipo = (id) => {
+    const eq = equiposData[id];
+    document.getElementById('eq-nombre').value = eq.nombre;
+    document.getElementById('eq-color').value = eq.color || '#000000';
+    document.getElementById('eq-presupuesto').value = eq.presupuesto || 0;
+    document.getElementById('btnGuardarEquipo').dataset.id = id;
+    abrirModal('modalEquipo');
 };
 
-document.getElementById('btnSubirResultado').addEventListener('click', async () => {
-    const idPiloto = document.getElementById('select-piloto').value;
-    const posicion = parseInt(document.getElementById('input-posicion').value);
-    const premio = parseFloat(document.getElementById('input-premio').value);
+document.getElementById('btnNuevoEquipo').addEventListener('click', () => {
+    document.getElementById('eq-nombre').value = '';
+    document.getElementById('eq-color').value = '#000000';
+    document.getElementById('eq-presupuesto').value = '';
+    document.getElementById('btnGuardarEquipo').dataset.id = 'nuevo';
+    abrirModal('modalEquipo');
+});
 
-    if (!idPiloto || isNaN(posicion) || isNaN(premio)) {
-        alert("Faltan datos en la torre de control. Rellena piloto, posición y premio.");
-        return;
-    }
+document.getElementById('btnGuardarEquipo').addEventListener('click', async () => {
+    const id = document.getElementById('btnGuardarEquipo').dataset.id;
+    const nombre = document.getElementById('eq-nombre').value;
+    const color = document.getElementById('eq-color').value;
+    const presupuesto = parseFloat(document.getElementById('eq-presupuesto').value);
+
+    if (!nombre) { alert('Nombre requerido'); return; }
 
     try {
-        alert("Procesando telemetría y enviando transferencias...");
-
-        // 1. Leer los datos actuales del piloto
-        const pilotoRef = doc(db, "pilotos", idPiloto);
-        const pilotoSnap = await getDoc(pilotoRef);
-        const pilotoData = pilotoSnap.data();
-
-        // 2. Calcular los nuevos puntos del piloto
-        // Si quedó entre los 10 primeros, coge los puntos, si no, 0.
-        const puntosGanados = PUNTOS_F1[posicion] || 0; 
-        const puntosActuales = pilotoData.puntos || 0;
-        const nuevosPuntos = puntosActuales + puntosGanados;
-
-        // 3. Leer los datos actuales del equipo al que pertenece
-        const equipoRef = doc(db, "equipos", pilotoData.equipo_id);
-        const equipoSnap = await getDoc(equipoRef);
-        const equipoData = equipoSnap.data();
-
-        // 4. Calcular el nuevo presupuesto del equipo
-        const presupuestoActual = equipoData.presupuesto || 0;
-        const nuevoPresupuesto = presupuestoActual + premio;
-
-        // 5. ¡Guardar todo en la base de datos a la vez!
-        await updateDoc(pilotoRef, { puntos: nuevosPuntos });
-        await updateDoc(equipoRef, { presupuesto: nuevoPresupuesto });
-
-        alert(`¡Bandera a cuadros! \n${pilotoData.apellido} suma ${puntosGanados} puntos.\nSu equipo recibe $${premio}.`);
-
-        // Limpiamos los inputs numéricos, pero dejamos el piloto por si quieres cambiar algo
-        document.getElementById('input-posicion').value = "";
-        document.getElementById('input-premio').value = "";
-
-    } catch (error) {
-        console.error("Error subiendo el resultado: ", error);
-        alert("Hubo un error al procesar el resultado de la carrera.");
+        if (id === 'nuevo') {
+            const nuevoId = nombre.toLowerCase().replace(/\s+/g, '');
+            await setDoc(doc(db, "equipos", nuevoId), {
+                nombre, color, presupuesto, owner_uid: ""
+            });
+        } else {
+            await updateDoc(doc(db, "equipos", id), { nombre, color, presupuesto });
+        }
+        cerrarModal('modalEquipo');
+        cargarEquipos();
+    } catch (e) {
+        alert('Error: ' + e.message);
     }
 });
+
+window.eliminarEquipo = async (id) => {
+    if (confirm('¿Eliminar equipo?')) {
+        await deleteDoc(doc(db, "equipos", id));
+        cargarEquipos();
+    }
+};
+
+// --- PILOTOS ---
+async function cargarPilotos() {
+    const tbody = document.querySelector('#tabla-pilotos tbody');
+    tbody.innerHTML = '';
+
+    const snap = await getDocs(collection(db, "pilotos"));
+    snap.forEach(doc => {
+        const p = doc.data();
+        const eqNombre = equiposData[p.equipo_id]?.nombre || 'N/A';
+        
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><strong>${p.numero}</strong></td>
+            <td>${p.apellido} ${p.nombre}</td>
+            <td>${eqNombre}</td>
+            <td>${p.puntos || 0}</td>
+            <td>
+                <div class="table-actions">
+                    <button class="btn-sm" onclick="editarPiloto('${doc.id}')">Editar</button>
+                    <button class="btn-sm btn-danger" onclick="eliminarPiloto('${doc.id}')">Eliminar</button>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+// --- CERRAR SESIÓN ---
+document.getElementById('btnCerrarSesion').addEventListener('click', () => {
+    signOut(auth).then(() => window.location.href = "index.html");
+});
+
+// Funciones auxiliares
+function abrirModal(id) {
+    document.getElementById(id).classList.add('active');
+}
+
+window.cerrarModal = (id) => {
+    document.getElementById(id).classList.remove('active');
+};

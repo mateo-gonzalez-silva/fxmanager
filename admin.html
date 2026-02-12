@@ -3,84 +3,230 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FX Manager | Dirección de Carrera (Admin)</title>
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #111; color: white; margin: 0; padding: 20px; }
-        .navbar { background-color: #e10600; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;}
-        .navbar h2 { margin: 0; font-style: italic; }
-        .panel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .card { background-color: #222; padding: 20px; border-radius: 8px; border: 1px solid #444; }
-        h3 { color: #e10600; margin-top: 0; border-bottom: 1px solid #444; padding-bottom: 10px; }
-        button { background-color: #e10600; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 5px; font-weight: bold; width: 100%;}
-        button:hover { background-color: #b30500; }
-        .btn-verde { background-color: #00C851; }
-        .btn-verde:hover { background-color: #007E33; }
-        input, select { width: 100%; padding: 10px; margin-bottom: 15px; background: #333; color: white; border: 1px solid #555; border-radius: 4px; box-sizing: border-box;}
-        label { font-size: 13px; color: #aaa; margin-bottom: 5px; display: block; }
-        .flex-row { display: flex; gap: 10px; }
-        .flex-row > div { flex: 1; }
-        /* Para el selector de color */
-        input[type="color"] { padding: 0; height: 40px; cursor: pointer; }
-    </style>
+    <title>FX Manager | Dirección de Carrera</title>
+    <link rel="stylesheet" href="modern.css">
 </head>
 <body>
 
     <div class="navbar">
-        <h2>DIRECCIÓN DE CARRERA (FIA)</h2>
-        <button id="btnCerrarSesion" style="background-color: #333; width: auto;">Desconectar</button>
+        <h2>Dirección de Carrera (FIA)</h2>
+        <button id="btnCerrarSesion" class="btn-secondary">Desconectar</button>
     </div>
 
-    <div class="panel-grid">
-        <div class="card">
-            <h3>Estado del Campeonato</h3>
-            <p>Estado actual: <strong id="estado-texto" style="color: yellow;">Cargando...</strong></p>
-            <p style="font-size: 13px; color: #aaa;">Si cierras el mercado, nadie podrá elegir equipo ni comprar mejoras hasta que lo vuelvas a abrir.</p>
-            <button id="btnToggleCampeonato" class="btn-verde">Cambiar Estado</button>
+    <main class="container">
+        <!-- ESTADO DEL CAMPEONATO -->
+        <div class="panel" style="margin-bottom: 32px;">
+            <h2>Estado del Campeonato</h2>
+            <p style="color: var(--text-muted);">Estado actual: <strong id="estado-texto" style="color: var(--accent);">Cargando...</strong></p>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">Si cierras el mercado, nadie podrá elegir equipo ni comprar mejoras.</p>
+            <button id="btnToggleCampeonato" class="btn-success">Cambiar Estado</button>
         </div>
 
-        <div class="card">
-            <h3>Diseño de Escuderías</h3>
-            <label>Seleccionar Equipo</label>
-            <select id="select-equipo-editar">
-                <option value="">Cargando equipos...</option>
-            </select>
-            
-            <div class="flex-row">
-                <div>
-                    <label>Color del Equipo</label>
-                    <input type="color" id="input-color-equipo" value="#ffffff">
-                </div>
-                <div style="flex: 3;">
-                    <label>Subir Foto del Coche (PNG transparente)</label>
-                    <input type="file" id="input-foto-coche" accept="image/*">
-                </div>
-            </div>
-            <button id="btnActualizarEquipo" class="btn-verde">Guardar Diseño en la FIA</button>
+        <!-- TABS -->
+        <div style="display: flex; gap: 8px; margin-bottom: 24px; border-bottom: 1px solid var(--border); overflow-x: auto;">
+            <button class="tab-btn active" data-tab="equipos">Equipos</button>
+            <button class="tab-btn" data-tab="pilotos">Pilotos</button>
+            <button class="tab-btn" data-tab="carreras">Carreras</button>
+            <button class="tab-btn" data-tab="resultados">Resultados</button>
+            <button class="tab-btn" data-tab="cambios">Cambios de Usuarios</button>
         </div>
 
-        <div class="card" style="grid-column: span 2;">
-            <h3>Fichar Nuevo Piloto</h3>
-            <div class="flex-row">
-                <div><label>Nombre</label><input type="text" id="p-nombre" placeholder="Ej: Charles"></div>
-                <div><label>APELLIDO</label><input type="text" id="p-apellido" placeholder="Ej: LECLERC"></div>
-                <div><label>Dorsal</label><input type="number" id="p-numero" placeholder="Ej: 16"></div>
-                <div><label>Bandera (Emoji)</label><input type="text" id="p-bandera" placeholder="Ej: 🇲🇨"></div>
+        <!-- TAB: EQUIPOS -->
+        <div id="tab-equipos" class="tab-content active">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3>Gestión de Equipos</h3>
+                <button id="btnNuevoEquipo" class="btn-primary">+ Nuevo Equipo</button>
             </div>
-            <div class="flex-row">
-                <div>
-                    <label>Escudería</label>
-                    <select id="p-equipo">
-                        <option value="">Cargando equipos...</option>
+            <div class="panel" style="overflow-x: auto;">
+                <table id="tabla-equipos">
+                    <thead>
+                        <tr>
+                            <th>Equipo</th>
+                            <th>Presupuesto</th>
+                            <th>Manager</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB: PILOTOS -->
+        <div id="tab-pilotos" class="tab-content" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3>Gestión de Pilotos</h3>
+                <button id="btnNuevoPiloto" class="btn-primary">+ Nuevo Piloto</button>
+            </div>
+            <div class="panel" style="overflow-x: auto;">
+                <table id="tabla-pilotos">
+                    <thead>
+                        <tr>
+                            <th>Dorsal</th>
+                            <th>Piloto</th>
+                            <th>Equipo</th>
+                            <th>Puntos</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB: CARRERAS -->
+        <div id="tab-carreras" class="tab-content" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3>Calendario de Carreras</h3>
+                <button id="btnNuevaCarrera" class="btn-primary">+ Nueva Carrera</button>
+            </div>
+            <div class="panel" style="overflow-x: auto;">
+                <table id="tabla-carreras">
+                    <thead>
+                        <tr>
+                            <th>Ronda</th>
+                            <th>GP</th>
+                            <th>Circuito</th>
+                            <th>Fecha</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB: RESULTADOS -->
+        <div id="tab-resultados" class="tab-content" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3>Introducir Resultados de Carrera</h3>
+            </div>
+            <div class="panel">
+                <div style="margin-bottom: 20px;">
+                    <label for="select-carrera-resultado">Seleccionar Carrera</label>
+                    <select id="select-carrera-resultado">
+                        <option value="">Cargando carreras...</option>
                     </select>
                 </div>
-                <div style="flex: 2;">
-                    <label>Subir Foto de Perfil</label>
-                    <input type="file" id="p-foto" accept="image/*">
+                <div id="formulario-resultado" style="display: none;">
+                    <h4>Clasificación Final</h4>
+                    <div id="posiciones-form" style="display: grid; gap: 12px; margin-bottom: 24px;"></div>
+                    <button id="btnGuardarResultado" class="btn-success">Guardar Resultados</button>
                 </div>
             </div>
-            <button id="btnGuardarPiloto" class="btn-verde">Registrar Piloto Oficial</button>
         </div>
 
+        <!-- TAB: CAMBIOS -->
+        <div id="tab-cambios" class="tab-content" style="display: none;">
+            <div style="margin-bottom: 20px;">
+                <h3>Registro de Cambios de Usuarios</h3>
+                <p style="color: var(--text-muted); font-size: 13px;">Historial de mejoras compradas y cambios de equipos</p>
+            </div>
+            <div class="panel" style="overflow-x: auto;">
+                <table id="tabla-cambios">
+                    <thead>
+                        <tr>
+                            <th>Equipo</th>
+                            <th>Cambio</th>
+                            <th>Detalles</th>
+                            <th>Fecha</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL: EQUIPO -->
+    <div id="modalEquipo" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Editar Equipo</h2>
+                <button class="close-modal" onclick="cerrarModal('modalEquipo')">×</button>
+            </div>
+            <div class="input-group">
+                <label>Nombre</label>
+                <input type="text" id="eq-nombre" placeholder="Ferrari">
+            </div>
+            <div class="input-group">
+                <label>Color (Hex)</label>
+                <input type="color" id="eq-color" value="#000000">
+            </div>
+            <div class="input-group">
+                <label>Presupuesto</label>
+                <input type="number" id="eq-presupuesto" placeholder="1000000">
+            </div>
+            <button id="btnGuardarEquipo" class="btn-primary" style="width: 100%;">Guardar Equipo</button>
+        </div>
+    </div>
+
+    <!-- MODAL: PILOTO -->
+    <div id="modalPiloto" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Editar Piloto</h2>
+                <button class="close-modal" onclick="cerrarModal('modalPiloto')">×</button>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div class="input-group" style="margin-bottom: 0;">
+                    <label>Nombre</label>
+                    <input type="text" id="p-nombre" placeholder="Lewis">
+                </div>
+                <div class="input-group" style="margin-bottom: 0;">
+                    <label>Apellido</label>
+                    <input type="text" id="p-apellido" placeholder="HAMILTON">
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                <div class="input-group" style="margin-bottom: 0;">
+                    <label>Dorsal</label>
+                    <input type="number" id="p-numero" placeholder="44">
+                </div>
+                <div class="input-group" style="margin-bottom: 0;">
+                    <label>Bandera</label>
+                    <input type="text" id="p-bandera" placeholder="🇬🇧">
+                </div>
+            </div>
+            <div class="input-group">
+                <label>Equipo</label>
+                <select id="p-equipo"></select>
+            </div>
+            <button id="btnGuardarPiloto" class="btn-primary" style="width: 100%;">Guardar Piloto</button>
+        </div>
+    </div>
+
+    <!-- MODAL: CARRERA -->
+    <div id="modalCarrera" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Editar Carrera</h2>
+                <button class="close-modal" onclick="cerrarModal('modalCarrera')">×</button>
+            </div>
+            <div class="input-group">
+                <label>Ronda</label>
+                <input type="number" id="cr-orden" placeholder="1">
+            </div>
+            <div class="input-group">
+                <label>Nombre del GP</label>
+                <input type="text" id="cr-nombre" placeholder="Gran Premio de Austria">
+            </div>
+            <div class="input-group">
+                <label>Circuito</label>
+                <input type="text" id="cr-circuito" placeholder="Red Bull Ring">
+            </div>
+            <div class="input-group">
+                <label>Fecha</label>
+                <input type="datetime-local" id="cr-fecha">
+            </div>
+            <div class="input-group">
+                <label>Bandera</label>
+                <input type="text" id="cr-bandera" placeholder="🇦🇹">
+            </div>
+            <button id="btnGuardarCarrera" class="btn-primary" style="width: 100%;">Guardar Carrera</button>
+        </div>
     </div>
 
     <script type="module" src="admin.js"></script>
