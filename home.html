@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FX Manager | Inicio</title>
+    <link rel="stylesheet" href="modern.css">
+</head>
+<body>
+
+    <main class="container" style="max-width: 900px;">
+        <div style="text-align: center; margin-bottom: 40px;">
+            <h1 style="font-style: italic; color: var(--accent); font-size: 36px;">FX MANAGER</h1>
+            <p style="color: #9ca3af; font-size: 14px;">Temporada 2026 | Gestor de Escuderías</p>
+        </div>
+
+        <!-- ESTADO DE LA CARRERA -->
+        <div id="carrera-estado" class="panel" style="text-align: center; margin-bottom: 32px;">
+            <h2 id="carrera-titulo" style="margin-bottom: 20px;">Próxima Carrera</h2>
+            <div id="contador-container" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px;">
+                <div class="contador-box">
+                    <div class="contador-numero" id="dias">0</div>
+                    <div class="contador-label">Días</div>
+                </div>
+                <div class="contador-box">
+                    <div class="contador-numero" id="horas">0</div>
+                    <div class="contador-label">Horas</div>
+                </div>
+                <div class="contador-box">
+                    <div class="contador-numero" id="minutos">0</div>
+                    <div class="contador-label">Minutos</div>
+                </div>
+                <div class="contador-box">
+                    <div class="contador-numero" id="segundos">0</div>
+                    <div class="contador-label">Segundos</div>
+                </div>
+            </div>
+            <div id="info-gp" style="border-top: 1px solid var(--border); padding-top: 16px; color: #9ca3af;">
+                <p style="margin: 0; font-size: 14px;" id="nombre-gp">Cargando información de la FIA...</p>
+            </div>
+        </div>
+
+        <!-- CLASIFICACIÓN TOP 5 / TOP 3 -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+            <!-- TOP 5 PILOTOS -->
+            <div class="panel">
+                <h2 style="font-size: 18px; margin-top: 0;">🏎️ Top 5 Pilotos</h2>
+                <div id="top-pilotos" style="display: flex; flex-direction: column; gap: 10px;">
+                    <p style="color: #9ca3af; text-align: center;">Cargando clasificación...</p>
+                </div>
+            </div>
+
+            <!-- TOP 3 EQUIPOS -->
+            <div class="panel">
+                <h2 style="font-size: 18px; margin-top: 0;">🏁 Top 3 Escuderías</h2>
+                <div id="top-equipos" style="display: flex; flex-direction: column; gap: 10px;">
+                    <p style="color: #9ca3af; text-align: center;">Cargando clasificación...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- CTA PRINCIPAL -->
+        <div style="margin-top: 40px; text-align: center;">
+            <button id="btnIrAlDashboard" style="padding: 14px 32px; font-size: 16px; display: inline-block;">
+                Acceder al Paddock
+            </button>
+        </div>
+    </main>
+
+    <nav class="bottom-nav">
+        <a href="home.html" class="active" title="Inicio"><span class="nav-icon">🏠</span></a>
+        <a href="equipos.html" title="Equipos"><span class="nav-icon">🏢</span></a>
+        <a href="pilotos.html" title="Pilotos"><span class="nav-icon">👤</span></a>
+        <a href="seleccion.html" title="Elección"><span class="nav-icon">✍️</span></a>
+        <a href="dashboard.html" title="Mi Equipo"><span class="nav-icon">📊</span></a>
+        <a href="clasificacion.html" title="Clasificación"><span class="nav-icon">🏆</span></a>
+        <a href="calendario.html" title="Calendario"><span class="nav-icon">📅</span></a>
+    </nav>
+
+    <script type="module" src="home.js"></script>
+</body>
+</html>

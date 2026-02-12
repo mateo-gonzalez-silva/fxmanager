@@ -56,10 +56,9 @@ if (btnLogin) {
     });
 }
 
-// 5. Truco: Si ya han iniciado sesión antes, los mandamos directo dentro
+// 5. Truco: Si ya han iniciado sesión antes, los mandamos directo a HOME
 onAuthStateChanged(auth, (user) => {
-    // Si hay un usuario logueado y estamos en index.html
     if (user && (window.location.pathname.endsWith('index.html') || window.location.pathname === '/')) {
-        window.location.href = "dashboard.html";
+        window.location.href = "home.html";
     }
 });

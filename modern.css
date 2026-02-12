@@ -34,10 +34,11 @@ body {
   background: linear-gradient(135deg, #0a0e14 0%, #0f1319 100%);
   display: flex;
   flex-direction: column;
+  padding-bottom: 70px;
 }
 
 main, .container {
-  max-width: 1200px;
+  max-width: 1100px;
   width: calc(100% - 40px);
   margin: 32px auto;
   flex: 1;
@@ -383,7 +384,7 @@ button:disabled, .btn-elegir:disabled {
 
 /* Bottom Navigation */
 .bottom-nav {
-  display: none;
+  display: flex;
   position: fixed;
   left: 0;
   right: 0;
@@ -394,7 +395,8 @@ button:disabled, .btn-elegir:disabled {
   padding: 0;
   z-index: 200;
   justify-content: space-around;
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(12px);
+  height: 70px;
 }
 
 .bottom-nav a {
@@ -402,25 +404,61 @@ button:disabled, .btn-elegir:disabled {
   color: var(--muted);
   text-decoration: none;
   font-weight: 600;
-  font-size: 12px;
-  padding: 12px 0;
-  text-align: center;
+  font-size: 11px;
+  height: 70px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 4px;
   transition: all var(--transition);
   border-bottom: 3px solid transparent;
+  position: relative;
+}
+
+.nav-icon {
+  font-size: 24px;
+  display: block;
+  line-height: 1;
 }
 
 .bottom-nav a:hover {
   color: var(--accent);
+  background: rgba(6,182,212,0.08);
 }
 
 .bottom-nav a.active {
   color: var(--accent);
   border-bottom-color: var(--accent);
-  background: rgba(6,182,212,0.08);
+  background: rgba(6,182,212,0.12);
+}
+
+.bottom-nav a span {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+/* Ocultar texto en mobile, solo iconos */
+@media (max-width: 480px) {
+  .bottom-nav a {
+    font-size: 0;
+  }
+  .nav-icon {
+    font-size: 20px;
+  }
+}
+
+/* ANIMACIÓN PULSE */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 /* Utilities */
@@ -611,4 +649,30 @@ tbody tr:hover {
 
 .flex-row > div {
   flex: 1;
+}
+
+/* CONTADOR DE CARRERA */
+.contador-box {
+  background: rgba(6,182,212,0.08);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.contador-numero {
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.contador-label {
+  font-size: 12px;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
