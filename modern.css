@@ -9,6 +9,12 @@
     --text-secondary: #888888;  /* Texto secundario gris medio */
     --border-color: #222222;    /* Bordes muy sutiles */
     --border-hover: #444444;    /* Bordes al pasar el ratón */
+    --accent: #ff2e3f;          /* Rojo F1 */
+    --accent-light: #ff5a70;    /* Rojo más claro */
+    --success: #00ff00;          /* Verde éxito */
+    --warning: #ffaa00;          /* Naranja advertencia */
+    --danger: #ff2e3f;           /* Rojo peligro */
+    --info: #00aaff;             /* Azul información */
 }
 
 /* =========================================
@@ -89,8 +95,10 @@ button {
 }
 
 .btn-solid:hover {
-    background-color: transparent;
+    background-color: var(--accent);
     color: var(--text-primary);
+    border-color: var(--accent);
+    box-shadow: 0 0 15px rgba(255, 46, 63, 0.5);
 }
 
 .btn-outline {
@@ -101,46 +109,101 @@ button {
 
 .btn-outline:hover {
     border-color: var(--text-primary);
+    background-color: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+}
+
+/* =========================================
+   Tarjetas Genéricas (Cards)
+   ========================================= */
+.card {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 25px;
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    border-color: var(--border-hover);
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
 }
 
 /* =========================================
    Navegación Global (Adaptada a home.html)
    ========================================= */
-.navbar {
+.main-nav-content {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 20px 40px;
-    border-bottom: 1px solid var(--border-color);
-    background-color: var(--bg-primary);
 }
 
-.nav-brand strong {
-    font-size: 1.5rem;
+.main-nav-content .logo {
+    font-size: 1.3rem;
     letter-spacing: 2px;
+    color: var(--text-primary);
+    font-weight: bold;
+    transition: color 0.3s ease;
+}
+
+.main-nav-content .logo:hover {
+    color: var(--text-secondary);
+}
+
+.main-nav {
+    border-bottom: 2px solid var(--border-hover);
+    background-color: var(--bg-secondary);
 }
 
 .nav-links {
-    list-style: none;
     display: flex;
-    gap: 30px;
+    gap: 40px;
+    list-style: none;
 }
 
 .nav-links a {
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 1px;
     color: var(--text-secondary);
+    transition: color 0.3s ease;
+    position: relative;
 }
 
-.nav-links a.active, .nav-links a:hover {
+.nav-links a:hover {
     color: var(--text-primary);
+}
+
+.nav-links a::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+    width: 0%;
+    height: 2px;
+    background-color: var(--text-primary);
+    transition: width 0.3s ease;
+}
+
+.nav-links a:hover::after {
+    width: 100%;
 }
 
 .nav-auth {
     display: flex;
     gap: 15px;
+    align-items: center;
+}
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 40px;
+    border-bottom: 2px solid var(--border-hover);
+    background-color: var(--bg-secondary);
 }
 
 /* =========================================

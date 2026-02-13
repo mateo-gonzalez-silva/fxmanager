@@ -239,26 +239,107 @@ function configurarBotonesAccion() {
 
     // --- INVESTIGACIÓN DE RIVALES ---
     const btnResearch = document.getElementById("btn-research");
+    const researchTarget = document.getElementById("research-target");
+    const researchRival = document.getElementById("research-rival");
+    
+    if (researchTarget) {
+        researchTarget.addEventListener("change", async () => {
+            const tipoInvestigacion = researchTarget.value;
+            const rivalLabel = document.getElementById("research-rival-label");
+            
+            if (!tipoInvestigacion) {
+                rivalLabel.style.display = "none";
+                researchRival.style.display = "none";
+                return;
+            }
+
+            rivalLabel.style.display = "block";
+            researchRival.style.display = "block";
+            researchRival.innerHTML = '<option value="">-- Cargando --</option>';
+
+            if (tipoInvestigacion === "piloto") {
+                // Cargar todos los pilotos excepto los del equipo actual
+                const pilotosQuery = query(collection(db, "pilotos"), where("equipoId", "!=", currentTeamId));
+                const pilotosSnap = await getDocs(pilotosQuery);
+                
+                researchRival.innerHTML = '<option value="">-- Seleccionar Piloto --</option>';
+                pilotosSnap.forEach(doc => {
+                    const p = doc.data();
+                    researchRival.innerHTML += `<option value="${doc.id}">${p.nombre} ${p.apellido || ''} (#${p.numero})</option>`;
+                });
+                
+            } else if (tipoInvestigacion === "mejora") {
+                // Cargar todos los equipos excepto el actual
+                const equiposQuery = query(collection(db, "equipos"), where("__name__", "!=", currentTeamId));
+                const equiposSnap = await getDocs(collection(db, "equipos"));
+                
+                researchRival.innerHTML = '<option value="">-- Seleccionar Equipo --</option>';
+                equiposSnap.forEach(doc => {
+                    if (doc.id !== currentTeamId) {
+                        const eq = doc.data();
+                        researchRival.innerHTML += `<option value="${doc.id}" data-type="equipo">${eq.nombre}</option>`;
+                    }
+                });
+                
+            } else if (tipoInvestigacion === "elemento") {
+                // Cargar todos los equipos excepto el actual
+                const equiposSnap = await getDocs(collection(db, "equipos"));
+                
+                researchRival.innerHTML = '<option value="">-- Seleccionar Equipo --</option>';
+                equiposSnap.forEach(doc => {
+                    if (doc.id !== currentTeamId) {
+                        const eq = doc.data();
+                        researchRival.innerHTML += `<option value="${doc.id}" data-type="equipo">${eq.nombre}</option>`;
+                    }
+                });
+            }
+        });
+    }
+
     if (btnResearch) {
         btnResearch.addEventListener("click", async () => {
-            const target = document.getElementById("research-target").value;
+            const tipoInvestigacion = researchTarget.value;
+            const rivalSeleccionado = researchRival.value;
+            
+            if (!tipoInvestigacion || !rivalSeleccionado) {
+                alert("Por favor selecciona un tipo de investigación y el rival a investigar.");
+                return;
+            }
+
             let detalleTexto = "";
+            let nombreRival = "";
 
-            if (target === "piloto") detalleTexto = "Solicita conocer los atributos (Ritmo/Agresividad) de un piloto rival.";
-            else if (target === "mejora") detalleTexto = "Solicita conocer cuál ha sido la última mejora de un equipo rival.";
-            else if (target === "elemento") detalleTexto = "Solicita conocer el nivel de una pieza de un rival.";
+            if (tipoInvestigacion === "piloto") {
+                const opcionSeleccionada = researchRival.options[researchRival.selectedIndex].text;
+                nombreRival = opcionSeleccionada;
+                detalleTexto = `Solicita conocer los atributos (Ritmo/Agresividad) del piloto ${nombreRival}.`;
+            } else if (tipoInvestigacion === "mejora") {
+                const opcionSeleccionada = researchRival.options[researchRival.selectedIndex].text;
+                nombreRival = opcionSeleccionada;
+                detalleTexto = `Solicita conocer cuál ha sido la última mejora del equipo ${nombreRival}.`;
+            } else if (tipoInvestigacion === "elemento") {
+                const opcionSeleccionada = researchRival.options[researchRival.selectedIndex].text;
+                nombreRival = opcionSeleccionada;
+                detalleTexto = `Solicita conocer el nivel de una pieza del equipo ${nombreRival}.`;
+            }
 
-            if(confirm(`¿Quieres gastar un uso de investigación en: ${target}?`)) {
+            if(confirm(`¿Gastar un uso de investigación en: ${nombreRival}?`)) {
                 await addDoc(collection(db, "solicitudes_admin"), {
                     equipoId: currentTeamId,
                     nombreEquipo: currentTeamData.nombre,
                     tipo: "Investigación (Espionaje)",
                     detalle: detalleTexto,
-                    estado: "Pendiente", // Al ser 'Pendiente', el admin decidirá si darle la info
+                    rivalId: rivalSeleccionado,
+                    tipoInvestigacion: tipoInvestigacion,
+                    estado: "Pendiente",
                     fecha: serverTimestamp()
                 });
 
                 alert("Investigación solicitada. El Admin evaluará la petición y te enviará los datos por la Bandeja de Mensajes.");
+                researchTarget.value = "";
+                researchRival.value = "";
+                document.getElementById("research-rival-label").style.display = "none";
+                researchRival.style.display = "none";
             }
         });
     }

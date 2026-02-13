@@ -77,6 +77,9 @@ document.addEventListener("DOMContentLoaded", () => {
             nombre: document.getElementById("pil-nombre").value,
             numero: parseInt(document.getElementById("pil-numero").value),
             pais: document.getElementById("pil-pais").value,
+            edad: parseInt(document.getElementById("pil-edad").value) || 0,
+            ritmo: parseInt(document.getElementById("pil-ritmo").value) || 0,
+            agresividad: parseInt(document.getElementById("pil-agresividad").value) || 0,
             equipoId: document.getElementById("pil-equipo").value,
             foto: document.getElementById("pil-foto").value
         };
@@ -357,6 +360,9 @@ window.editarPiloto = (data) => {
     document.getElementById("pil-nombre").value = data.nombre || "";
     document.getElementById("pil-numero").value = data.numero || "";
     document.getElementById("pil-pais").value = data.pais || "";
+    document.getElementById("pil-edad").value = data.edad || "";
+    document.getElementById("pil-ritmo").value = data.ritmo || "";
+    document.getElementById("pil-agresividad").value = data.agresividad || "";
     document.getElementById("pil-equipo").value = data.equipoId || "";
     document.getElementById("pil-foto").value = data.foto || "";
     document.getElementById("titulo-modal-piloto").textContent = "Editar Piloto";

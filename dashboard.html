@@ -38,6 +38,7 @@
                             <span>PRESUPUESTO</span>
                             <h2 id="dash-budget">$0</h2>
                         </div>
+                        <a href="reglas.html" class="btn btn-outline" style="margin-top: 15px; display: inline-block;">📋 Ver Reglas</a>
                     </div>
                 </div>
                 <div class="stats-grid">
@@ -90,11 +91,20 @@
                 <div class="research-action">
                     <strong>Investigación de Rivales</strong>
                     <span id="research-count" style="font-size: 0.8rem; color: var(--text-secondary);">Usos restantes: 2</span>
-                    <select id="research-target" style="margin-top: 10px;">
+                    
+                    <label style="margin-top: 10px; display: block;">Tipo de Investigación:</label>
+                    <select id="research-target" style="margin-top: 5px;">
+                        <option value="">-- Seleccionar --</option>
                         <option value="piloto">Piloto Rival (Ritmo/Agresividad)</option>
                         <option value="mejora">Última Mejora Rival</option>
                         <option value="elemento">Nivel de Elemento Rival</option>
                     </select>
+
+                    <label id="research-rival-label" style="margin-top: 10px; display: none; display: block;">Rival a Investigar:</label>
+                    <select id="research-rival" style="margin-top: 5px; display: none;">
+                        <option value="">-- Cargando --</option>
+                    </select>
+                    
                     <button class="btn-solid" id="btn-research" style="width: 100%; margin-top: 10px;">Iniciar Investigación</button>
                 </div>
             </div>

@@ -2,10 +2,12 @@ import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/fi
 
 const NAV_TEMPLATE = `
     <div class="container main-nav-content">
-        <a href="index.html" class="logo">F1Manager</a>
+        <a href="index.html" class="logo" style="font-weight: bold; font-size: 1.3rem; letter-spacing: 2px;">⚡ F1 MANAGER</a>
         <div class="nav-links">
             <a href="clasificacion.html">Clasificación</a>
             <a href="calendario.html">Calendario</a>
+            <a href="pilotos.html">Pilotos</a>
+            <a href="equipos.html">Equipos</a>
             <!-- Enlaces dinámicos aquí -->
         </div>
         <div class="nav-auth">
