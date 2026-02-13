@@ -120,8 +120,8 @@
                 <input type="hidden" id="eq-id">
                 <label>Nombre del Equipo</label><input type="text" id="eq-nombre" required>
                 <label>Color (Hex)</label><input type="color" id="eq-color" style="height:40px; padding:0;" required>
-                <label>URL Foto del Coche</label><input type="url" id="eq-coche" placeholder="https://...">
-                <label>URL Logo del Equipo</label><input type="url" id="eq-logo" placeholder="https://...">
+                <label>URL Foto del Coche</label><input type="text" id="eq-coche" placeholder="Ej: assets/img/coche.png">
+                <label>URL Logo del Equipo</label><input type="text" id="eq-logo" placeholder="Ej: assets/img/logo.png">
                 <div style="display:flex; gap:10px; margin-top:20px;">
                     <button type="submit" class="btn-solid" style="flex:1;">Guardar</button>
                     <button type="button" class="btn-outline" onclick="cerrarModal('modal-equipo')" style="flex:1;">Cancelar</button>
@@ -142,7 +142,7 @@
                 <select id="pil-equipo">
                     <option value="">Ninguno (Agente Libre)</option>
                     </select>
-                <label>URL Foto (Opcional)</label><input type="url" id="pil-foto" placeholder="https://...">
+                    <label>URL Foto (Opcional)</label><input type="text" id="pil-foto" placeholder="Ej: assets/img/piloto.png">
                 <div style="display:flex; gap:10px; margin-top:20px;">
                     <button type="submit" class="btn-solid" style="flex:1;">Guardar</button>
                     <button type="button" class="btn-outline" onclick="cerrarModal('modal-piloto')" style="flex:1;">Cancelar</button>
@@ -197,7 +197,7 @@
                     <option value="video">Vídeo</option>
                 </select>
                 <label>Título</label><input type="text" id="med-titulo" required>
-                <label>URL (Obligatorio para Foto/Vídeo)</label><input type="url" id="med-url" placeholder="Enlace imagen o YouTube">
+                <label>URL (Obligatorio para Foto/Vídeo)</label><input type="text" id="med-url" placeholder="Ej: assets/img/noticia.jpg">
                 <label>Texto (Obligatorio para Artículo)</label><textarea id="med-texto" rows="5" placeholder="Cuerpo de la noticia..."></textarea>
                 
                 <div style="display:flex; gap:10px; margin-top:20px;">
