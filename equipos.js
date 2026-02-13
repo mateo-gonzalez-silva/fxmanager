@@ -116,8 +116,8 @@ function renderEquipos() {
                 <div class="coche-display-modern">
                     ${equipo.imagenCoche ? `<img src="${equipo.imagenCoche}" alt="${equipo.nombre}">` : '<span style="color: var(--text-secondary);">Foto Coche</span>'}
                 </div>
-                <h2 class="equipo-nombre-moderno" style="color: ${equipo.color};">${equipo.nombre}</h2>
-                <button class="toggle-pilotos-btn" onclick="togglePilotos(this)" style="color: ${equipo.color};">▼</button>
+                <h2 class="equipo-nombre-moderno">${equipo.nombre}</h2>
+                <button class="toggle-pilotos-btn" onclick="togglePilotos(this)">▼</button>
             </div>
 
             <div class="equipo-pilotos-container">

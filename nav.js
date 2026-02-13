@@ -6,7 +6,7 @@ const NAV_TEMPLATE = `
         <div class="nav-links">
             <a href="clasificacion.html">Clasificación</a>
             <a href="calendario.html">Calendario</a>
-            <a href="pilotos.html">Pilotos</a>
+            <a href="pilotos.html">Media</a>
             <a href="equipos.html">Equipos</a>
             <!-- Enlaces dinámicos aquí -->
         </div>
