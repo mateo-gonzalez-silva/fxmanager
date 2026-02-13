@@ -131,8 +131,8 @@ function renderEquipos() {
         // Construir Tarjeta del equipo
         card.innerHTML = `
             <div class="equipo-header">
-                <div class="coche-placeholder" style="height: 120px; margin-bottom: 1px; display: flex; align-items: center; justify-content: center;">
-                    ${equipo.imagenCoche ? `<img src="${equipo.imagenCoche}" alt="Coche ${equipo.nombre}" style="width: 135%; height: 135%; object-fit: contain; transform: scale(1.3); filter: drop-shadow(0px 10px 15px rgba(0,0,0,0.6));">` : '<span style="color: var(--text-secondary);">Foto Coche</span>'}
+                <div class="coche-placeholder" style="height: 110px; margin-bottom: 2px; display: flex; align-items: center; justify-content: center;">
+                    ${equipo.imagenCoche ? `<img src="${equipo.imagenCoche}" alt="Coche ${equipo.nombre}" style="width: 125%; height: 125%; object-fit: contain; transform: scale(1.3); filter: drop-shadow(0px 10px 15px rgba(0,0,0,0.6));">` : '<span style="color: var(--text-secondary);">Foto Coche</span>'}
                 </div>
                 
                 <h2 style="color: ${equipo.color}; margin-bottom: 5px; font-size: 1.5rem; position: relative; z-index: 2;">${equipo.nombre}</h2>
