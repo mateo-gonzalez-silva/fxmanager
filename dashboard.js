@@ -1,6 +1,9 @@
-// dashboard.js
+// dashboard.js - NUEVO Dashboard completamente rediseñado y funcional
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getFirestore, doc, getDoc, collection, query, where, getDocs, updateDoc, addDoc, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import {
+    getFirestore, doc, getDoc, collection, query, where, getDocs, 
+    updateDoc, addDoc, serverTimestamp, onSnapshot
+} from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
 const firebaseConfig = {
@@ -16,359 +19,307 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
+let currentUser = null;
 let currentTeamId = null;
 let currentTeamData = null;
-let userDocId = null;
+let allPilotos = [];
+let allEquipos = [];
 
 document.addEventListener("DOMContentLoaded", () => {
-    
-    // 1. VERIFICAR AUTENTICACIÓN Y PERMISOS
     onAuthStateChanged(auth, async (user) => {
         if (!user) {
-            window.location.href = "home.html"; // No logueado
+            window.location.href = "index.html";
             return;
         }
 
-        userDocId = user.uid;
+        currentUser = user;
         const userRef = doc(db, "usuarios", user.uid);
         const userSnap = await getDoc(userRef);
 
-        if (userSnap.exists()) {
-            const userData = userSnap.data();
-            
-            // Si es Admin mostramos el botón del menú
-            if (userData.isAdmin) document.getElementById("nav-admin").style.display = "inline-block";
-
-            // Si NO tiene equipo, lo echamos de aquí
-            if (!userData.equipo || userData.equipo === "") {
-                alert("No tienes ninguna escudería asignada.");
-                window.location.href = "equipos.html";
-                return;
-            }
-
-            currentTeamId = userData.equipo;
-            cargarDatosDashboard();
-            escucharNotificaciones();
-        }
-    });
-
-    // Evento Logout
-    document.getElementById("btnLogout").addEventListener("click", async () => {
-        await signOut(auth);
-        window.location.href = "home.html";
-    });
-});
-
-// 2. CARGAR DATOS DEL EQUIPO Y PILOTOS
-async function cargarDatosDashboard() {
-    try {
-        // Cargar Equipo
-        const equipoRef = doc(db, "equipos", currentTeamId);
-        const equipoSnap = await getDoc(equipoRef);
-        
-        if (!equipoSnap.exists()) return;
-        currentTeamData = equipoSnap.data();
-
-        // Renderizar Info Base
-        document.getElementById("dash-team-name").textContent = currentTeamData.nombre;
-        document.getElementById("dash-team-name").style.color = currentTeamData.color;
-        document.getElementById("dash-budget").textContent = `$${(currentTeamData.presupuesto || 0).toLocaleString()}`;
-        
-        if(currentTeamData.imagenCoche) {
-            document.getElementById("dash-car-img").innerHTML = `<img src="${currentTeamData.imagenCoche}">`;
-        } else {
-            document.getElementById("dash-car-img").innerHTML = `<span style="color:var(--text-secondary)">Sin Imagen</span>`;
-        }
-
-        // Estadísticas del equipo (asumiendo que las guardas en el doc del equipo)
-        document.getElementById("ts-carreras").textContent = currentTeamData.carreras || 0;
-        document.getElementById("ts-victorias").textContent = currentTeamData.victorias || 0;
-        document.getElementById("ts-puntos").textContent = currentTeamData.puntos || 0;
-        document.getElementById("ts-podios").textContent = currentTeamData.podios || 0;
-        document.getElementById("ts-poles").textContent = currentTeamData.poles || 0;
-        document.getElementById("ts-dnfs").textContent = currentTeamData.dnfs || 0;
-        document.getElementById("ts-mundiales").textContent = currentTeamData.mundiales || 0;
-
-        // Cargar Pilotos del Equipo
-        const pilotosQuery = query(collection(db, "pilotos"), where("equipoId", "==", currentTeamId));
-        const pilotosSnap = await getDocs(pilotosQuery);
-        
-        const driversContainer = document.getElementById("dash-drivers-container");
-        driversContainer.innerHTML = "";
-
-        pilotosSnap.forEach(docSnap => {
-            const p = docSnap.data();
-            const pId = docSnap.id;
-            
-            driversContainer.innerHTML += `
-                <div class="driver-dash-card">
-                    <div class="driver-dash-header">
-                        <div class="driver-dash-photo" style="overflow:hidden;">
-                            ${p.foto ? `<img src="${p.foto}" style="width:100%; height:100%; object-fit:cover;">` : ''}
-                        </div>
-                        <div>
-                            <h4 style="margin:0;">${p.nombre} <span style="color:${currentTeamData.color}">${p.apellido}</span></h4>
-                            <span class="text-muted" style="font-size:0.8rem;">${p.pais} | Edad: ${p.edad || '--'} | #${p.numero}</span>
-                        </div>
-                    </div>
-                    
-                    <div class="driver-attributes">
-                        <span>Ritmo: <strong>${p.ritmo || 0}</strong></span>
-                        <span>Agresividad: <strong>${p.agresividad || 0}</strong></span>
-                        <span>Moral: <strong>${p.moral || 'Media'}</strong></span>
-                    </div>
-
-                    <div class="driver-stats-mini">
-                        <div class="stat-box"><span>Pts</span><strong>${p.puntos || 0}</strong></div>
-                        <div class="stat-box"><span>Vic</span><strong>${p.victorias || 0}</strong></div>
-                        <div class="stat-box"><span>Pod</span><strong>${p.podios || 0}</strong></div>
-                    </div>
-
-                    <div style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 15px;">
-                        <label>Sueldo Actual: $${(p.sueldo || 0).toLocaleString()}</label>
-                        <div style="display:flex; gap:10px;">
-                            <input type="number" id="sueldo-${pId}" value="${p.sueldo || 0}" style="margin:0;">
-                            <button class="btn-outline btn-update-salary" data-pid="${pId}">Actualizar</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-
-        configurarBotonesAccion();
-
-    } catch (error) {
-        console.error("Error al cargar dashboard:", error);
-    }
-}
-
-// 3. CONFIGURAR ACCIONES (Mejoras, Fichajes, Sueldos)
-function configurarBotonesAccion() {
-    
-    // --- MEJORAS ---
-    const botonesMejora = document.querySelectorAll(".btn-upgrade");
-    botonesMejora.forEach(btn => {
-        btn.addEventListener("click", async (e) => {
-            const tipo = e.target.getAttribute("data-type");
-            const costo = parseInt(e.target.getAttribute("data-cost"));
-
-            if (currentTeamData.presupuesto < costo) {
-                alert("Presupuesto insuficiente para esta mejora.");
-                return;
-            }
-
-            if (confirm(`¿Invertir $${costo.toLocaleString()} en mejora de ${tipo}? El dinero se descontará inmediatamente.`)) {
-                try {
-                    // 1. Restar dinero
-                    const nuevoPresupuesto = currentTeamData.presupuesto - costo;
-                    await updateDoc(doc(db, "equipos", currentTeamId), {
-                        presupuesto: nuevoPresupuesto
-                    });
-
-                    // 2. Crear solicitud para el admin en la colección "solicitudes_admin"
-                    await addDoc(collection(db, "solicitudes_admin"), {
-                        equipoId: currentTeamId,
-                        nombreEquipo: currentTeamData.nombre,
-                        tipo: "Mejora",
-                        detalle: tipo,
-                        costo: costo,
-                        estado: "Pendiente",
-                        fecha: serverTimestamp()
-                    });
-
-                    alert("Mejora solicitada. El Admin evaluará el resultado.");
-                    cargarDatosDashboard(); // Recargar datos para ver el nuevo saldo
-
-                } catch (error) {
-                    console.error("Error al procesar mejora:", error);
-                }
-            }
-        });
-    });
-
-    // --- ACTUALIZAR SUELDOS ---
-    // --- ACTUALIZAR SUELDOS ---
-    const botonesSueldo = document.querySelectorAll(".btn-update-salary");
-    botonesSueldo.forEach(btn => {
-        btn.addEventListener("click", async (e) => {
-            const pId = e.target.getAttribute("data-pid");
-            const nuevoSueldo = parseInt(document.getElementById(`sueldo-${pId}`).value);
-
-            if(confirm(`¿Actualizar el sueldo de este piloto a $${nuevoSueldo.toLocaleString()}?`)) {
-                await updateDoc(doc(db, "pilotos", pId), { sueldo: nuevoSueldo });
-                
-                // --- NUEVO: ENVIAR AVISO AL ADMIN ---
-                await addDoc(collection(db, "solicitudes_admin"), {
-                    equipoId: currentTeamId,
-                    nombreEquipo: currentTeamData.nombre,
-                    tipo: "Cambio de Sueldo",
-                    detalle: `Nuevo sueldo establecido a $${nuevoSueldo.toLocaleString()}`,
-                    estado: "Info", // 'Info' no pide aprobar ni denegar, solo informa.
-                    fecha: serverTimestamp()
-                });
-
-                alert("Sueldo actualizado.");
-                cargarDatosDashboard();
-            }
-        });
-    });
-
-    // --- FICHAJES Y OFERTAS A OTROS PILOTOS ---
-    document.getElementById("btn-transfer").addEventListener("click", async () => {
-        const pilotoTarget = document.getElementById("transfer-target").value;
-        const oferta = document.getElementById("transfer-offer").value;
-        
-        if(!pilotoTarget || !oferta) return alert("Rellena los datos de la oferta.");
-
-        // Formateamos el número para que se vea bonito con las comas en el panel de Admin
-        const ofertaFormateada = parseInt(oferta).toLocaleString();
-
-        await addDoc(collection(db, "solicitudes_admin"), {
-            equipoId: currentTeamId,
-            nombreEquipo: currentTeamData.nombre,
-            tipo: "Mercado de Fichajes",
-            detalle: `Desea fichar a ${pilotoTarget} por $${ofertaFormateada}`,
-            estado: "Pendiente", // Al ser 'Pendiente', en tu Admin saldrán los botones de Aprobar/Denegar
-            fecha: serverTimestamp()
-        });
-        
-        alert("Oferta enviada a la Dirección de Carrera (Admin) para su tramitación.");
-        document.getElementById("transfer-target").value = "";
-        document.getElementById("transfer-offer").value = "";
-    });
-
-    // --- INVESTIGACIÓN DE RIVALES ---
-    const btnResearch = document.getElementById("btn-research");
-    const researchTarget = document.getElementById("research-target");
-    const researchRival = document.getElementById("research-rival");
-    
-    if (researchTarget) {
-        researchTarget.addEventListener("change", async () => {
-            const tipoInvestigacion = researchTarget.value;
-            const rivalLabel = document.getElementById("research-rival-label");
-            
-            if (!tipoInvestigacion) {
-                rivalLabel.style.display = "none";
-                researchRival.style.display = "none";
-                return;
-            }
-
-            rivalLabel.style.display = "block";
-            researchRival.style.display = "block";
-            researchRival.innerHTML = '<option value="">-- Cargando --</option>';
-
-            if (tipoInvestigacion === "piloto") {
-                // Cargar todos los pilotos excepto los del equipo actual
-                const pilotosQuery = query(collection(db, "pilotos"), where("equipoId", "!=", currentTeamId));
-                const pilotosSnap = await getDocs(pilotosQuery);
-                
-                researchRival.innerHTML = '<option value="">-- Seleccionar Piloto --</option>';
-                pilotosSnap.forEach(doc => {
-                    const p = doc.data();
-                    researchRival.innerHTML += `<option value="${doc.id}">${p.nombre} ${p.apellido || ''} (#${p.numero})</option>`;
-                });
-                
-            } else if (tipoInvestigacion === "mejora") {
-                // Cargar todos los equipos excepto el actual
-                const equiposQuery = query(collection(db, "equipos"), where("__name__", "!=", currentTeamId));
-                const equiposSnap = await getDocs(collection(db, "equipos"));
-                
-                researchRival.innerHTML = '<option value="">-- Seleccionar Equipo --</option>';
-                equiposSnap.forEach(doc => {
-                    if (doc.id !== currentTeamId) {
-                        const eq = doc.data();
-                        researchRival.innerHTML += `<option value="${doc.id}" data-type="equipo">${eq.nombre}</option>`;
-                    }
-                });
-                
-            } else if (tipoInvestigacion === "elemento") {
-                // Cargar todos los equipos excepto el actual
-                const equiposSnap = await getDocs(collection(db, "equipos"));
-                
-                researchRival.innerHTML = '<option value="">-- Seleccionar Equipo --</option>';
-                equiposSnap.forEach(doc => {
-                    if (doc.id !== currentTeamId) {
-                        const eq = doc.data();
-                        researchRival.innerHTML += `<option value="${doc.id}" data-type="equipo">${eq.nombre}</option>`;
-                    }
-                });
-            }
-        });
-    }
-
-    if (btnResearch) {
-        btnResearch.addEventListener("click", async () => {
-            const tipoInvestigacion = researchTarget.value;
-            const rivalSeleccionado = researchRival.value;
-            
-            if (!tipoInvestigacion || !rivalSeleccionado) {
-                alert("Por favor selecciona un tipo de investigación y el rival a investigar.");
-                return;
-            }
-
-            let detalleTexto = "";
-            let nombreRival = "";
-
-            if (tipoInvestigacion === "piloto") {
-                const opcionSeleccionada = researchRival.options[researchRival.selectedIndex].text;
-                nombreRival = opcionSeleccionada;
-                detalleTexto = `Solicita conocer los atributos (Ritmo/Agresividad) del piloto ${nombreRival}.`;
-            } else if (tipoInvestigacion === "mejora") {
-                const opcionSeleccionada = researchRival.options[researchRival.selectedIndex].text;
-                nombreRival = opcionSeleccionada;
-                detalleTexto = `Solicita conocer cuál ha sido la última mejora del equipo ${nombreRival}.`;
-            } else if (tipoInvestigacion === "elemento") {
-                const opcionSeleccionada = researchRival.options[researchRival.selectedIndex].text;
-                nombreRival = opcionSeleccionada;
-                detalleTexto = `Solicita conocer el nivel de una pieza del equipo ${nombreRival}.`;
-            }
-
-            if(confirm(`¿Gastar un uso de investigación en: ${nombreRival}?`)) {
-                await addDoc(collection(db, "solicitudes_admin"), {
-                    equipoId: currentTeamId,
-                    nombreEquipo: currentTeamData.nombre,
-                    tipo: "Investigación (Espionaje)",
-                    detalle: detalleTexto,
-                    rivalId: rivalSeleccionado,
-                    tipoInvestigacion: tipoInvestigacion,
-                    estado: "Pendiente",
-                    fecha: serverTimestamp()
-                });
-
-                alert("Investigación solicitada. El Admin evaluará la petición y te enviará los datos por la Bandeja de Mensajes.");
-                researchTarget.value = "";
-                researchRival.value = "";
-                document.getElementById("research-rival-label").style.display = "none";
-                researchRival.style.display = "none";
-            }
-        });
-    }
-} // <-- Aquí termina la función configurarBotonesAccion()
-
-// 4. ESCUCHAR AVISOS/MENSAJES EN TIEMPO REAL
-function escucharNotificaciones() {
-    const messagesContainer = document.getElementById("dash-messages");
-    
-    // Escuchamos la colección "notificaciones" donde el 'equipoId' sea el nuestro o sea "todos"
-    const q = query(collection(db, "notificaciones"), where("equipoId", "in", [currentTeamId, "todos"]));
-    
-    onSnapshot(q, (snapshot) => {
-        messagesContainer.innerHTML = "";
-        if(snapshot.empty) {
-            messagesContainer.innerHTML = "<p class='text-muted'>No tienes mensajes nuevos.</p>";
+        if (!userSnap.exists() || !userSnap.data().equipo) {
+            alert("No tienes equipo asignado");
+            window.location.href = "equipos.html";
             return;
         }
 
-        let mensajesHTML = "";
-        snapshot.forEach(docSnap => {
-            const msg = docSnap.data();
-            mensajesHTML += `
-                <div class="message-item">
-                    <strong style="color:var(--text-primary);">${msg.remitente || 'Admin'}:</strong> 
-                    <span style="color:var(--text-secondary);">${msg.texto}</span>
+        currentTeamId = userSnap.data().equipo;
+        await cargarDatos();
+        escucharNotificaciones();
+    });
+});
+
+async function cargarDatos() {
+    try {
+        // Cargar equipo actual
+        const teamRef = doc(db, "equipos", currentTeamId);
+        const teamSnap = await getDoc(teamRef);
+        if (!teamSnap.exists()) return;
+        currentTeamData = teamSnap.data();
+
+        // Cargar todos los pilotos
+        const pilotosSnap = await getDocs(collection(db, "pilotos"));
+        allPilotos = [];
+        pilotosSnap.forEach(doc => allPilotos.push({ id: doc.id, ...doc.data() }));
+
+        // Cargar todos los equipos
+        const equiposSnap = await getDocs(collection(db, "equipos"));
+        allEquipos = [];
+        equiposSnap.forEach(doc => allEquipos.push({ id: doc.id, ...doc.data() }));
+
+        renderUI();
+        setupListeners();
+    } catch (error) {
+        console.error("Error cargando datos:", error);
+    }
+}
+
+function renderUI() {
+    // Información del equipo
+    document.getElementById("team-name").textContent = currentTeamData.nombre;
+    document.getElementById("team-name").style.color = currentTeamData.color;
+    document.getElementById("team-budget").textContent = `$${(currentTeamData.presupuesto || 0).toLocaleString()}`;
+    document.getElementById("team-points").textContent = currentTeamData.puntos || 0;
+    document.getElementById("team-wins").textContent = currentTeamData.victorias || 0;
+    document.getElementById("team-championships").textContent = currentTeamData.mundiales || 0;
+
+    // Coche del equipo
+    const carDisplay = document.getElementById("team-car-display");
+    if (currentTeamData.imagenCoche) {
+        carDisplay.innerHTML = `<img src="${currentTeamData.imagenCoche}" style="max-width: 100%; max-height: 100%; object-fit: contain;">`;
+    }
+
+    // Pilotos
+    const pilotosMiEquipo = allPilotos.filter(p => p.equipoId === currentTeamId);
+    const driversContainer = document.getElementById("drivers-container");
+    driversContainer.innerHTML = "";
+
+    pilotosMiEquipo.forEach(piloto => {
+        const card = document.createElement("div");
+        card.className = "driver-card-modern";
+        card.innerHTML = `
+            <div class="driver-header-modern">
+                <div class="driver-photo-modern">
+                    ${piloto.foto ? `<img src="${piloto.foto}">` : ''}
                 </div>
-            `;
+                <div>
+                    <p class="driver-name-modern">${piloto.nombre} <span style="color: ${currentTeamData.color};">${piloto.apellido || ''}</span></p>
+                    <p class="driver-number-modern">#${piloto.numero} • ${piloto.pais}</p>
+                </div>
+            </div>
+            <div class="driver-stats-modern">
+                <div class="driver-stat-modern">
+                    <div class="driver-stat-label">Edad</div>
+                    <div class="driver-stat-value">${piloto.edad || '-'}</div>
+                </div>
+                <div class="driver-stat-modern">
+                    <div class="driver-stat-label">Ritmo</div>
+                    <div class="driver-stat-value">${piloto.ritmo || 0}</div>
+                </div>
+                <div class="driver-stat-modern">
+                    <div class="driver-stat-label">Agresividad</div>
+                    <div class="driver-stat-value">${piloto.agresividad || 0}</div>
+                </div>
+                <div class="driver-stat-modern">
+                    <div class="driver-stat-label">Moral</div>
+                    <div class="driver-stat-value">${piloto.moral || 'N/A'}</div>
+                </div>
+            </div>
+        `;
+        driversContainer.appendChild(card);
+    });
+
+    // Niveles de mejoras
+    const aeroLevel = currentTeamData.aeroLevel || 0;
+    const motorLevel = currentTeamData.motorLevel || 0;
+    document.getElementById("aero-level").textContent = aeroLevel;
+    document.getElementById("motor-level").textContent = motorLevel;
+    document.getElementById("aero-progress").style.width = (aeroLevel * 20) + "%";
+    document.getElementById("motor-progress").style.width = (motorLevel * 20) + "%";
+
+    // Poblar selectores de investigación
+    poblarSelectores();
+}
+
+function poblarSelectores() {
+    // Pilotos rivales
+    const pilotosRivales = allPilotos.filter(p => p.equipoId !== currentTeamId);
+    const selectPilot = document.getElementById("select-pilot-research");
+    selectPilot.innerHTML = '<option value="">-- Seleccionar piloto --</option>';
+    pilotosRivales.forEach(p => {
+        selectPilot.innerHTML += `<option value="${p.id}">${p.nombre} ${p.apellido || ''} (#${p.numero})</option>`;
+    });
+
+    // Equipos rivales para mejoras
+    const equiposRivales = allEquipos.filter(e => e.id !== currentTeamId);
+    const selectTeamUpgrade = document.getElementById("select-team-upgrade");
+    selectTeamUpgrade.innerHTML = '<option value="">-- Seleccionar equipo --</option>';
+    equiposRivales.forEach(e => {
+        selectTeamUpgrade.innerHTML += `<option value="${e.id}">${e.nombre}</option>`;
+    });
+
+    // Equipos rivales para componentes
+    const selectTeamComponent = document.getElementById("select-team-component");
+    selectTeamComponent.innerHTML = '<option value="">-- Seleccionar equipo --</option>';
+    equiposRivales.forEach(e => {
+        selectTeamComponent.innerHTML += `<option value="${e.id}">${e.nombre}</option>`;
+    });
+}
+
+function setupListeners() {
+    // Botones de mejoras
+    document.getElementById("btn-aero").addEventListener("click", () => solicitarMejora("aerodinámica", 5000000));
+    document.getElementById("btn-motor").addEventListener("click", () => solicitarMejora("motor", 7500000));
+
+    // Botones de investigación
+    document.getElementById("btn-research-pilot").addEventListener("click", investigarPiloto);
+    document.getElementById("btn-research-upgrade").addEventListener("click", investigarMejora);
+    document.getElementById("btn-research-component").addEventListener("click", investigarComponente);
+}
+
+async function solicitarMejora(tipo, costo) {
+    if (currentTeamData.presupuesto < costo) {
+        alert("Presupuesto insuficiente");
+        return;
+    }
+
+    const confirmar = confirm(`¿Invertir $${costo.toLocaleString()} en mejorar ${tipo}?`);
+    if (!confirmar) return;
+
+    try {
+        // Restar presupuesto
+        await updateDoc(doc(db, "equipos", currentTeamId), {
+            presupuesto: currentTeamData.presupuesto - costo
         });
-        messagesContainer.innerHTML = mensajesHTML;
+
+        // Crear solicitud al admin
+        await addDoc(collection(db, "solicitudes_admin"), {
+            equipoId: currentTeamId,
+            nombreEquipo: currentTeamData.nombre,
+            tipo: "Mejora de Componente",
+            detalle: `Solicita mejora de ${tipo}. Costo: $${costo.toLocaleString()}`,
+            estado: "Pendiente",
+            fecha: serverTimestamp()
+        });
+
+        alert("Mejora solicitada al Admin. Te notificaremos del resultado.");
+        cargarDatos();
+    } catch (error) {
+        console.error("Error:", error);
+    }
+}
+
+async function investigarPiloto() {
+    const pilotoId = document.getElementById("select-pilot-research").value;
+    if (!pilotoId) {
+        alert("Selecciona un piloto");
+        return;
+    }
+
+    const piloto = allPilotos.find(p => p.id === pilotoId);
+    if (!piloto) return;
+
+    try {
+        await addDoc(collection(db, "solicitudes_admin"), {
+            equipoId: currentTeamId,
+            nombreEquipo: currentTeamData.nombre,
+            tipo: "Investigación",
+            detalle: `Investigar piloto: ${piloto.nombre} ${piloto.apellido || ''} - Ritmo: ${piloto.ritmo || 0}, Agresividad: ${piloto.agresividad || 0}`,
+            estado: "Info",
+            fecha: serverTimestamp()
+        });
+
+        // Enviar notificación directa
+        await addDoc(collection(db, "notificaciones"), {
+            equipoId: currentTeamId,
+            remitente: "Sistema",
+            texto: `📊 Investigación completada: ${piloto.nombre} tiene ritmo ${piloto.ritmo || 0} y agresividad ${piloto.agresividad || 0}.`,
+            fecha: serverTimestamp()
+        });
+
+        alert("Investigación completada. Revisa tu bandeja de avisos.");
+        document.getElementById("select-pilot-research").value = "";
+    } catch (error) {
+        console.error("Error:", error);
+    }
+}
+
+async function investigarMejora() {
+    const equipoId = document.getElementById("select-team-upgrade").value;
+    if (!equipoId) {
+        alert("Selecciona un equipo");
+        return;
+    }
+
+    const equipo = allEquipos.find(e => e.id === equipoId);
+    if (!equipo) return;
+
+    try {
+        const ultimaMejora = equipo.ultimaMejora || "Motor";
+        
+        await addDoc(collection(db, "notificaciones"), {
+            equipoId: currentTeamId,
+            remitente: "Sistema",
+            texto: `⚙️ Última mejora de ${equipo.nombre}: ${ultimaMejora}`,
+            fecha: serverTimestamp()
+        });
+
+        alert("Información enviada a tu bandeja de avisos.");
+        document.getElementById("select-team-upgrade").value = "";
+    } catch (error) {
+        console.error("Error:", error);
+    }
+}
+
+async function investigarComponente() {
+    const equipoId = document.getElementById("select-team-component").value;
+    const componente = document.getElementById("select-component-type").value;
+
+    if (!equipoId) {
+        alert("Selecciona un equipo");
+        return;
+    }
+
+    const equipo = allEquipos.find(e => e.id === equipoId);
+    if (!equipo) return;
+
+    try {
+        const nivelComponente = componente === "aero" ? (equipo.aeroLevel || 0) : (equipo.motorLevel || 0);
+        const nombreComponente = componente === "aero" ? "Aerodinámica" : "Motor";
+        
+        await addDoc(collection(db, "notificaciones"), {
+            equipoId: currentTeamId,
+            remitente: "Sistema",
+            texto: `🔩 Nivel de ${nombreComponente} en ${equipo.nombre}: ${nivelComponente}/5`,
+            fecha: serverTimestamp()
+        });
+
+        alert("Información enviada a tu bandeja de avisos.");
+        document.getElementById("select-team-component").value = "";
+    } catch (error) {
+        console.error("Error:", error);
+    }
+}
+
+function escucharNotificaciones() {
+    const q = query(collection(db, "notificaciones"), where("equipoId", "==", currentTeamId));
+    const notificationsBox = document.getElementById("notifications-box");
+
+    onSnapshot(q, (snapshot) => {
+        notificationsBox.innerHTML = "";
+        if (snapshot.empty) {
+            notificationsBox.innerHTML = '<p style="text-align:center; color: var(--text-secondary);">Sin notificaciones</p>';
+            return;
+        }
+
+        snapshot.forEach(doc => {
+            const notif = doc.data();
+            const notifEl = document.createElement("div");
+            notifEl.style.cssText = "padding: 12px; border-left: 3px solid var(--accent); background-color: var(--bg-tertiary); margin-bottom: 10px; border-radius: 4px;";
+            notifEl.innerHTML = `
+                <strong style="color: var(--accent);">${notif.remitente || 'Sistema'}:</strong>
+                <p style="margin: 5px 0 0 0; font-size: 0.95rem;">${notif.texto}</p>
+            `;
+            notificationsBox.appendChild(notifEl);
+        });
     });
 }

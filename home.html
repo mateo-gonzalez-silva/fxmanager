@@ -3,42 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>F1 Manager - Inicio</title>
+    <title>F1 Manager - Simulador de Gestión</title>
     <link rel="stylesheet" href="modern.css">
 </head>
 <body>
 
     <nav class="navbar">
         <div class="nav-brand">
-            <strong>F1 MANAGER</strong>
+            <strong>⚡ F1 MANAGER</strong>
         </div>
         <ul class="nav-links">
-            <li><a href="home.html" class="active" >Inicio</a></li>
+            <li><a href="index.html" class="active">Inicio</a></li>
             <li><a href="equipos.html">Equipos</a></li>
             <li><a href="calendario.html">Calendario</a></li>
             <li><a href="clasificacion.html">Clasificación</a></li>
-            <li><a href="pilotos.html">Media</a></li>
-            <li id="nav-dashboard" style="display: none;"><a href="dashboard.html">Mi Escudería</a></li>
-            <li id="nav-admin" style="display: none;"><a href="admin.html">Panel Admin</a></li>
+            <li><a href="pilotos.html">Pilotos</a></li>
         </ul>
         <div class="nav-auth">
-            <button id="btnLogin" class="btn-outline">Iniciar Sesión</button>
-            <button id="btnLogout" class="btn-solid" style="display: none;">Cerrar Sesión</button>
+            <button id="btnLogin" class="btn-outline" onclick="window.location.href='login.html'">Iniciar Sesión</button>
+            <button id="btnLogout" class="btn-solid" onclick="logout()" style="display: none;">Cerrar Sesión</button>
         </div>
     </nav>
 
-    <main class="hero-section">
-        <div class="hero-content">
-            <h1>DOMINA LA PISTA</h1>
-            <p>El simulador de gestión definitivo. Construye tu monoplaza, gestiona tu presupuesto y lleva a tus pilotos a la cima del campeonato.</p>
-            
-            <div class="hero-actions">
-                <a href="equipos.html" class="btn-solid">Ver Escuderías</a>
-                <a href="clasificacion.html" class="btn-outline">Ver Clasificación</a>
+    <main>
+        <div class="hero-section">
+            <div class="hero-content">
+                <h1>🏁 DOMINA LA PISTA</h1>
+                <p>El simulador de gestión más realista. Construye tu monoplaza, gestiona tu presupuesto, recluta pilotos de élite y lleva a tu equipo a la cima del campeonato mundial de Fórmula 1.</p>
+                
+                <div class="hero-actions">
+                    <a href="equipos.html" class="btn-solid">Ver Escuderías</a>
+                    <a href="clasificacion.html" class="btn-outline">Ver Clasificación</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="container" style="padding: 60px 20px; text-align: center;">
+            <h2 style="margin-bottom: 40px;">Lo que te espera</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px;">
+                <div class="card" style="text-align: left;">
+                    <h3 style="color: var(--accent); margin-bottom: 15px;">🚗 Gestiona tu Equipo</h3>
+                    <p style="font-size: 0.95rem;">Diseña el chasis, optimiza la aerodinámica, mejora el motor. Cada decisión cuenta para lograr la velocidad máxima.</p>
+                </div>
+                <div class="card" style="text-align: left;">
+                    <h3 style="color: var(--accent); margin-bottom: 15px;">👥 Recluta Pilotos</h3>
+                    <p style="font-size: 0.95rem;">Encuentra los mejores talentos. Negocia sueldos, gestiona egos y construye una dupla campeona.</p>
+                </div>
+                <div class="card" style="text-align: left;">
+                    <h3 style="color: var(--accent); margin-bottom: 15px;">💰 Presupuesto Estratégico</h3>
+                    <p style="font-size: 0.95rem;">Administra tus recursos limitados. Invierte en tecnología o en fichajes. ¿Cuál será tu estrategia?</p>
+                </div>
+                <div class="card" style="text-align: left;">
+                    <h3 style="color: var(--accent); margin-bottom: 15px;">🏆 Compite por el Título</h3>
+                    <p style="font-size: 0.95rem;">Participa en 24 carreras épicas. Sube al podio, consigue poles, bate récords. ¡El campeonato te llama!</p>
+                </div>
+                <div class="card" style="text-align: left;">
+                    <h3 style="color: var(--accent); margin-bottom: 15px;">🔎 Espionaje Industrial</h3>
+                    <p style="font-size: 0.95rem;">Investiga a tus rivales. Descubre sus mejoras, estudia sus pilotos, planea tu ataque.</p>
+                </div>
+                <div class="card" style="text-align: left;">
+                    <h3 style="color: var(--accent); margin-bottom: 15px;">📊 Estadísticas en Tiempo Real</h3>
+                    <p style="font-size: 0.95rem;">Sigue cada carrera, analiza desempeños, optimiza tus tácticas basándote en datos reales.</p>
+                </div>
+            </div>
+        </div>
+
+        <div style="background-color: var(--bg-secondary); border-top: 2px solid var(--accent); border-bottom: 2px solid var(--accent); padding: 40px 20px; text-align: center; margin: 40px 0;">
+            <div class="container">
+                <h2 style="margin-bottom: 30px;">¿Listo para comenzar?</h2>
+                <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                    <a href="register.html" class="btn-solid" style="padding: 15px 30px; font-size: 1rem;">Crear Cuenta Ahora</a>
+                    <a href="equipos.html" class="btn-outline" style="padding: 15px 30px; font-size: 1rem;">Explorar Equipos</a>
+                </div>
             </div>
         </div>
     </main>
 
+    <footer style="text-align: center; padding: 30px 20px; border-top: 1px solid var(--border-color); color: var(--text-secondary);">
+        <p>&copy; 2024-2026 F1 Manager. Todos los derechos reservados. | <a href="reglas.html" style="color: var(--text-secondary);">Términos y Reglas</a></p>
+    </footer>
+
     <script type="module" src="home.js"></script>
+    <script>
+        function logout() {
+            localStorage.clear();
+            window.location.reload();
+        }
+    </script>
 </body>
 </html>

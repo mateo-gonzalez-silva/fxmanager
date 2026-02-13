@@ -9,118 +9,163 @@
 <body>
 
     <nav class="navbar">
-        <div class="nav-brand"><strong>F1 MANAGER</strong></div>
+        <div class="nav-brand">
+            <strong>⚡ F1 MANAGER</strong>
+        </div>
         <ul class="nav-links">
-            <li><a href="home.html">Inicio</a></li>
+            <li><a href="index.html">Inicio</a></li>
             <li><a href="equipos.html">Equipos</a></li>
             <li><a href="calendario.html">Calendario</a></li>
             <li><a href="clasificacion.html">Clasificación</a></li>
-            <li><a href="pilotos.html">Media</a></li>
-            <li id="nav-dashboard" style="display: none;"><a href="dashboard.html" class="active>Mi Escudería</a></li>
-            <li id="nav-admin" style="display: none;"><a href="admin.html">Panel Admin</a></li>
+            <li><a href="pilotos.html">Pilotos</a></li>
+            <li id="nav-dashboard" style="display: none;"><a href="dashboard.html" class="active">Mi Equipo</a></li>
+            <li id="nav-admin" style="display: none;"><a href="admin.html">Admin</a></li>
         </ul>
         <div class="nav-auth">
-            <button id="btnLogout" class="btn-solid">Cerrar Sesión</button>
+            <button id="btnLogout" class="btn-solid" onclick="logout()">Cerrar Sesión</button>
         </div>
     </nav>
 
-    <div class="container dashboard-layout">
-        
-        <div class="dashboard-main">
-            
-            <div class="card team-overview">
-                <div class="team-header-dash">
-                    <div class="car-display" id="dash-car-img">
+    <main class="container" style="padding: 40px 20px;">
+
+        <!-- SECCIÓN 1: INFORMACIÓN DEL EQUIPO -->
+        <div class="card" style="margin-bottom: 40px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: center;">
+                <div id="team-car-display" style="text-align: center; height: 200px; display: flex; align-items: center; justify-content: center;">
+                    <span style="color: var(--text-secondary);">Cargando coche...</span>
+                </div>
+                <div>
+                    <h1 id="team-name" style="margin: 0 0 20px 0; font-size: 2.5rem;">Cargando...</h1>
+                    <div class="stats-grid" style="grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                        <div style="background-color: var(--bg-tertiary); padding: 15px; border-radius: 8px;">
+                            <span style="color: var(--text-secondary); font-size: 0.9rem;">PRESUPUESTO</span>
+                            <h3 id="team-budget" style="margin: 5px 0 0 0;">$0</h3>
                         </div>
-                    <div class="team-info-dash">
-                        <h1 id="dash-team-name">Cargando Escudería...</h1>
-                        <div class="budget-display">
-                            <span>PRESUPUESTO</span>
-                            <h2 id="dash-budget">$0</h2>
+                        <div style="background-color: var(--bg-tertiary); padding: 15px; border-radius: 8px;">
+                            <span style="color: var(--text-secondary); font-size: 0.9rem;">PUNTOS</span>
+                            <h3 id="team-points" style="margin: 5px 0 0 0;">0</h3>
                         </div>
-                        <a href="reglas.html" class="btn btn-outline" style="margin-top: 15px; display: inline-block;">📋 Ver Reglas</a>
+                        <div style="background-color: var(--bg-tertiary); padding: 15px; border-radius: 8px;">
+                            <span style="color: var(--text-secondary); font-size: 0.9rem;">VICTORIAS</span>
+                            <h3 id="team-wins" style="margin: 5px 0 0 0;">0</h3>
+                        </div>
+                        <div style="background-color: var(--bg-tertiary); padding: 15px; border-radius: 8px;">
+                            <span style="color: var(--text-secondary); font-size: 0.9rem;">CAMPEONATOS</span>
+                            <h3 id="team-championships" style="margin: 5px 0 0 0;">0</h3>
+                        </div>
                     </div>
                 </div>
-                <div class="stats-grid">
-                    <div class="stat-box"><span>Carreras</span><strong id="ts-carreras">0</strong></div>
-                    <div class="stat-box"><span>Victorias</span><strong id="ts-victorias">0</strong></div>
-                    <div class="stat-box"><span>Puntos</span><strong id="ts-puntos">0</strong></div>
-                    <div class="stat-box"><span>Podios</span><strong id="ts-podios">0</strong></div>
-                    <div class="stat-box"><span>Poles</span><strong id="ts-poles">0</strong></div>
-                    <div class="stat-box"><span>DNFs</span><strong id="ts-dnfs">0</strong></div>
-                    <div class="stat-box"><span>Mundiales</span><strong id="ts-mundiales">0</strong></div>
-                </div>
             </div>
-
-            <h3 class="section-title">Alineación de Pilotos</h3>
-            <div class="drivers-dashboard" id="dash-drivers-container">
-                </div>
         </div>
 
-        <div class="dashboard-sidebar">
+        <!-- SECCIÓN 2: PILOTOS DEL EQUIPO -->
+        <h2 style="margin: 50px 0 25px 0; border-bottom: 2px solid var(--accent); padding-bottom: 10px;">👥 Mi Alineación</h2>
+        <div id="drivers-container" class="drivers-dashboard" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; margin-bottom: 40px;">
+            <p style="text-align:center; color: var(--text-secondary); grid-column: 1/-1;">Cargando pilotos...</p>
+        </div>
+
+        <!-- SECCIÓN 3: NOTIFICACIONES/AVISOS -->
+        <h2 style="margin: 50px 0 25px 0; border-bottom: 2px solid var(--accent); padding-bottom: 10px;">📬 Bandeja de Avisos</h2>
+        <div class="card" style="margin-bottom: 40px;">
+            <div id="notifications-box" style="min-height: 200px; max-height: 400px; overflow-y: auto;">
+                <p style="text-align:center; color: var(--text-secondary);">Sin notificaciones</p>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 4: MEJORAS DEL COCHE -->
+        <h2 style="margin: 50px 0 25px 0; border-bottom: 2px solid var(--accent); padding-bottom: 10px;">🔧 I+D y Mejoras</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; margin-bottom: 40px;">
             
-            <div class="card notifications-panel">
-                <h3>Buzón de Avisos</h3>
-                <div class="messages-list" id="dash-messages">
-                    <p class="text-muted">Buscando mensajes de la FIA o Admin...</p>
+            <div class="card">
+                <h3 style="margin-top: 0; color: var(--accent);">Chasis y Aerodinámica</h3>
+                <div style="margin: 20px 0;">
+                    <p style="margin: 0 0 10px 0; color: var(--text-secondary);">Nivel actual: <strong id="aero-level">0</strong>/5</p>
+                    <div style="background-color: var(--bg-tertiary); border-radius: 6px; height: 20px; overflow: hidden; margin-bottom: 15px;">
+                        <div id="aero-progress" style="background: linear-gradient(90deg, #ff2e3f, #ff5a70); height: 100%; width: 0%; transition: width 0.3s ease;"></div>
+                    </div>
+                    <p style="font-size: 0.9rem; margin: 0 0 15px 0;">Mejora la aerodinámica para mayor velocidad en recta.</p>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 10px;">Costo: $5,000,000</p>
+                    <button class="btn-solid" id="btn-aero" style="width: 100%;">Desarrollar Mejora</button>
                 </div>
             </div>
 
-            <div class="card engineering-panel">
-                <h3>I+D y Mejoras</h3>
-                <p class="text-muted" style="font-size: 0.85rem;">Las mejoras se pagarán al instante y el Admin decidirá el resultado.</p>
-                
-                <div class="upgrade-action">
-                    <div class="upgrade-info">
-                        <strong>Chasis y Aerodinámica</strong>
-                        <span>Costo: $5,000,000</span>
+            <div class="card">
+                <h3 style="margin-top: 0; color: var(--accent);">Unidad de Potencia (Motor)</h3>
+                <div style="margin: 20px 0;">
+                    <p style="margin: 0 0 10px 0; color: var(--text-secondary);">Nivel actual: <strong id="motor-level">0</strong>/5</p>
+                    <div style="background-color: var(--bg-tertiary); border-radius: 6px; height: 20px; overflow: hidden; margin-bottom: 15px;">
+                        <div id="motor-progress" style="background: linear-gradient(90deg, #00aaff, #00ddff); height: 100%; width: 0%; transition: width 0.3s ease;"></div>
                     </div>
-                    <button class="btn-outline btn-upgrade" data-type="aero" data-cost="5000000">Desarrollar</button>
+                    <p style="font-size: 0.9rem; margin: 0 0 15px 0;">Mejora la potencia del motor para más rendimiento.</p>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 10px;">Costo: $7,500,000</p>
+                    <button class="btn-solid" id="btn-motor" style="width: 100%;">Desarrollar Mejora</button>
                 </div>
-                
-                <div class="upgrade-action">
-                    <div class="upgrade-info">
-                        <strong>Unidad de Potencia (Motor)</strong>
-                        <span>Costo: $7,500,000</span>
-                    </div>
-                    <button class="btn-outline btn-upgrade" data-type="motor" data-cost="7500000">Desarrollar</button>
-                </div>
-
-                <hr style="border-color: var(--border-color); margin: 15px 0;">
-
-                <div class="research-action">
-                    <strong>Investigación de Rivales</strong>
-                    <span id="research-count" style="font-size: 0.8rem; color: var(--text-secondary);">Usos restantes: 2</span>
-                    
-                    <label style="margin-top: 10px; display: block;">Tipo de Investigación:</label>
-                    <select id="research-target" style="margin-top: 5px;">
-                        <option value="">-- Seleccionar --</option>
-                        <option value="piloto">Piloto Rival (Ritmo/Agresividad)</option>
-                        <option value="mejora">Última Mejora Rival</option>
-                        <option value="elemento">Nivel de Elemento Rival</option>
-                    </select>
-
-                    <label id="research-rival-label" style="margin-top: 10px; display: none; display: block;">Rival a Investigar:</label>
-                    <select id="research-rival" style="margin-top: 5px; display: none;">
-                        <option value="">-- Cargando --</option>
-                    </select>
-                    
-                    <button class="btn-solid" id="btn-research" style="width: 100%; margin-top: 10px;">Iniciar Investigación</button>
-                </div>
-            </div>
-
-            <div class="card transfers-panel">
-                <h3>Mercado de Fichajes</h3>
-                <label>Piloto Objetivo</label>
-                <input type="text" id="transfer-target" placeholder="Nombre del piloto rival...">
-                <label>Oferta Salarial ($)</label>
-                <input type="number" id="transfer-offer" placeholder="Ej: 15000000">
-                <button class="btn-outline" id="btn-transfer" style="width: 100%;">Enviar Oferta Formal</button>
             </div>
 
         </div>
-    </div>
+
+        <!-- SECCIÓN 5: INVESTIGACIÓN DE RIVALES -->
+        <h2 style="margin: 50px 0 25px 0; border-bottom: 2px solid var(--accent); padding-bottom: 10px;">🔎 Investigación de Rivales</h2>
+        <div class="card" style="margin-bottom: 40px;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+                
+                <!-- Opción 1: Investigar Piloto -->
+                <div style="padding: 20px; background-color: var(--bg-tertiary); border-radius: 8px; border: 1px solid var(--border-color);">
+                    <h3 style="margin-top: 0; color: var(--accent);">📊 Investigar Piloto</h3>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 15px;">Conoce el ritmo y agresividad de un piloto rival.</p>
+                    <label style="display: block; margin-bottom: 10px;">Selecciona un piloto:</label>
+                    <select id="select-pilot-research" style="margin-bottom: 15px;">
+                        <option value="">-- Seleccionar piloto --</option>
+                    </select>
+                    <button class="btn-outline" id="btn-research-pilot" style="width: 100%;">Investigar</button>
+                </div>
+
+                <!-- Opción 2: Investigar Mejora del Coche -->
+                <div style="padding: 20px; background-color: var(--bg-tertiary); border-radius: 8px; border: 1px solid var(--border-color);">
+                    <h3 style="margin-top: 0; color: var(--accent);">⚙️ Última Mejora Rival</h3>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 15px;">Descubre la última mejora que hizo tu rival.</p>
+                    <label style="display: block; margin-bottom: 10px;">Selecciona un equipo:</label>
+                    <select id="select-team-upgrade" style="margin-bottom: 15px;">
+                        <option value="">-- Seleccionar equipo --</option>
+                    </select>
+                    <button class="btn-outline" id="btn-research-upgrade" style="width: 100%;">Investigar</button>
+                </div>
+
+                <!-- Opción 3: Investigar Nivel de Componente -->
+                <div style="padding: 20px; background-color: var(--bg-tertiary); border-radius: 8px; border: 1px solid var(--border-color);">
+                    <h3 style="margin-top: 0; color: var(--accent);">🔩 Nivel de Componente</h3>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 15px;">Compara el nivel de un componente del rival.</p>
+                    <label style="display: block; margin-bottom: 10px;">Selecciona un equipo:</label>
+                    <select id="select-team-component" style="margin-bottom: 15px;">
+                        <option value="">-- Seleccionar equipo --</option>
+                    </select>
+                    <label style="display: block; margin-bottom: 10px; margin-top: 10px;">Componente:</label>
+                    <select id="select-component-type" style="margin-bottom: 15px;">
+                        <option value="aero">Aerodinámica</option>
+                        <option value="motor">Motor</option>
+                    </select>
+                    <button class="btn-outline" id="btn-research-component" style="width: 100%;">Investigar</button>
+                </div>
+
+            </div>
+        </div>
+
+        <a href="reglas.html" class="btn-outline" style="display: inline-block; margin-top: 20px;">📋 Ver Reglas de Juego</a>
+
+    </main>
+
+    <footer style="text-align: center; padding: 30px 20px; border-top: 1px solid var(--border-color); color: var(--text-secondary); margin-top: 60px;">
+        <p>&copy; 2024-2026 F1 Manager. Todos los derechos reservados.</p>
+    </footer>
 
     <script type="module" src="dashboard.js"></script>
+    <script type="module">
+        import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        window.logout = async function() {
+            const auth = getAuth();
+            await signOut(auth);
+            window.location.href = "index.html";
+        }
+    </script>
 </body>
 </html>

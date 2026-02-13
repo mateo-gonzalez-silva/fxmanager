@@ -1,20 +1,20 @@
 /* =========================================
-   Paleta Monocromática Estricta (Premium)
+   Paleta de Colores Premium
    ========================================= */
    :root {
-    --bg-primary: #000000;      /* Fondo negro profundo */
-    --bg-secondary: #0a0a0a;    /* Paneles ligeramente despegados del fondo */
-    --bg-tertiary: #141414;     /* Elementos interactivos o inputs */
-    --text-primary: #ffffff;    /* Texto principal blanco puro */
-    --text-secondary: #888888;  /* Texto secundario gris medio */
-    --border-color: #222222;    /* Bordes muy sutiles */
-    --border-hover: #444444;    /* Bordes al pasar el ratón */
-    --accent: #ff2e3f;          /* Rojo F1 */
-    --accent-light: #ff5a70;    /* Rojo más claro */
-    --success: #00ff00;          /* Verde éxito */
-    --warning: #ffaa00;          /* Naranja advertencia */
-    --danger: #ff2e3f;           /* Rojo peligro */
-    --info: #00aaff;             /* Azul información */
+    --bg-primary: #0a0a0a;      
+    --bg-secondary: #121212;    
+    --bg-tertiary: #1a1a1a;     
+    --text-primary: #ffffff;    
+    --text-secondary: #888888;  
+    --border-color: #2a2a2a;    
+    --border-hover: #444444;    
+    --accent: #ff2e3f;          
+    --accent-light: #ff5a70;    
+    --success: #00ff00;          
+    --warning: #ffaa00;          
+    --danger: #ff2e3f;           
+    --info: #00aaff;             
 }
 
 /* =========================================
@@ -201,9 +201,26 @@ button {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px 40px;
-    border-bottom: 2px solid var(--border-hover);
+    padding: 15px 20px;
+    border-bottom: 3px solid var(--accent);
     background-color: var(--bg-secondary);
+    flex-wrap: wrap;
+    gap: 15px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.nav-brand {
+    font-size: 1.2rem;
+    font-weight: 900;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-primary);
+}
+
+.nav-brand strong {
+    color: var(--accent);
 }
 
 /* =========================================
@@ -290,13 +307,219 @@ button {
 }
 
 /* =========================================
-   Estilos específicos para Equipos (equipos.html)
+   Grid de Equipos Mejorado
    ========================================= */
-   .equipo-header {
-    padding: 24px;
-    text-align: center;
-    cursor: pointer;
+.team-grid-modern {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 30px;
+    width: 100%;
+}
+
+.equipo-card-modern {
+    background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-secondary) 100%);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.equipo-card-modern:hover {
+    border-color: var(--accent);
+    transform: translateY(-8px);
+    box-shadow: 0 12px 36px rgba(255, 46, 63, 0.2);
+}
+
+.equipo-header-modern {
+    position: relative;
+    padding: 30px 20px;
+    text-align: center;
+    border-bottom: 2px solid var(--border-color);
+    background-color: var(--bg-primary);
+    overflow: hidden;
+}
+
+.equipo-header-modern::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 46, 63, 0.1), transparent);
+    transition: left 0.5s ease;
+}
+
+.equipo-card-modern:hover .equipo-header-modern::before {
+    left: 100%;
+}
+
+.coche-display-modern {
+    height: 140px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.coche-display-modern img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0px 5px 10px rgba(0, 0, 0, 0.6));
+    transition: transform 0.3s ease;
+}
+
+.equipo-card-modern:hover .coche-display-modern img {
+    transform: scale(1.1);
+}
+
+.equipo-nombre-moderno {
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin: 0;
+    position: relative;
+    z-index: 1;
+}
+
+.equipo-pilotos-container {
+    padding: 20px;
+    display: none;
+    max-height: 0;
+    opacity: 0;
+    transition: all 0.3s ease;
+    background-color: var(--bg-secondary);
+}
+
+.equipo-card-modern.expanded .equipo-pilotos-container {
+    display: block;
+    max-height: 500px;
+    opacity: 1;
+}
+
+.piloto-row-moderno {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    margin-bottom: 10px;
+    background-color: var(--bg-tertiary);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.piloto-row-moderno:hover {
+    background-color: rgba(255, 46, 63, 0.1);
+    border-left: 3px solid var(--accent);
+    padding-left: 16px;
+}
+
+.piloto-foto-moderno {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 2px solid var(--border-color);
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.piloto-foto-moderno img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.piloto-info-moderno {
+    flex-grow: 1;
+}
+
+.piloto-nombre-moderno {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin: 0 0 2px 0;
+}
+
+.piloto-datos-moderno {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0;
+}
+
+.equipo-acciones {
+    padding: 15px 20px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    gap: 10px;
+}
+
+.btn-dirigir-moderno {
+    flex: 1;
+    padding: 12px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-light));
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.85rem;
+}
+
+.btn-dirigir-moderno:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(255, 46, 63, 0.4);
+}
+
+.btn-dirigir-moderno:active {
+    transform: scale(0.98);
+}
+
+.estado-equipo {
+    padding: 10px 15px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-align: center;
+    background-color: rgba(255, 170, 0, 0.2);
+    color: var(--warning);
+    border: 1px solid var(--warning);
+}
+
+.toggle-pilotos-btn {
+    background: none;
+    border: none;
+    color: var(--accent);
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.equipo-card-modern.expanded .toggle-pilotos-btn {
+    transform: rotate(180deg);
+}
+
+@media (max-width: 768px) {
+    .team-grid-modern {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .equipo-card-modern {
+        margin: 0;
+    }
 }
 
 .deploy-arrow {
@@ -427,33 +650,90 @@ button {
     color: var(--text-primary);
 }
 
-/* Tarjetas de Pilotos en Dashboard */
+/* Tarjetas de Pilotos Mejoradas */
 .drivers-dashboard {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px;
 }
 
-.driver-dash-card {
-    background-color: var(--bg-secondary);
+.driver-card-modern {
+    background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-secondary) 100%);
     border: 1px solid var(--border-color);
-    border-radius: 8px;
+    border-radius: 10px;
     padding: 20px;
+    transition: all 0.3s ease;
 }
 
-.driver-dash-header {
+.driver-card-modern:hover {
+    border-color: var(--accent);
+    box-shadow: 0 8px 24px rgba(255, 46, 63, 0.15);
+    transform: translateY(-4px);
+}
+
+.driver-header-modern {
     display: flex;
     align-items: center;
     gap: 15px;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.driver-photo-modern {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    border: 3px solid var(--accent);
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.driver-photo-modern img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.driver-name-modern {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.driver-number-modern {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+.driver-stats-modern {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
     margin-bottom: 15px;
 }
 
-.driver-dash-photo {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background-color: var(--bg-tertiary);
-    border: 2px solid var(--border-color);
+.driver-stat-modern {
+    background-color: var(--bg-primary);
+    padding: 10px;
+    border-radius: 6px;
+    text-align: center;
+    border-left: 3px solid var(--accent);
+}
+
+.driver-stat-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 3px;
+}
+
+.driver-stat-value {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-primary);
 }
 
 .driver-attributes {
@@ -1051,5 +1331,174 @@ button {
     .admin-tab-btn { padding: 15px; white-space: nowrap; border-left: none; border-bottom: 3px solid transparent; }
     .admin-tab-btn.active { border-left-color: transparent; border-bottom-color: var(--text-primary); }
     .admin-content { padding: 20px; }
+}
+
+/* =========================================
+   Mejorado: Form Inputs y Elementos
+   ========================================= */
+input, textarea, select {
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 12px 15px;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    font-family: inherit;
+    width: 100%;
+}
+
+input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 10px rgba(255, 46, 63, 0.3);
+}
+
+input::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.6;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+/* =========================================
+   Responsive Mejorado - Mobile First
+   ========================================= */
+@media (max-width: 1024px) {
+    .dashboard-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .standings-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .drivers-dashboard {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        font-size: 14px;
+    }
+
+    .navbar {
+        padding: 12px 15px;
+        gap: 10px;
+    }
+
+    .nav-links {
+        gap: 15px;
+    }
+
+    .nav-links a {
+        font-size: 0.75rem;
+        letter-spacing: 1px;
+    }
+
+    .nav-auth {
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    h1 { font-size: 2rem; }
+    h2 { font-size: 1.5rem; }
+    h3 { font-size: 1.2rem; }
+
+    .hero-content h1 {
+        font-size: 2.5rem;
+    }
+
+    .hero-actions {
+        flex-direction: column;
+    }
+
+    .team-grid, .media-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .card {
+        padding: 15px;
+    }
+
+    .grid-equipos {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .navbar {
+        flex-direction: column;
+        padding: 10px;
+    }
+
+    .nav-brand {
+        font-size: 1rem;
+        width: 100%;
+        text-align: center;
+    }
+
+    .nav-links {
+        width: 100%;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .nav-links a {
+        font-size: 0.7rem;
+    }
+
+    .nav-auth {
+        width: 100%;
+        gap: 5px;
+    }
+
+    .btn-solid, .btn-outline {
+        padding: 10px 15px;
+        font-size: 0.8rem;
+        letter-spacing: 0.5px;
+    }
+
+    .container {
+        padding: 0 10px;
+    }
+
+    h1 { font-size: 1.5rem; }
+    h2 { font-size: 1.2rem; }
+
+    .hero-content h1 {
+        font-size: 1.8rem;
+    }
+
+    .hero-content p {
+        font-size: 1rem;
+    }
+
+    .stat-box {
+        min-width: 60px;
+    }
+
+    .modal-content {
+        width: 95%;
+        max-width: none;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    input, textarea, select {
+        font-size: 16px; /* Previene zoom en iOS */
+        padding: 14px 12px;
+    }
 }
 
