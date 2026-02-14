@@ -78,7 +78,7 @@
                 </div>
                 <div class="table-container">
                     <table class="admin-table">
-                        <thead><tr><th>Dorsal</th><th>Nombre</th><th>País</th><th>Acciones</th></tr></thead>
+                        <thead><tr><th>Dorsal</th><th>Nombre</th><th>Apellidos</th><th>Moral</th><th>País</th><th>Acciones</th></tr></thead>
                         <tbody id="tabla-pilotos"></tbody>
                     </table>
                 </div>
@@ -143,12 +143,14 @@
             <h3 id="titulo-modal-piloto">Crear Piloto</h3>
             <form id="form-piloto">
                 <input type="hidden" id="pil-id">
-                <label>Nombre Completo</label><input type="text" id="pil-nombre" required>
+                <label>Nombre</label><input type="text" id="pil-nombre" required>
+                <label>Apellidos</label><input type="text" id="pil-apellido" placeholder="Ej: Pérez">
                 <label>Número (Dorsal)</label><input type="number" id="pil-numero" required>
                 <label>País (Siglas o Nombre)</label><input type="text" id="pil-pais" required>
                 <label>Edad</label><input type="number" id="pil-edad" min="18" max="50" placeholder="Ej: 25">
                 <label>Ritmo (0-100)</label><input type="number" id="pil-ritmo" min="0" max="100" placeholder="Ej: 85">
                 <label>Agresividad (0-100)</label><input type="number" id="pil-agresividad" min="0" max="100" placeholder="Ej: 75">
+                <label>Moral (0-100)</label><input type="number" id="pil-moral" min="0" max="100" placeholder="Ej: 50">
                 <label>Equipo Actual</label>
                 <select id="pil-equipo">
                     <option value="">Ninguno (Agente Libre)</option>

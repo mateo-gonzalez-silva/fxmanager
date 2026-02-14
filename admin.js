@@ -75,11 +75,13 @@ document.addEventListener("DOMContentLoaded", () => {
         e.preventDefault();
         const data = {
             nombre: document.getElementById("pil-nombre").value,
+            apellido: document.getElementById("pil-apellido").value || '',
             numero: parseInt(document.getElementById("pil-numero").value),
             pais: document.getElementById("pil-pais").value,
             edad: parseInt(document.getElementById("pil-edad").value) || 0,
             ritmo: parseInt(document.getElementById("pil-ritmo").value) || 0,
             agresividad: parseInt(document.getElementById("pil-agresividad").value) || 0,
+            moral: parseInt(document.getElementById("pil-moral").value) || 0,
             equipoId: document.getElementById("pil-equipo").value,
             foto: document.getElementById("pil-foto").value
         };
@@ -316,6 +318,8 @@ function pintarTablaPilotos() {
         tbody.innerHTML += `<tr>
             <td>#${p.numero || '0'}</td>
             <td><strong>${p.nombre}</strong></td>
+            <td>${p.apellido || ''}</td>
+            <td>${p.moral !== undefined ? p.moral : 'N/A'}</td>
             <td>${p.pais || 'N/A'} (${eqNombre})</td>
             <td>
                 <button class="btn-outline" style="padding:5px 10px; font-size:0.8rem;" onclick='editarPiloto(${JSON.stringify(p)})'>Editar</button>
@@ -358,11 +362,13 @@ window.editarEquipo = (data) => {
 window.editarPiloto = (data) => {
     document.getElementById("pil-id").value = data.id;
     document.getElementById("pil-nombre").value = data.nombre || "";
+    document.getElementById("pil-apellido").value = data.apellido || "";
     document.getElementById("pil-numero").value = data.numero || "";
     document.getElementById("pil-pais").value = data.pais || "";
     document.getElementById("pil-edad").value = data.edad || "";
     document.getElementById("pil-ritmo").value = data.ritmo || "";
     document.getElementById("pil-agresividad").value = data.agresividad || "";
+    document.getElementById("pil-moral").value = data.moral || "";
     document.getElementById("pil-equipo").value = data.equipoId || "";
     document.getElementById("pil-foto").value = data.foto || "";
     document.getElementById("titulo-modal-piloto").textContent = "Editar Piloto";

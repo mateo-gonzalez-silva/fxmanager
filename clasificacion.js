@@ -95,8 +95,8 @@ async function cargarClasificaciones() {
 
         // 4. Pintar Constructores (máximo 20)
         // 1. Empezamos a construir el HTML de la tabla. 
-// Usamos border-collapse para que las filas se "peguen" y se vea como una tabla junta.
-htmlTabla = `<table style="width: 100%; border-collapse: collapse; text-align: left;">`;
+        // Usamos border-collapse para que las filas se "peguen" y se vea como una tabla junta.
+        let htmlTabla = `<table style="width: 100%; border-collapse: collapse; text-align: left;">`;
 
 const equiposTop20 = equiposData.slice(0, 20);
 
@@ -138,7 +138,7 @@ listaEquipos.innerHTML = htmlTabla;
 
         // 5. Pintar Pilotos (máximo 20)
         // 1. Empezamos a construir la tabla
-htmlTabla = `<table style="width: 100%; border-collapse: collapse; text-align: left;">`;
+        let htmlTabla = `<table style="width: 100%; border-collapse: collapse; text-align: left;">`;
 
 const pilotosTop20 = pilotosData.slice(0, 20);
 

@@ -209,9 +209,9 @@ async function solicitarMejora(tipo, costo) {
 }
 
 async function investigarPiloto() {
-    // Verificar límite de investigaciones
-    const investigacionesHoy = await contarInvestigacionesHoy();
-    if (investigacionesHoy >= 3) {
+    // Verificar límite de investigaciones usando contador persistente en el documento del equipo
+    const puede = await tryConsumeInvestigation();
+    if (!puede) {
         alert("Has alcanzado el límite de 3 investigaciones hoy. Intenta mañana.");
         return;
     }
@@ -251,9 +251,9 @@ async function investigarPiloto() {
 }
 
 async function investigarMejora() {
-    // Verificar límite de investigaciones
-    const investigacionesHoy = await contarInvestigacionesHoy();
-    if (investigacionesHoy >= 3) {
+    // Verificar límite de investigaciones usando contador persistente en el documento del equipo
+    const puede = await tryConsumeInvestigation();
+    if (!puede) {
         alert("Has alcanzado el límite de 3 investigaciones hoy. Intenta mañana.");
         return;
     }
@@ -285,9 +285,9 @@ async function investigarMejora() {
 }
 
 async function investigarComponente() {
-    // Verificar límite de investigaciones
-    const investigacionesHoy = await contarInvestigacionesHoy();
-    if (investigacionesHoy >= 3) {
+    // Verificar límite de investigaciones usando contador persistente en el documento del equipo
+    const puede = await tryConsumeInvestigation();
+    if (!puede) {
         alert("Has alcanzado el límite de 3 investigaciones hoy. Intenta mañana.");
         return;
     }
@@ -338,6 +338,38 @@ async function contarInvestigacionesHoy() {
     } catch (error) {
         console.error("Error contando investigaciones:", error);
         return 0;
+    }
+}
+
+// Persistente: intenta consumir 1 investigación del contador del equipo (resetea a diario)
+async function tryConsumeInvestigation() {
+    try {
+        const teamRef = doc(db, "equipos", currentTeamId);
+        const teamSnap = await getDoc(teamRef);
+        if (!teamSnap.exists()) return true; // no hay equipo, permitir (fall-back)
+
+        const team = teamSnap.data();
+        const now = new Date();
+        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+        let count = team.investigacionesCount || 0;
+        const resetTs = team.investigacionesReset ? (team.investigacionesReset.toDate ? team.investigacionesReset.toDate() : new Date(team.investigacionesReset)) : null;
+
+        // Si no hay marca de reset o es anterior al inicio del día, reiniciamos el contador
+        if (!resetTs || resetTs < todayStart) {
+            count = 0;
+            await updateDoc(teamRef, { investigacionesCount: 0, investigacionesReset: serverTimestamp() });
+        }
+
+        if (count >= 3) return false;
+
+        await updateDoc(teamRef, { investigacionesCount: count + 1, investigacionesReset: serverTimestamp() });
+        // Actualizar caché local si existe
+        if (currentTeamData) currentTeamData.investigacionesCount = count + 1;
+        return true;
+    } catch (error) {
+        console.error("Error consumiendo investigación:", error);
+        return false;
     }
 }
 
