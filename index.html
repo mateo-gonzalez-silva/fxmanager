@@ -128,6 +128,11 @@
                 font-size: 0.75rem;
                 padding: 8px 12px;
             }
+            /* further compact the navbar */
+            .navbar { padding: 8px 10px; }
+            .nav-brand { font-size: 1rem; }
+            .nav-links a { padding: 8px 12px; font-size: 0.85rem; }
+        }
         }
     </style>
 </head>
@@ -151,8 +156,12 @@
             <li id="nav-dashboard" style="display: none;"><a href="dashboard.html">Mi Equipo</a></li>
         </ul>
         <div class="nav-auth">
-            <button id="btnLogin" class="btn-outline" onclick="window.location.href='login.html'">Iniciar Sesión</button>
-            <button id="btnLogout" class="btn-solid" onclick="logout()" style="display: none;">Cerrar Sesión</button>
+            <select id="nav-account" aria-label="Cuenta" style="padding:6px 8px; border-radius:6px; background: linear-gradient(135deg, rgba(34,34,42,0.6), rgba(22,22,26,0.4)); border:1px solid var(--border-color); color:var(--text-primary); font-weight:700;">
+                <option value="">Cuenta ▾</option>
+                <option value="login">Iniciar Sesión</option>
+                <option value="register">Registrarse</option>
+            </select>
+            <button id="btnLogout" class="btn-solid" onclick="logout()" style="display: none; padding:6px 8px; margin-left:8px;">Cerrar Sesión</button>
         </div>
     </nav>
 
@@ -245,6 +254,18 @@
                 document.getElementById('nav-links').classList.remove('active');
             });
         });
+
+        // Compact account select handler
+        const navAccount = document.getElementById('nav-account');
+        if (navAccount) {
+            navAccount.addEventListener('change', (e) => {
+                const v = e.target.value;
+                if (!v) return;
+                if (v === 'login') window.location.href = 'login.html';
+                else if (v === 'register') window.location.href = 'register.html';
+                e.target.value = '';
+            });
+        }
 
         function logout() {
             localStorage.clear();

@@ -33,8 +33,12 @@ document.addEventListener("DOMContentLoaded", () => {
             const user = userCredential.user;
 
             // 2. IMPORTANTE: Crear el perfil en la base de datos Firestore
+            // Generar un username automáticamente a partir del nombre + uid corto
+            const slugBase = name.toLowerCase().replace(/[^a-z0-9]+/g, '').substring(0, 12) || 'user';
+            const username = `${slugBase}_${user.uid.slice(0,6)}`;
             await setDoc(doc(db, "usuarios", user.uid), {
                 nombre: name,
+                username: username,
                 email: email,
                 isAdmin: false,  // Por defecto nadie es admin
                 equipo: null     // Por defecto nadie tiene equipo
