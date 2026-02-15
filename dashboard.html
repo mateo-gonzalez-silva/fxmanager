@@ -53,28 +53,28 @@
 
         <!-- SECCIÓN 1: INFORMACIÓN DEL EQUIPO -->
         <div class="card" style="margin-bottom: 40px;">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: center;">
-                <div id="team-car-display" style="text-align: center; height: 200px; display: flex; align-items: center; justify-content: center;">
+            <div class="team-header-dash">
+                <div id="team-car-display" class="car-display" style="display:flex; align-items:center; justify-content:center;">
                     <span style="color: var(--text-secondary);">Cargando coche...</span>
                 </div>
                 <div>
-                    <h1 id="team-name" style="margin: 0 0 20px 0; font-size: 2.5rem;">Cargando...</h1>
-                    <div class="stats-grid" style="grid-template-columns: repeat(2, 1fr); gap: 15px;">
-                        <div style="background-color: var(--bg-tertiary); padding: 15px; border-radius: 8px;">
-                            <span style="color: var(--text-secondary); font-size: 0.9rem;">PRESUPUESTO</span>
-                            <h3 id="team-budget" style="margin: 5px 0 0 0;">$0</h3>
+                    <h1 id="team-name" class="team-name" style="margin: 0 0 12px 0; font-size: 1.6rem;">Cargando...</h1>
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <span style="color: var(--text-secondary); font-size: 0.85rem;">PRESUPUESTO</span>
+                            <h3 id="team-budget" style="margin: 6px 0 0 0;">$0</h3>
                         </div>
-                        <div style="background-color: var(--bg-tertiary); padding: 15px; border-radius: 8px;">
-                            <span style="color: var(--text-secondary); font-size: 0.9rem;">PUNTOS</span>
-                            <h3 id="team-points" style="margin: 5px 0 0 0;">0</h3>
+                        <div class="stat-box">
+                            <span style="color: var(--text-secondary); font-size: 0.85rem;">PUNTOS</span>
+                            <h3 id="team-points" style="margin: 6px 0 0 0;">0</h3>
                         </div>
-                        <div style="background-color: var(--bg-tertiary); padding: 15px; border-radius: 8px;">
-                            <span style="color: var(--text-secondary); font-size: 0.9rem;">VICTORIAS</span>
-                            <h3 id="team-wins" style="margin: 5px 0 0 0;">0</h3>
+                        <div class="stat-box">
+                            <span style="color: var(--text-secondary); font-size: 0.85rem;">VICTORIAS</span>
+                            <h3 id="team-wins" style="margin: 6px 0 0 0;">0</h3>
                         </div>
-                        <div style="background-color: var(--bg-tertiary); padding: 15px; border-radius: 8px;">
-                            <span style="color: var(--text-secondary); font-size: 0.9rem;">CAMPEONATOS</span>
-                            <h3 id="team-championships" style="margin: 5px 0 0 0;">0</h3>
+                        <div class="stat-box">
+                            <span style="color: var(--text-secondary); font-size: 0.85rem;">CAMPEONATOS</span>
+                            <h3 id="team-championships" style="margin: 6px 0 0 0;">0</h3>
                         </div>
                     </div>
                 </div>

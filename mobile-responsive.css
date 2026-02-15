@@ -532,6 +532,181 @@
     }
 }
 
+/* Countdown base styles (global) */
+.countdown-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+.countdown-title {
+    margin: 0 0 6px 0;
+    font-size: 1.05rem;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+.countdown-boxes {
+    display: grid;
+    grid-auto-flow: column;
+    gap: 12px;
+    justify-content: center;
+    align-items: center;
+}
+
+.countdown-box {
+    background: linear-gradient(135deg, rgba(34,34,42,0.6), rgba(22,22,26,0.45));
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    min-width: 70px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+}
+
+.countdown-value {
+    font-weight: 800;
+    font-size: 1.4rem;
+    color: var(--accent);
+}
+
+.countdown-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    margin-top: 4px;
+}
+
+@media (max-width: 480px) {
+    .countdown-boxes { grid-auto-flow: row; grid-template-columns: repeat(auto-fit, minmax(64px, 1fr)); gap:8px; }
+    .countdown-value { font-size: 1.1rem; }
+}
+
+/* =========================================
+   Estilo global para Clasificación: filas con columnas tipo tabla
+   (mejora visual en escritorio y móvil)
+   ========================================= */
+.standings-grid {
+    display: block;
+    width: 100%;
+}
+
+.standing-row {
+    display: grid;
+    grid-template-columns: 56px 1fr 100px;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 14px;
+    background: linear-gradient(135deg, rgba(23,23,25,0.6), rgba(30,30,34,0.5));
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.standing-row .pos-number { text-align: center; font-weight:900; }
+.standing-row .standing-pts { justify-self: end; font-weight:800; }
+.standing-row .standing-info { display:flex; align-items:center; gap:12px; }
+
+
+/* =========================================
+   Overrides adicionales para apariencia móvil (barra superior más delgada,
+   menú más limpio, 'Mi Equipo' visual y clasificación tipo tabla)
+   ========================================= */
+@media (max-width: 768px) {
+    /* Barra superior más compacta */
+    .navbar {
+        padding: 6px 10px !important;
+        height: 48px;
+        align-items: center;
+        display: flex;
+        gap: 8px;
+    }
+
+    .nav-brand {
+        font-size: 1rem;
+        font-weight: 900;
+        margin-right: 8px;
+    }
+
+    /* Menu hamburguesa más pequeño */
+    .hamburger-btn { padding: 6px; border-radius:6px; }
+    .hamburger-btn span { width: 20px; height: 2px; }
+
+    /* Nav links as overlay but slim */
+    .nav-links {
+        top: 48px !important;
+        left: 6px;
+        right: 6px;
+        border-radius: 8px;
+        padding: 6px 4px;
+        background: linear-gradient(180deg, rgba(18,18,20,0.98), rgba(26,26,28,0.98));
+        box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+    }
+
+    .nav-links a { padding: 10px 12px; border-radius:6px; margin:4px 6px; }
+
+    /* Compact account control on right */
+    .nav-auth { display:flex; align-items:center; gap:8px; }
+    #nav-account { background: transparent; border: 1px solid rgba(255,255,255,0.04); padding:6px 8px; border-radius:6px; color:var(--text-primary); }
+
+    /* ocultar el texto extra y dejar el topbar minimalista */
+    .nav-links li { border: none; }
+
+    /* HERO: reducir espacio en móvil */
+    .hero-section { padding: 14px 10px; }
+    .hero-title { font-size: 1.5rem !important; }
+    .hero-sub { font-size: 0.9rem !important; margin-bottom: 12px !important; }
+
+    /* Countdown compact */
+    .countdown-section { padding: 12px; }
+    .countdown-value { font-size: 1.2rem; }
+
+    /* ===== 'Mi Equipo' visual mejorada ===== */
+    .team-header-dash {
+        background: linear-gradient(135deg, rgba(34,34,42,0.85), rgba(23,23,25,0.85));
+        border-radius: 10px;
+        padding: 12px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+        width: 100%;
+    }
+
+    .car-display { height: 100px; border-radius: 10px; }
+
+    .budget-display h2 { font-size: 1.8rem; color: var(--accent); }
+
+    .stat-box { background: linear-gradient(135deg, rgba(28,28,30,0.6), rgba(22,22,26,0.45)); border:1px solid var(--border-color); }
+
+    .stat-box strong { color: var(--accent); font-size: 1.25rem; }
+
+    .equipo-acciones { gap:10px; overflow-x:auto; padding:8px 6px; }
+
+    /* ===== Clasificación: filas en formato 'tabla' ===== */
+    .standings-grid { display: block; }
+    .standing-row {
+        display: grid;
+        grid-template-columns: 48px 1fr 84px;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 12px;
+        background: linear-gradient(135deg, rgba(24,24,26,0.6), rgba(18,18,20,0.45));
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        margin-bottom: 8px;
+    }
+
+    .standing-row .pos-number { text-align: center; font-weight:800; }
+    .standing-row .standing-pts { justify-self: end; }
+    .standing-row .standing-info { display:flex; align-items:center; gap:10px; }
+
+    /* small avatars / team bars inline */
+    .team-color-bar { width: 6px; height: 36px; border-radius:4px; }
+
+}
+
 /* =========================================
    Responsive - 480px (Móviles pequeños)
    ========================================= */
