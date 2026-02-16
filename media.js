@@ -18,14 +18,18 @@ const db = getFirestore(app);
 document.addEventListener('DOMContentLoaded', loadMedia);
 
 async function loadMedia() {
-    const container = document.getElementById('media-container');
-    container.innerHTML = '<p>Cargando publicaciones...</p>';
+    const container = document.getElementById('grid-media');
+    if (!container) {
+        console.error('Contenedor #grid-media no encontrado');
+        return;
+    }
+    container.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">Cargando publicaciones...</p>';
 
     try {
         const mediaSnap = await getDocs(query(collection(db, "media"), orderBy("timestamp", "desc")));
 
         if (mediaSnap.empty) {
-            container.innerHTML = '<p>No hay publicaciones disponibles en este momento.</p>';
+            container.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">No hay publicaciones disponibles en este momento.</p>';
             return;
         }
 
@@ -34,14 +38,28 @@ async function loadMedia() {
             const post = doc.data();
             const postElement = document.createElement('div');
             postElement.className = 'media-card';
+            
+            // Manejar timestamp robusto
+            let fechaTexto = '';
+            try {
+                if (post.timestamp && typeof post.timestamp.toDate === 'function') {
+                    fechaTexto = post.timestamp.toDate().toLocaleDateString();
+                } else if (post.timestamp) {
+                    const t = new Date(post.timestamp);
+                    if (!isNaN(t)) fechaTexto = t.toLocaleDateString();
+                }
+            } catch (e) {
+                console.warn('Error parsing timestamp:', e);
+            }
+            
             postElement.innerHTML = `
-                ${post.imagenURL ? `<img src="${post.imagenURL}" alt="${post.titulo}">` : ''}
+                ${post.imagenURL ? `<img src="${post.imagenURL}" alt="${post.titulo || 'Imagen'}">` : ''}
                 <div class="media-card-content">
-                    <h3>${post.titulo}</h3>
-                    <p>${post.resumen}</p>
+                    <h3>${post.titulo || 'Sin título'}</h3>
+                    <p>${post.resumen || ''}</p>
                     <div class="media-card-footer">
                         <span>Por: ${post.autor || 'Admin'}</span>
-                        <span>${post.timestamp?.toDate().toLocaleDateString() || ''}</span>
+                        <span>${fechaTexto}</span>
                     </div>
                 </div>
             `;
@@ -50,6 +68,6 @@ async function loadMedia() {
 
     } catch (error) {
         console.error("Error al cargar el contenido multimedia: ", error);
-        container.innerHTML = '<p style="color: var(--danger);">No se pudo cargar el contenido. Inténtalo de nuevo más tarde.</p>';
+        container.innerHTML = '<p style="color: var(--danger); text-align: center;">No se pudo cargar el contenido. Inténtalo de nuevo más tarde.</p>';
     }
 }

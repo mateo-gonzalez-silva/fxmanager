@@ -27,7 +27,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isOpen) closeMenu(); else openMenu();
     }
 
-    hamburgerBtn.addEventListener('click', toggleMenu);
+    // Exponer toggleMenu globalmente para compatibilidad con onclick inline
+    window.toggleMenu = toggleMenu;
+
+    // Solo agregar listener si no hay onclick inline (evitar dobles toggles)
+    if (!hamburgerBtn.hasAttribute('onclick')) {
+        hamburgerBtn.addEventListener('click', toggleMenu);
+    }
 
     // Close menu when a link is clicked
     navLinks.querySelectorAll('a').forEach(link => {
