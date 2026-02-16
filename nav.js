@@ -1,27 +1,21 @@
-
-function toggleMenu() {
-    const hamburger = document.getElementById('hamburger-btn');
-    const navLinks = document.getElementById('nav-links');
-    hamburger.classList.toggle('active');
-    navLinks.classList.toggle('active');
-}
-
 document.addEventListener('DOMContentLoaded', () => {
-    const hamburger = document.getElementById('hamburger-btn');
-    if (hamburger) {
-        hamburger.addEventListener('click', toggleMenu);
-    }
+    const hamburgerBtn = document.getElementById('hamburger-btn');
+    const navLinks = document.getElementById('nav-links');
 
-    // Close the menu when a link is clicked
-    const navLinks = document.querySelectorAll('.nav-links a');
-    navLinks.forEach(link => {
-        link.addEventListener('click', () => {
-            const hamburger = document.getElementById('hamburger-btn');
-            const navLinks = document.getElementById('nav-links');
-            if (hamburger.classList.contains('active')) {
-                hamburger.classList.remove('active');
-                navLinks.classList.remove('active');
-            }
+    if (hamburgerBtn && navLinks) {
+        hamburgerBtn.addEventListener('click', () => {
+            hamburgerBtn.classList.toggle('active');
+            navLinks.classList.toggle('active');
         });
-    });
+
+        // Close menu when a link is clicked
+        navLinks.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                if (hamburgerBtn.classList.contains('active')) {
+                    hamburgerBtn.classList.remove('active');
+                    navLinks.classList.remove('active');
+                }
+            });
+        });
+    }
 });
