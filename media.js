@@ -75,6 +75,6 @@ async function loadMedia() {
 
     } catch (error) {
         console.error("Error al cargar el contenido multimedia: ", error);
-        container.innerHTML = '<p style="color: var(--danger); text-align: center;">No se pudo cargar el contenido. Inténtalo de nuevo más tarde.</p>';
+        container.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 40px; font-size: 1.1rem;">Próximamente publicaremos noticias y contenido exclusivo.</p>';
     }
 }
