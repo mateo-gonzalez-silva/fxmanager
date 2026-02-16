@@ -3604,3 +3604,70 @@ label {
 }
 }
 
+/* --- ESTILOS MODERNOS PARA CLASIFICACIÓN --- */
+.standings-table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    margin-top: 10px;
+}
+.standings-table th { 
+    text-align: left; 
+    color: var(--text-sec); 
+    padding: 10px 15px; 
+    border-bottom: 1px solid var(--border); 
+    font-size: 0.75rem; 
+    text-transform: uppercase; 
+    letter-spacing: 1px; 
+}
+.standings-table td { 
+    padding: 12px 15px; 
+    border-bottom: 1px solid rgba(255,255,255,0.03); 
+    vertical-align: middle; 
+    transition: background 0.2s;
+}
+.standings-table tr:hover td { 
+    background: rgba(255,255,255,0.02); 
+}
+
+/* Columna de Posición */
+.pos-col { 
+    font-weight: 800; 
+    color: #555; /* Gris oscuro neutro */
+    width: 40px; 
+    font-size: 1.1rem;
+}
+.top-1 { color: #ffd700; } /* Oro */
+.top-2 { color: #c0c0c0; } /* Plata */
+.top-3 { color: #cd7f32; } /* Bronce */
+
+/* Columna de Puntos */
+.pts-col { 
+    text-align: right; 
+    font-size: 1.2rem; 
+    font-weight: 700;
+}
+.standings-table th:last-child { 
+    text-align: right; 
+}
+
+/* Tipografía de Pilotos */
+.driver-name {
+    font-size: 1.05rem;
+    letter-spacing: 0.5px;
+}
+.driver-name .first-name {
+    color: #ffffff;
+    font-weight: 400;
+}
+.driver-name .last-name {
+    font-weight: 800;
+    text-transform: uppercase;
+}
+.team-name-small {
+    color: var(--text-sec);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 3px;
+    font-weight: 600;
+}

@@ -77,7 +77,8 @@ async function cargarClasificaciones() {
             const data = docSnap.data();
             const equipo = { id: docSnap.id, ...data, puntos: data.puntos || 0 };
             equiposData.push(equipo);
-            equiposMap[docSnap.id] = { nombre: equipo.nombre, color: equipo.color };
+            // Aseguramos un color por defecto en caso de que no lo tenga
+            equiposMap[docSnap.id] = { nombre: equipo.nombre, color: equipo.color || "#8a8b98" };
         });
 
         // 2. Obtener Pilotos
@@ -93,74 +94,113 @@ async function cargarClasificaciones() {
         equiposData.sort((a, b) => b.puntos - a.puntos);
         pilotosData.sort((a, b) => b.puntos - a.puntos);
 
-
-        // 4. Pintar Constructores (máximo 20)
-        // Construimos una tabla con cabecera y cuerpo para mejor semántica.
-        let htmlTabla = `<table class="standing-table" style="width:100%; border-collapse:collapse; text-align:left;">
-            <thead class="standing-header"><tr><th style="width:60px">Pos</th><th>Escudería</th><th style="width:90px; text-align:right">Puntos</th></tr></thead><tbody>`;
+        // ==========================================
+        // 4. TABLA DE CONSTRUCTORES (EQUIPOS)
+        // ==========================================
+        let htmlTablaEquipos = `
+        <table style="width:100%; border-collapse:collapse; margin-top:10px;">
+            <thead>
+                <tr>
+                    <th style="text-align:left; color:var(--text-sec); padding:10px 15px; border-bottom:1px solid var(--border); font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; width:40px;">Pos</th>
+                    <th style="text-align:left; color:var(--text-sec); padding:10px 15px; border-bottom:1px solid var(--border); font-size:0.75rem; text-transform:uppercase; letter-spacing:1px;">Equipo</th>
+                    <th style="text-align:right; color:var(--text-sec); padding:10px 15px; border-bottom:1px solid var(--border); font-size:0.75rem; text-transform:uppercase; letter-spacing:1px;">Pts</th>
+                </tr>
+            </thead>
+            <tbody>`;
 
         const equiposTop20 = equiposData.slice(0, 20);
 
         equiposTop20.forEach((equipo, index) => {
             const posicion = index + 1;
-            const topClass = posicion <= 3 ? "top-3" : "";
-            const bordeColor = posicion <= 3 ? equipo.color : "var(--border-color)";
-            htmlTabla += `
-                <tr class="standing-row ${topClass}" data-pos="${posicion}" style="border-bottom:1px solid var(--border-color);">
-                    <td class="pos-number" style="padding:10px; text-align:center;">${posicion}</td>
-                    <td class="standing-info" style="padding:10px;">
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            ${equipo.logo ? `<img src="${equipo.logo}" class="standing-avatar" alt="${equipo.nombre}" onerror="this.style.display='none'">` : `<div class="team-color-bar" style="background-color:${equipo.color||'#999'}; width:12px; height:28px; border-radius:4px;"></div>`}
-                            <div class="standing-name"><strong>${equipo.nombre}</strong></div>
-                        </div>
+            // Colores para el Top 3
+            let posColor = "#555";
+            if (posicion === 1) posColor = "#ffd700"; // Oro
+            if (posicion === 2) posColor = "#c0c0c0"; // Plata
+            if (posicion === 3) posColor = "#cd7f32"; // Bronce
+
+            htmlTablaEquipos += `
+                <tr style="transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
+                    <td style="padding:12px 15px; border-bottom:1px solid rgba(255,255,255,0.03); vertical-align:middle; font-weight:800; font-size:1.1rem; color:${posColor};">${posicion}</td>
+                    <td style="padding:12px 15px; border-bottom:1px solid rgba(255,255,255,0.03); vertical-align:middle;">
+                        <span style="color:${equipo.color || '#fff'}; font-weight:800; font-size:1.15rem; text-transform:uppercase; letter-spacing:0.5px;">
+                            ${equipo.nombre}
+                        </span>
                     </td>
-                    <td class="standing-pts" style="padding:10px; text-align:right; font-weight:700;">${equipo.puntos}</td>
+                    <td style="padding:12px 15px; border-bottom:1px solid rgba(255,255,255,0.03); vertical-align:middle; text-align:right; font-size:1.2rem; font-weight:700;">${equipo.puntos}</td>
                 </tr>`;
         });
 
-        htmlTabla += `</tbody></table>`;
+        htmlTablaEquipos += `</tbody></table>`;
+        listaEquipos.innerHTML = htmlTablaEquipos;
 
-        listaEquipos.innerHTML = htmlTabla;
 
-
-        // 5. Pintar Pilotos (máximo 20)
-        htmlTabla = `<table class="standing-table" style="width:100%; border-collapse:collapse; text-align:left;">
-            <thead class="standing-header"><tr><th style="width:60px">Pos</th><th>Piloto</th><th style="width:110px">Escudería</th><th style="width:90px; text-align:right">Puntos</th></tr></thead><tbody>`;
+        // ==========================================
+        // 5. TABLA DE PILOTOS
+        // ==========================================
+        let htmlTablaPilotos = `
+        <table style="width:100%; border-collapse:collapse; margin-top:10px;">
+            <thead>
+                <tr>
+                    <th style="text-align:left; color:var(--text-sec); padding:10px 15px; border-bottom:1px solid var(--border); font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; width:40px;">Pos</th>
+                    <th style="text-align:left; color:var(--text-sec); padding:10px 15px; border-bottom:1px solid var(--border); font-size:0.75rem; text-transform:uppercase; letter-spacing:1px;">Piloto</th>
+                    <th style="text-align:right; color:var(--text-sec); padding:10px 15px; border-bottom:1px solid var(--border); font-size:0.75rem; text-transform:uppercase; letter-spacing:1px;">Pts</th>
+                </tr>
+            </thead>
+            <tbody>`;
 
         const pilotosTop20 = pilotosData.slice(0, 20);
 
         pilotosTop20.forEach((piloto, index) => {
             const posicion = index + 1;
-            const infoEquipo = equiposMap[piloto.equipoId] || { nombre: "Agente Libre", color: "#888888" };
-            const topClass = posicion <= 3 ? "top-3" : "";
+            const infoEquipo = equiposMap[piloto.equipoId] || { nombre: "Agente Libre", color: "#8a8b98" };
+            
+            // Colores para el Top 3
+            let posColor = "#555";
+            if (posicion === 1) posColor = "#ffd700";
+            if (posicion === 2) posColor = "#c0c0c0";
+            if (posicion === 3) posColor = "#cd7f32";
 
-            htmlTabla += `
-                <tr class="standing-row ${topClass}" data-pos="${posicion}" style="border-bottom:1px solid var(--border-color);">
-                    <td class="pos-number" style="padding:10px; text-align:center;">${posicion}</td>
-                    <td class="standing-info" style="padding:10px;">
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            ${piloto.foto ? `<img src="${piloto.foto}" class="standing-avatar" alt="${piloto.nombre}">` : `<div class="standing-avatar" style="background:${infoEquipo.color};"></div>`}
-                            <div class="standing-name" style="display:flex; flex-direction:column; justify-content:center;">
-                                <strong style="line-height:1.1;">${piloto.nombre} ${piloto.apellido || ''}</strong>
-                                <span style="font-size:0.85rem; color:var(--text-secondary);">${infoEquipo.nombre}</span>
+            // Lógica para nombre en blanco y apellido en color del equipo
+            // Si el campo apellido existe explícitamente, lo usamos. Si no, intentamos extraerlo del campo nombre.
+            let firstName = "";
+            let lastName = "";
+            
+            if (piloto.apellido && piloto.apellido.trim() !== "") {
+                firstName = piloto.nombre;
+                lastName = piloto.apellido;
+            } else {
+                const nameParts = piloto.nombre.trim().split(' ');
+                lastName = nameParts.length > 1 ? nameParts.pop() : piloto.nombre;
+                firstName = nameParts.length > 0 ? nameParts.join(' ') : '';
+            }
+
+            htmlTablaPilotos += `
+                <tr style="transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
+                    <td style="padding:12px 15px; border-bottom:1px solid rgba(255,255,255,0.03); vertical-align:middle; font-weight:800; font-size:1.1rem; color:${posColor};">${posicion}</td>
+                    <td style="padding:12px 15px; border-bottom:1px solid rgba(255,255,255,0.03); vertical-align:middle;">
+                        <div>
+                            <div style="font-size:1.05rem; letter-spacing:0.5px;">
+                                <span style="color:#ffffff; font-weight:400;">${firstName}</span> 
+                                <span style="color:${infoEquipo.color}; font-weight:800; text-transform:uppercase;">${lastName}</span>
+                            </div>
+                            <div style="color:var(--text-sec); font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; margin-top:3px; font-weight:600;">
+                                ${infoEquipo.nombre}
                             </div>
                         </div>
                     </td>
-                    <td style="padding:10px; vertical-align:middle;">${infoEquipo.nombre}</td>
-                    <td class="standing-pts" style="padding:10px; text-align:right; font-weight:700;">${piloto.puntos}</td>
+                    <td style="padding:12px 15px; border-bottom:1px solid rgba(255,255,255,0.03); vertical-align:middle; text-align:right; font-size:1.2rem; font-weight:700;">${piloto.puntos}</td>
                 </tr>`;
         });
 
-        htmlTabla += `</tbody></table>`;
-
-        listaPilotos.innerHTML = htmlTabla;
+        htmlTablaPilotos += `</tbody></table>`;
+        listaPilotos.innerHTML = htmlTablaPilotos;
 
         if (pilotosData.length === 0) listaPilotos.innerHTML = "<p class='text-muted'>No hay datos de pilotos.</p>";
         if (equiposData.length === 0) listaEquipos.innerHTML = "<p class='text-muted'>No hay datos de equipos.</p>";
 
     } catch (error) {
         console.error("Error cargando clasificaciones:", error);
-        listaPilotos.innerHTML = "<p style='color: var(--danger);'>Error al cargar.</p>";
-        listaEquipos.innerHTML = "<p style='color: var(--danger);'>Error al cargar.</p>";
+        listaPilotos.innerHTML = "<p style='color: var(--danger);'>Error al cargar los datos.</p>";
+        listaEquipos.innerHTML = "<p style='color: var(--danger);'>Error al cargar los datos.</p>";
     }
 }
