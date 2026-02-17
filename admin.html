@@ -8,69 +8,12 @@
     <link rel="stylesheet" href="mobile-responsive.css">
     <link rel="stylesheet" href="hamburger.css">
     <style>
-        /* Hamburger menu for mobile responsiveness - MUST USE !important */
-        .hamburger-btn { 
-            display: none !important; 
-            flex-direction: column !important; 
-            gap: 3px !important; 
-            background: none !important; 
-            border: none !important; 
-            cursor: pointer !important; 
-            padding: 4px 6px !important; 
-            z-index: 1001 !important;
-        }
-        .hamburger-btn span { 
-            width: 22px !important; 
-            height: 2px !important; 
-            background-color: var(--text-primary) !important; 
-            border-radius: 2px !important; 
-            transition: all 0.3s ease !important; 
-        }
-        .hamburger-btn.active span:nth-child(1) { transform: rotate(45deg) translate(8px, 8px) !important; }
-        .hamburger-btn.active span:nth-child(2) { opacity: 0 !important; }
-        .hamburger-btn.active span:nth-child(3) { transform: rotate(-45deg) translate(6px, -6px) !important; }
-        
-        @media (max-width: 900px) {
-            .hamburger-btn { 
-                display: flex !important; 
-                align-items: center !important;
-                justify-content: center !important;
-            }
-            .nav-links { 
-                display: none !important; 
-                position: fixed !important; 
-                top: 60px !important; 
-                left: 0 !important; 
-                right: 0 !important; 
-                flex-direction: column !important; 
-                background: linear-gradient(180deg, rgba(23, 23, 25, 0.99), rgba(15, 15, 18, 0.99)) !important; 
-                padding: 8px 0 !important; 
-                gap: 0 !important; 
-                list-style: none !important; 
-                z-index: 100 !important; 
-                border-bottom: 1px solid var(--border-color) !important; 
-                backdrop-filter: blur(15px) !important; 
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important; 
-                max-height: calc(100vh - 60px) !important; 
-                overflow-y: auto !important; 
-            }
-            .nav-links.active { display: flex !important; }
-            .nav-links li { 
-                padding: 0 !important; 
-                border-bottom: 1px solid var(--border-color) !important; 
-                list-style: none !important;
-            }
-            .nav-links li:last-child { border-bottom: none !important; }
-            .nav-links a { 
-                display: block !important; 
-                padding: 10px 15px !important; 
-                font-size: 0.9rem !important;
-                color: var(--text-primary) !important;
-                text-decoration: none !important;
-            }
-            .nav-auth { width: 100% !important; gap: 6px !important; flex-wrap: wrap !important; order: -1 !important; }
-            .nav-auth button { flex: 1 !important; min-width: 100px !important; font-size: 0.75rem !important; padding: 8px 12px !important; }
-        }
+        /* Estilos para las pestañas dentro del modal de carrera */
+        .modal-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); }
+        .modal-tab-btn { flex: 1; padding: 10px; background: transparent; border: none; color: var(--text-secondary); cursor: pointer; border-bottom: 3px solid transparent; font-weight: 600; }
+        .modal-tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .session-content { display: none; }
+        .session-content.active { display: block; }
     </style>
 </head>
 <body>
@@ -86,13 +29,8 @@
             <li><a href="pilotos.html">Pilotos</a></li>
         </ul>
     </nav>
-    <script>
-        function toggleMenu() { const h = document.getElementById('hamburger-btn'); const n = document.getElementById('nav-links'); h.classList.toggle('active'); n.classList.toggle('active'); }
-        document.querySelectorAll('.nav-links a').forEach(link => { link.addEventListener('click', () => { document.getElementById('hamburger-btn').classList.remove('active'); document.getElementById('nav-links').classList.remove('active'); }); });
-    </script>
 
     <div class="admin-layout">
-        
         <aside class="admin-sidebar">
             <button class="admin-tab-btn active" data-target="panel-mensajes">1. Comunicados</button>
             <button class="admin-tab-btn" data-target="panel-equipos">2. Equipos</button>
@@ -103,7 +41,6 @@
         </aside>
 
         <main class="admin-content">
-
             <section id="panel-mensajes" class="admin-panel active">
                 <h2>Enviar Comunicado Oficial</h2>
                 <div class="card">
@@ -113,15 +50,10 @@
                             <option value="Admin">Admin</option>
                             <option value="FIA">FIA</option>
                         </select>
-                        
                         <label>A quién (Destinatario):</label>
-                        <select id="msg-destinatario" required>
-                            <option value="todos">A todos los equipos</option>
-                        </select>
-
+                        <select id="msg-destinatario" required><option value="todos">A todos los equipos</option></select>
                         <label>Mensaje:</label>
                         <textarea id="msg-texto" rows="4" placeholder="Escribe el comunicado..." required></textarea>
-
                         <button type="submit" class="btn-solid" style="width: 100%; margin-top: 15px;">Enviar Comunicado</button>
                     </form>
                 </div>
@@ -180,13 +112,9 @@
             </section>
 
             <section id="panel-actividad" class="admin-panel">
-                <h2>Registro de Actividad y Peticiones</h2>
-                <p class="text-muted">Aquí verás todo lo que hacen los mánagers en sus equipos.</p>
-                <div id="lista-actividad" class="media-grid" style="display: flex; flex-direction: column; gap: 15px; margin-top: 20px;">
-                    <p class="text-muted">Cargando registros...</p>
-                </div>
+                <h2>Registro de Actividad</h2>
+                <div id="lista-actividad" class="media-grid" style="display: flex; flex-direction: column; gap: 15px; margin-top: 20px;"></div>
             </section>
-
         </main>
     </div>
 
@@ -195,10 +123,10 @@
             <h3 id="titulo-modal-equipo">Crear Equipo</h3>
             <form id="form-equipo">
                 <input type="hidden" id="eq-id">
-                <label>Nombre del Equipo</label><input type="text" id="eq-nombre" required>
-                <label>Color (Hex)</label><input type="color" id="eq-color" style="height:40px; padding:0;" required>
-                <label>URL Foto del Coche</label><input type="text" id="eq-coche" placeholder="Ej: assets/img/coche.png">
-                <label>URL Logo del Equipo</label><input type="text" id="eq-logo" placeholder="Ej: assets/img/logo.png">
+                <label>Nombre</label><input type="text" id="eq-nombre" required>
+                <label>Color</label><input type="color" id="eq-color" style="height:40px; padding:0;" required>
+                <label>Foto Coche</label><input type="text" id="eq-coche">
+                <label>Logo</label><input type="text" id="eq-logo">
                 <div style="display:flex; gap:10px; margin-top:20px;">
                     <button type="submit" class="btn-solid" style="flex:1;">Guardar</button>
                     <button type="button" class="btn-outline" onclick="cerrarModal('modal-equipo')" style="flex:1;">Cancelar</button>
@@ -213,64 +141,18 @@
             <form id="form-piloto">
                 <input type="hidden" id="pil-id">
                 <label>Nombre</label><input type="text" id="pil-nombre" required>
-                <label>Apellidos</label><input type="text" id="pil-apellido" placeholder="Ej: Pérez">
-                <label>Número (Dorsal)</label><input type="number" id="pil-numero" required>
-                <label>País (Siglas o Nombre)</label><input type="text" id="pil-pais" required>
-                <label>Edad</label><input type="number" id="pil-edad" min="18" max="50" placeholder="Ej: 25">
-                <label>Ritmo (0-100)</label><input type="number" id="pil-ritmo" min="0" max="100" placeholder="Ej: 85">
-                <label>Agresividad (0-100)</label><input type="number" id="pil-agresividad" min="0" max="100" placeholder="Ej: 75">
-                <label>Moral (0-100)</label>
-                <select id="pil-moral" required>
-                    <option value="">Selecciona una opción</option>
-                    <option value="Baja">Baja</option>
-                    <option value="Normal">Normal</option>
-                    <option value="Alta">Alta</option>
-                </select>
-                <label>Equipo Actual</label>
-                <select id="pil-equipo">
-                    <option value="">Ninguno (Agente Libre)</option>
-                </select>
-                <label>URL Foto (Opcional)</label><input type="text" id="pil-foto" placeholder="Ej: assets/img/piloto.png">
+                <label>Apellidos</label><input type="text" id="pil-apellido">
+                <label>Número</label><input type="number" id="pil-numero" required>
+                <label>País</label><input type="text" id="pil-pais" required>
+                <label>Edad</label><input type="number" id="pil-edad">
+                <label>Ritmo</label><input type="number" id="pil-ritmo">
+                <label>Agresividad</label><input type="number" id="pil-agresividad">
+                <label>Moral</label><select id="pil-moral"><option value="Normal">Normal</option><option value="Alta">Alta</option><option value="Baja">Baja</option></select>
+                <label>Equipo</label><select id="pil-equipo"></select>
+                <label>Foto</label><input type="text" id="pil-foto">
                 <div style="display:flex; gap:10px; margin-top:20px;">
                     <button type="submit" class="btn-solid" style="flex:1;">Guardar</button>
                     <button type="button" class="btn-outline" onclick="cerrarModal('modal-piloto')" style="flex:1;">Cancelar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div id="modal-carrera" class="modal-overlay">
-        <div class="modal-content card" style="max-height: 90vh; overflow-y: auto; max-width: 600px;">
-            <h3 id="titulo-modal-carrera">Crear / Editar Carrera</h3>
-            <form id="form-carrera">
-                <input type="hidden" id="car-id">
-                
-                <h4 style="color:var(--text-secondary); margin-top:10px;">Datos Básicos</h4>
-                <div style="display:flex; gap:10px;">
-                    <div style="flex:1;"><label>Ronda</label><input type="number" id="car-ronda" required></div>
-                    <div style="flex:2;"><label>Nombre GP</label><input type="text" id="car-nombre" required placeholder="Ej: GP Bahréin"></div>
-                </div>
-                <label>Circuito</label><input type="text" id="car-circuito" required>
-                <label>Fecha y Hora</label><input type="datetime-local" id="car-fecha" required>
-
-                <h4 style="color:var(--text-secondary); margin-top:20px; border-top:1px solid var(--border-color); padding-top:10px;">Puntos Extra</h4>
-                <div style="display:flex; gap:10px;">
-                    <div style="flex:1;"><label>Pole Position</label><select id="car-pole"><option value="">Ninguno</option></select></div>
-                    <div style="flex:1;"><label>Vuelta Rápida (VR)</label><select id="car-vr"><option value="">Ninguno</option></select></div>
-                </div>
-
-                <h4 style="color:var(--text-secondary); margin-top:20px;">Clasificación Final (1º al 20º)</h4>
-                <div id="carrera-posiciones" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: var(--bg-tertiary); padding: 15px; border-radius: 8px;">
-                </div>
-                
-                <label style="display:flex; align-items:center; gap:10px; margin-top:20px; cursor:pointer; background: var(--bg-secondary); padding: 10px; border-radius: 6px;">
-                    <input type="checkbox" id="car-completada" style="width:auto; margin:0; transform: scale(1.5);"> 
-                    <strong>Marcar como carrera COMPLETADA</strong>
-                </label>
-
-                <div style="display:flex; gap:10px; margin-top:20px;">
-                    <button type="submit" class="btn-solid" style="flex:1;">Guardar Resultados</button>
-                    <button type="button" class="btn-outline" onclick="cerrarModal('modal-carrera')" style="flex:1;">Cancelar</button>
                 </div>
             </form>
         </div>
@@ -281,16 +163,10 @@
             <h3 id="titulo-modal-media">Crear Publicación</h3>
             <form id="form-media">
                 <input type="hidden" id="med-id">
-                <label>Tipo de Contenido</label>
-                <select id="med-tipo" required>
-                    <option value="articulo">Artículo / Noticia</option>
-                    <option value="foto">Fotografía</option>
-                    <option value="video">Vídeo</option>
-                </select>
+                <label>Tipo</label><select id="med-tipo"><option value="articulo">Artículo</option><option value="foto">Foto</option><option value="video">Vídeo</option></select>
                 <label>Título</label><input type="text" id="med-titulo" required>
-                <label>URL (Obligatorio para Foto/Vídeo)</label><input type="text" id="med-url" placeholder="Ej: assets/img/noticia.jpg">
-                <label>Texto (Obligatorio para Artículo)</label><textarea id="med-texto" rows="5" placeholder="Cuerpo de la noticia..."></textarea>
-                
+                <label>URL</label><input type="text" id="med-url">
+                <label>Texto</label><textarea id="med-texto" rows="5"></textarea>
                 <div style="display:flex; gap:10px; margin-top:20px;">
                     <button type="submit" class="btn-solid" style="flex:1;">Publicar</button>
                     <button type="button" class="btn-outline" onclick="cerrarModal('modal-media')" style="flex:1;">Cancelar</button>
@@ -299,15 +175,78 @@
         </div>
     </div>
 
+    <div id="modal-carrera" class="modal-overlay">
+        <div class="modal-content card" style="max-height: 90vh; overflow-y: auto; max-width: 700px;">
+            <h3 id="titulo-modal-carrera">Gestión de Gran Premio</h3>
+            <form id="form-carrera">
+                <input type="hidden" id="car-id">
+                
+                <div style="display:flex; gap:10px;">
+                    <div style="flex:1;"><label>Ronda</label><input type="number" id="car-ronda" required></div>
+                    <div style="flex:2;"><label>Nombre GP</label><input type="text" id="car-nombre" required></div>
+                </div>
+                <label>Circuito</label><input type="text" id="car-circuito" required>
+                <label>Fecha</label><input type="datetime-local" id="car-fecha" required>
+
+                <h4 style="margin-top:20px;">Resultados de Sesión</h4>
+                
+                <div class="modal-tabs">
+                    <button type="button" class="modal-tab-btn active" onclick="cambiarPestanaSesion('practica')">Práctica</button>
+                    <button type="button" class="modal-tab-btn" onclick="cambiarPestanaSesion('clasificacion')">Clasificación</button>
+                    <button type="button" class="modal-tab-btn" onclick="cambiarPestanaSesion('carrera')">Carrera</button>
+                </div>
+
+                <div id="tab-practica" class="session-content active">
+                    <p class="text-muted" style="font-size:0.8rem;">Resultados de Entrenamientos Libres (1-20)</p>
+                    <div id="container-practica" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
+                </div>
+
+                <div id="tab-clasificacion" class="session-content">
+                    <p class="text-muted" style="font-size:0.8rem;">Resultados de Clasificación (1-20). Define la Pole.</p>
+                    <div id="container-clasificacion" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
+                </div>
+
+                <div id="tab-carrera" class="session-content">
+                    <p class="text-muted" style="font-size:0.8rem;">Resultados de Carrera (1-20). Define puntos y Vuelta Rápida.</p>
+                    <div style="display:flex; gap:10px; margin-bottom:15px; background:var(--bg-tertiary); padding:10px; border-radius:6px;">
+                        <div style="flex:1;"><label>Pole (Estadística)</label><select id="car-pole"><option value="">--</option></select></div>
+                        <div style="flex:1;"><label>Vuelta Rápida</label><select id="car-vr"><option value="">--</option></select></div>
+                    </div>
+                    <div id="container-carrera" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;"></div>
+                </div>
+                
+                <label style="display:flex; align-items:center; gap:10px; margin-top:20px; cursor:pointer; background: var(--bg-secondary); padding: 10px; border-radius: 6px;">
+                    <input type="checkbox" id="car-completada" style="width:auto; margin:0; transform: scale(1.5);"> 
+                    <strong>Marcar como COMPLETADA (Calcula puntos)</strong>
+                </label>
+
+                <div style="display:flex; gap:10px; margin-top:20px;">
+                    <button type="submit" class="btn-solid" style="flex:1;">Guardar Todo</button>
+                    <button type="button" class="btn-outline" onclick="cerrarModal('modal-carrera')" style="flex:1;">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="nav.js" defer></script>
     <script type="module" src="admin.js"></script>
     <script>
-        // Funciones simples para abrir/cerrar modales desde el HTML (por si las necesitas)
-        window.abrirModal = function(id) { 
-            document.getElementById(id).style.display = 'flex'; 
+        // Lógica visual de pestañas dentro del modal
+        function cambiarPestanaSesion(tabName) {
+            document.querySelectorAll('.modal-tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.session-content').forEach(c => c.classList.remove('active'));
+            
+            // Buscar botón por texto (chapuza rápida pero efectiva) o por orden
+            const buttons = document.querySelectorAll('.modal-tab-btn');
+            if(tabName === 'practica') buttons[0].classList.add('active');
+            if(tabName === 'clasificacion') buttons[1].classList.add('active');
+            if(tabName === 'carrera') buttons[2].classList.add('active');
+
+            document.getElementById('tab-' + tabName).classList.add('active');
         }
-        window.cerrarModal = function(id) { 
-            document.getElementById(id).style.display = 'none'; 
-        }
+        window.cambiarPestanaSesion = cambiarPestanaSesion;
+        window.abrirModal = (id) => document.getElementById(id).style.display = 'flex';
+        window.cerrarModal = (id) => document.getElementById(id).style.display = 'none';
     </script>
 </body>
 </html>

@@ -1,11 +1,8 @@
 // calendario.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import { getFirestore, collection, getDocs, doc, getDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
-// ==========================================
-// 1. CONFIGURACIÓN FIREBASE
-// ==========================================
 const firebaseConfig = {
     apiKey: "AIzaSyAE1PLVdULmXqkscQb9jK8gAkXbjIBETbk",
     authDomain: "fxmanager-c5868.firebaseapp.com",
@@ -19,95 +16,160 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-document.addEventListener("DOMContentLoaded", () => {
-    
-    // ==========================================
-    // 2. GESTIÓN DEL MENÚ SUPERIOR
-    // ==========================================
+// Caché de datos
+let pilotosMap = {};
+let equiposMap = {};
+
+document.addEventListener("DOMContentLoaded", async () => {
+    // Nav logic
     const navDashboard = document.getElementById("nav-dashboard");
-    const btnLogin = document.getElementById("btnLogin");
-    const btnLogout = document.getElementById("btnLogout");
-
-    onAuthStateChanged(auth, async (user) => {
-        if (user) {
-            if (btnLogin) btnLogin.style.display = "none";
-            if (btnLogout) btnLogout.style.display = "block";
-
-            try {
-                const userRef = doc(db, "usuarios", user.uid);
-                const userSnap = await getDoc(userRef);
-
-                if (userSnap.exists()) {
-                    const userData = userSnap.data();
-                    if (userData.equipo && userData.equipo !== "" && navDashboard) navDashboard.style.display = "inline-block";
-                }
-            } catch (error) {
-                console.error("Error cargando permisos:", error);
-            }
-        } else {
-            if (btnLogin) btnLogin.style.display = "inline-block";
-            if (btnLogout) btnLogout.style.display = "none";
-        }
-        
-        // Cargamos las carreras sin importar si hay usuario o no (es público)
-        cargarCalendario();
+    onAuthStateChanged(auth, (user) => {
+        if (user && navDashboard) navDashboard.style.display = "inline-block";
     });
 
-    if (btnLogin) btnLogin.addEventListener("click", () => window.location.href = "login.html");
-    if (btnLogout) btnLogout.addEventListener("click", async () => {
-        await signOut(auth);
-        window.location.reload();
-    });
+    await cargarDatosBase();
+    cargarCalendario();
 });
 
-// ==========================================
-// 3. OBTENER Y RENDERIZAR CARRERAS
-// ==========================================
+async function cargarDatosBase() {
+    // Cargar Pilotos
+    const pSnap = await getDocs(collection(db, "pilotos"));
+    pSnap.forEach(d => {
+        const p = d.data();
+        pilotosMap[d.id] = { nombre: p.nombre, apellido: p.apellido || '', equipoId: p.equipoId };
+    });
+
+    // Cargar Equipos
+    const eSnap = await getDocs(collection(db, "equipos"));
+    eSnap.forEach(d => {
+        const e = d.data();
+        equiposMap[d.id] = { nombre: e.nombre, color: e.color || '#fff' };
+    });
+}
+
 async function cargarCalendario() {
-    const gridCalendario = document.getElementById("grid-calendario");
-    
+    const grid = document.getElementById("grid-calendario");
     try {
-        // Pedimos a Firestore las carreras ordenadas por el campo "ronda" (1, 2, 3...)
-        const carrerasRef = collection(db, "carreras");
-        const q = query(carrerasRef, orderBy("ronda", "asc"));
+        const q = query(collection(db, "carreras"), orderBy("ronda", "asc"));
         const snapshot = await getDocs(q);
 
-        if (snapshot.empty) {
-            gridCalendario.innerHTML = "<p style='text-align:center; color: var(--text-secondary);'>Aún no hay carreras programadas en el calendario.</p>";
+        grid.innerHTML = "";
+        
+        if(snapshot.empty) {
+            grid.innerHTML = "<p class='text-muted' style='text-align:center;'>No hay carreras programadas.</p>";
             return;
         }
 
-        gridCalendario.innerHTML = ""; // Limpiar mensaje de carga
-
         snapshot.forEach(docSnap => {
-            const carrera = docSnap.data();
+            const c = docSnap.data();
+            const fecha = new Date(c.fecha).toLocaleDateString("es-ES", { day: 'numeric', month: 'long', hour: '2-digit', minute:'2-digit' });
             
-            // Verificamos si la carrera está completada (asegúrate de tener este campo en tu BD)
-            const isCompletada = carrera.completada === true;
-            const statusClass = isCompletada ? "status-completed" : "status-pending";
-            const statusText = isCompletada ? "Completada" : "Pendiente";
+            let estadoHTML = `<span class="race-status status-pending">📅 Pendiente</span>`;
+            let botonHTML = `<button class="btn-outline" disabled style="opacity:0.5; cursor:not-allowed;">Esperando resultados</button>`;
 
-            // Crear el HTML de la tarjeta
-            const card = document.createElement("div");
-            card.className = "race-card";
-            card.innerHTML = `
-                <div class="race-info">
-                    <div class="race-round">R${carrera.ronda || '0'}</div>
-                    <div class="race-details">
-                        <h2>${carrera.nombre || 'Gran Premio Desconocido'}</h2>
-                        <p>${carrera.circuito || 'Circuito por definir'} | ${carrera.fecha || 'Fecha por definir'}</p>
+            if (c.completada) {
+                // Buscar nombre del ganador
+                const ganadorId = c.resultados_20 ? c.resultados_20[0] : null;
+                let nombreGanador = "Desconocido";
+                let colorGanador = "var(--border-color)";
+                
+                if (ganadorId && pilotosMap[ganadorId]) {
+                    const p = pilotosMap[ganadorId];
+                    nombreGanador = `${p.nombre} ${p.apellido}`;
+                    const eq = equiposMap[p.equipoId];
+                    if(eq) colorGanador = eq.color;
+                }
+
+                estadoHTML = `
+                    <div style="text-align:right;">
+                        <span style="display:block; font-size:0.7rem; color:var(--text-secondary); text-transform:uppercase;">Ganador</span>
+                        <strong style="color:${colorGanador}; font-size:1.1rem;">🏆 ${nombreGanador}</strong>
+                    </div>
+                `;
+                
+                // Guardamos todos los datos de la carrera en el botón para pasarlos al modal
+                // IMPORTANTE: Serializar con cuidado para evitar errores de comillas
+                const dataString = encodeURIComponent(JSON.stringify(c));
+                botonHTML = `<button class="btn-solid" onclick="abrirDetalles('${dataString}')">Ver Resultados</button>`;
+            }
+
+            grid.innerHTML += `
+                <div class="race-card">
+                    <div class="race-info">
+                        <div class="race-round">${c.ronda}</div>
+                        <div class="race-details">
+                            <h2>${c.nombre}</h2>
+                            <p>${c.circuito} • ${fecha}</p>
+                        </div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:20px;">
+                        ${estadoHTML}
+                        ${botonHTML}
                     </div>
                 </div>
-                <div class="race-status ${statusClass}">
-                    ${statusText}
-                </div>
             `;
-
-            gridCalendario.appendChild(card);
         });
 
     } catch (error) {
-        console.error("Error cargando el calendario:", error);
-        gridCalendario.innerHTML = "<p style='text-align:center; color: var(--danger);'>Hubo un error al cargar el calendario.</p>";
+        console.error(error);
+        grid.innerHTML = "<p>Error al cargar el calendario.</p>";
     }
+}
+
+// Función global para abrir el modal (se llama desde el HTML generado)
+window.abrirDetalles = (dataEncoded) => {
+    const data = JSON.parse(decodeURIComponent(dataEncoded));
+    
+    document.getElementById("modal-titulo").textContent = `${data.nombre} - Resultados`;
+    
+    // Info Pole y VR
+    const divPole = document.getElementById("info-pole");
+    const divVr = document.getElementById("info-vr");
+    
+    const getPilotoHTML = (pid) => {
+        if(!pid || !pilotosMap[pid]) return "N/A";
+        const p = pilotosMap[pid];
+        const e = equiposMap[p.equipoId] || {color:'#fff'};
+        return `<span style="font-weight:bold; color:${e.color}">${p.nombre} ${p.apellido}</span>`;
+    };
+
+    divPole.innerHTML = `<span style="color:var(--text-secondary); font-size:0.8rem; text-transform:uppercase;">Pole Position</span><br>${getPilotoHTML(data.pole)}`;
+    divVr.innerHTML = `<span style="color:var(--text-secondary); font-size:0.8rem; text-transform:uppercase;">Vuelta Rápida</span><br>${getPilotoHTML(data.vr)}`;
+
+    // Rellenar Tablas
+    llenarTabla("table-race-body", data.resultados_20);
+    llenarTabla("table-qual-body", data.clasificacion);
+    llenarTabla("table-prac-body", data.entrenamientos);
+
+    // Resetear pestañas y mostrar modal
+    window.verPestana('race'); // Función definida en el HTML
+    document.getElementById("modal-detalles").style.display = "flex";
+};
+
+function llenarTabla(elementId, idList) {
+    const tbody = document.getElementById(elementId);
+    tbody.innerHTML = "";
+    
+    if (!idList || idList.length === 0 || (idList.length === 1 && idList[0] === "")) {
+        tbody.innerHTML = "<tr><td colspan='3' style='text-align:center; color:var(--text-secondary);'>Sin datos registrados.</td></tr>";
+        return;
+    }
+
+    idList.forEach((pid, index) => {
+        if (!pid) return;
+        const p = pilotosMap[pid];
+        const e = p ? equiposMap[p.equipoId] : null;
+        
+        const nombre = p ? `${p.nombre} <strong>${p.apellido}</strong>` : "Desconocido";
+        const equipoNombre = e ? e.nombre : "N/A";
+        const equipoColor = e ? e.color : "#fff";
+
+        tbody.innerHTML += `
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                <td style="padding:10px; font-weight:bold;">${index + 1}</td>
+                <td style="padding:10px;">${nombre}</td>
+                <td style="padding:10px; color:${equipoColor}; font-weight:600;">${equipoNombre}</td>
+            </tr>
+        `;
+    });
 }
