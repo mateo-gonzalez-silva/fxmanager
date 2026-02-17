@@ -1,4 +1,4 @@
-// equipos.js - Renderiza la página de equipos con diseño moderno
+// Equipos.js - Renderiza la página de equipos con diseño moderno
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import { getFirestore, doc, getDoc, collection, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";

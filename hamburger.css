@@ -89,7 +89,7 @@
         transition: top 0.4s ease, opacity 0.4s ease !important; /* Animación de caída */
     }
 
-    /* Clase que activa JavaScript para mostrarlo */
+    /* clase que activa JavaScript para mostrarlo */
     .nav-links.active {
         top: 65px !important; /* Baja hasta colocarse bajo la navbar */
         opacity: 1 !important;

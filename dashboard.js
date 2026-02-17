@@ -1,4 +1,4 @@
-// dashboard.js - NUEVO Dashboard completamente rediseñado y funcional
+// Dashboard.js - NUEVO Dashboard completamente rediseñado y funcional
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import {
     getFirestore, doc, getDoc, collection, query, where, getDocs, 

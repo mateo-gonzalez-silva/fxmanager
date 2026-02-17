@@ -32,6 +32,6 @@
 
     /* Photo and video gallery adjustments */
     .photo-gallery, .video-gallery {
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); /* Responsive grid */
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); /* responsive grid */
     }
 }

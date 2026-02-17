@@ -98,7 +98,7 @@ function pintarMedia(filtro) {
         // Estilos modernos en línea si no tienes clase "card" en CSS. Si la tienes, pon "card"
         elemento.style.cssText = "background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; transition: transform 0.2s;";
         
-        // Efecto hover sutil
+        // Efecto hover sutil necesario
         elemento.onmouseover = () => elemento.style.transform = "translateY(-5px)";
         elemento.onmouseout = () => elemento.style.transform = "translateY(0)";
 

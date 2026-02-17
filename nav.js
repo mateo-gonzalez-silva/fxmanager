@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Evento para abrir/cerrar desde el botón
+    // evento para abrir/cerrar desde el botón
     hamburgerBtn.addEventListener('click', toggleMenu);
 
     // Cierra el menú cuando se hace clic en un enlace
