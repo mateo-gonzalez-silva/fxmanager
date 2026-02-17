@@ -24,36 +24,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function toggleMenu() {
         const isOpen = hamburgerBtn.classList.contains('active');
-        if (isOpen) closeMenu(); else openMenu();
+        if (isOpen) {
+            closeMenu();
+        } else {
+            openMenu();
+        }
     }
 
-    // Exponer toggleMenu globalmente para compatibilidad con onclick inline
-    window.toggleMenu = toggleMenu;
-
-    // Solo agregar listener si no hay onclick inline (evitar dobles toggles)
-    if (!hamburgerBtn.hasAttribute('onclick')) {
-        hamburgerBtn.addEventListener('click', toggleMenu);
-    }
+    hamburgerBtn.addEventListener('click', toggleMenu);
 
     // Close menu when a link is clicked
-    navLinks.querySelectorAll('a').forEach(link => {
-        link.addEventListener('click', () => {
-            closeMenu();
-        });
-    });
-
-    // Close on Escape
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && hamburgerBtn.classList.contains('active')) {
+    navLinks.addEventListener('click', (event) => {
+        if (event.target.tagName === 'A') {
             closeMenu();
         }
     });
 
-    // Close when clicking outside (mobile only)
-    document.addEventListener('click', (e) => {
-        if (window.innerWidth > 768) return;
-        if (!navLinks.contains(e.target) && !hamburgerBtn.contains(e.target) && navLinks.classList.contains('active')) {
+    // Close menu when clicking outside
+    document.addEventListener('click', (event) => {
+        if (!navLinks.contains(event.target) && !hamburgerBtn.contains(event.target)) {
             closeMenu();
         }
-    }, { capture: true });
+    });
 });
