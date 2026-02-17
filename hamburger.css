@@ -1,115 +1,119 @@
-/* HAMBURGER MENU - SUBTLE & MINIMAL */
+/* ====================================================
+   HAMBURGER MENU & MOBILE NAVBAR (DEFINITIVO)
+==================================================== */
+/* Ocultar el botón por defecto en PC */
+.hamburger-btn {
+    display: none !important;
+}
+
+/* Solo se aplica en pantallas de móvil/tablet */
 @media (max-width: 900px) {
     
-    .hamburger-btn {
-        display: flex !important;
-        flex-direction: column !important;
-        gap: 4px !important;
-        background: transparent !important;
-        border: none !important;
-        padding: 8px !important;
-        cursor: pointer !important;
-        align-items: center !important;
-        justify-content: center !important;
-        z-index: 9999 !important;
-        position: relative !important;
-    }
-    
-    .hamburger-btn span {
-        display: block !important;
-        width: 20px !important;
-        height: 2px !important;
-        background: #e0e0e0 !important;
-        border-radius: 1px !important;
-        transition: all 0.3s ease !important;
-    }
-    
-    .hamburger-btn.active span:nth-child(1) {
-        transform: rotate(45deg) translateY(9px) !important;
-    }
-    
-    .hamburger-btn.active span:nth-child(2) {
-        opacity: 0 !important;
-    }
-    
-    .hamburger-btn.active span:nth-child(3) {
-        transform: rotate(-45deg) translateY(-9px) !important;
-    }
-    
-    .navbar.thin-navbar {
+    /* 1. Forzar que la barra sea SIEMPRE horizontal (ignora modern.css) */
+    .navbar {
         position: fixed !important;
         top: 0 !important;
         left: 0 !important;
         right: 0 !important;
-        z-index: 9998 !important;
-        height: 48px !important;
-        padding: 6px 12px !important;
+        height: 65px !important;
+        padding: 0 20px !important;
         display: flex !important;
+        flex-direction: row !important; /* CRÍTICO: Evita que se rompa en <480px */
         align-items: center !important;
         justify-content: space-between !important;
-        gap: 12px !important;
-        width: 100% !important;
+        flex-wrap: nowrap !important;
+        z-index: 9999 !important;
+        background: linear-gradient(90deg, rgba(15, 15, 18, 0.98), rgba(23, 23, 25, 0.95)) !important;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.5) !important;
+    }
+
+    /* 2. Evitar que la barra tape el contenido superior de la web */
+    body {
+        padding-top: 65px !important;
+    }
+
+    /* 3. Diseño del botón Hamburguesa */
+    .hamburger-btn {
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        width: 30px !important;
+        height: 22px !important;
+        background: transparent !important;
+        border: none !important;
+        cursor: pointer !important;
+        z-index: 10000 !important;
+        padding: 0 !important;
         margin: 0 !important;
     }
-    
-    body {
-        padding-top: 48px !important;
+
+    .hamburger-btn span {
+        width: 100% !important;
+        height: 3px !important;
+        background-color: var(--accent, #ffffff) !important;
+        border-radius: 10px !important;
+        transition: all 0.3s ease-in-out !important;
+        transform-origin: center !important;
     }
-    
-    main {
-        padding-top: 0 !important;
-        margin-top: 0 !important;
+
+    /* Animación fluida para convertirse en una "X" */
+    .hamburger-btn.active span:nth-child(1) {
+        transform: translateY(9.5px) rotate(45deg) !important;
     }
-    
+    .hamburger-btn.active span:nth-child(2) {
+        opacity: 0 !important;
+    }
+    .hamburger-btn.active span:nth-child(3) {
+        transform: translateY(-9.5px) rotate(-45deg) !important;
+    }
+
+    /* 4. Contenedor del Menú Desplegable */
     .nav-links {
-        display: none !important;
         position: fixed !important;
-        top: 48px !important;
+        top: -100vh !important; /* Empieza oculto arriba fuera de la pantalla */
         left: 0 !important;
         right: 0 !important;
         width: 100% !important;
-        z-index: 9997 !important;
-        list-style: none !important;
-        flex-direction: column !important;
+        height: calc(100vh - 65px) !important;
         background: rgba(15, 15, 18, 0.98) !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        gap: 0 !important;
-        border-bottom: 1px solid rgba(255,255,255,0.08) !important;
-        max-height: 0 !important;
-        overflow: hidden !important;
-        transition: max-height 0.3s ease !important;
-        backdrop-filter: blur(6px) !important;
-    }
-    
-    .nav-links.active {
+        backdrop-filter: blur(10px) !important;
         display: flex !important;
-        max-height: 500px !important;
-    }
-    
-    .nav-links li {
-        list-style: none !important;
+        flex-direction: column !important;
+        justify-content: flex-start !important;
+        align-items: center !important;
         margin: 0 !important;
-        padding: 0 !important;
+        padding: 30px 0 !important;
+        gap: 20px !important;
+        z-index: 9998 !important;
+        opacity: 0 !important;
+        transition: top 0.4s ease, opacity 0.4s ease !important; /* Animación de caída */
+    }
+
+    /* Clase que activa JavaScript para mostrarlo */
+    .nav-links.active {
+        top: 65px !important; /* Baja hasta colocarse bajo la navbar */
+        opacity: 1 !important;
+    }
+
+    /* 5. Diseño de los enlaces dentro del menú móvil */
+    .nav-links li {
+        width: 100% !important;
+        text-align: center !important;
         border: none !important;
     }
-    
+
     .nav-links a {
-        display: block !important;
-        padding: 12px 16px !important;
-        color: #d0d0d0 !important;
-        text-decoration: none !important;
-        font-size: 0.9rem !important;
-        border-bottom: 1px solid rgba(255,255,255,0.04) !important;
-        transition: background 0.2s ease !important;
+        display: inline-block !important;
+        font-size: 1.2rem !important;
+        font-weight: 700 !important;
+        padding: 15px !important;
+        color: var(--text-primary, #fff) !important;
+        border: none !important;
     }
-    
-    .nav-links a:hover {
-        background: rgba(255,255,255,0.03) !important;
+
+    .nav-auth {
+        flex-direction: column !important;
+        width: 100% !important;
+        margin-top: 20px !important;
     }
-    
-    .nav-links a.active {
-        background: rgba(255,255,255,0.05) !important;
-    }
-    
 }

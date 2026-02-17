@@ -1,10 +1,11 @@
+// nav.js
 document.addEventListener('DOMContentLoaded', () => {
     const hamburgerBtn = document.getElementById('hamburger-btn');
     const navLinks = document.getElementById('nav-links');
 
     if (!hamburgerBtn || !navLinks) return;
 
-    // Accessibility initial state
+    // Accesibilidad: Estado inicial
     hamburgerBtn.setAttribute('aria-expanded', 'false');
     navLinks.setAttribute('aria-hidden', 'true');
 
@@ -22,7 +23,10 @@ document.addEventListener('DOMContentLoaded', () => {
         navLinks.setAttribute('aria-hidden', 'false');
     }
 
-    function toggleMenu() {
+    function toggleMenu(event) {
+        // Evita que el clic en el botón se propague al document y cierre el menú al instante
+        event.stopPropagation(); 
+        
         const isOpen = hamburgerBtn.classList.contains('active');
         if (isOpen) {
             closeMenu();
@@ -31,18 +35,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Evento para abrir/cerrar desde el botón
     hamburgerBtn.addEventListener('click', toggleMenu);
 
-    // Close menu when a link is clicked
+    // Cierra el menú cuando se hace clic en un enlace
     navLinks.addEventListener('click', (event) => {
-        if (event.target.tagName === 'A') {
+        if (event.target.tagName === 'A' || event.target.closest('a')) {
             closeMenu();
         }
     });
 
-    // Close menu when clicking outside
+    // Cierra el menú al hacer clic en cualquier parte fuera de él
     document.addEventListener('click', (event) => {
-        if (!navLinks.contains(event.target) && !hamburgerBtn.contains(event.target)) {
+        const isOpen = hamburgerBtn.classList.contains('active');
+        // Solo ejecuta el cierre si está abierto y el clic no fue dentro del menú
+        if (isOpen && !navLinks.contains(event.target) && !hamburgerBtn.contains(event.target)) {
             closeMenu();
         }
     });

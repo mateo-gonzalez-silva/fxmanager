@@ -111,10 +111,10 @@ function pintarMedia(filtro) {
                     <iframe src="${pub.url}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:none;" allowfullscreen></iframe>
                 </div>`;
             } else if (pub.url) {
-                // Imagen (Adaptada a proporción 4:5 sin recortes)
+                // Imagen (Proporción 4:5 exacta garantizada en todos los móviles)
                 contenidoMultimedia = `
-                    <div style="width: 100%; aspect-ratio: 4 / 5; background: #0f1014; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
-                        <img src="${pub.url}" alt="${pub.titulo}" style="width: 100%; height: 100%; object-fit: contain;">
+                    <div style="width: 100%; padding-top: 125%; position: relative; background: #000; border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                        <img src="${pub.url}" alt="${pub.titulo}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain;">
                     </div>`;
             }
 
