@@ -556,17 +556,27 @@ async function saveFixedContract() {
     }
 }
 
+// Tabla de presupuestos por posición objetivo
+const sponsorBudgetTable = {
+    1: 55000000,
+    2: 53000000,
+    3: 51000000,
+    4: 50000000,
+    5: 48000000,
+    6: 46000000,
+    7: 44000000,
+    8: 42000000,
+    9: 40000000,
+    10: 40000000
+};
+
 window.updatePositionDisplay = function(value) {
     const slider = document.getElementById("position-slider");
     slider.value = value;
 
-    // Cálculos del contrato performance con interpolación
     const targetPosition = parseInt(value);
-    
-    // Fórmula: Posición 1 = $55M, Posición 10 = $40M
-    // Linear interpolation: maxTotal = 55 - (posición - 1) * 1.6667
-    const maxTotal = Math.round(55000000 - (targetPosition - 1) * (15000000 / 9));
-    const initialPayment = Math.round(maxTotal * 0.35);
+    const maxTotal = sponsorBudgetTable[targetPosition];
+    const initialPayment = Math.round(maxTotal * 0.5);
     const maxBonus = maxTotal - initialPayment;
 
     // Actualizar display
@@ -580,9 +590,8 @@ window.updatePositionDisplay = function(value) {
 window.confirmSponsorExpectations = function() {
     const targetPosition = parseInt(document.getElementById("position-slider").value);
 
-    // Misma fórmula que updatePositionDisplay
-    const maxTotal = Math.round(55000000 - (targetPosition - 1) * (15000000 / 9));
-    const initialPayment = Math.round(maxTotal * 0.35);
+    const maxTotal = sponsorBudgetTable[targetPosition];
+    const initialPayment = Math.round(maxTotal * 0.5);
     const maxBonus = maxTotal - initialPayment;
 
     const contract = {
