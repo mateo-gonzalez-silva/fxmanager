@@ -33,7 +33,7 @@
         }
         .sponsors-modal-content {
             background: linear-gradient(135deg, rgba(26, 26, 33, 0.98) 0%, rgba(16, 16, 19, 0.98) 100%);
-            border: 1.5px solid rgba(255, 107, 53, 0.35);
+            border: 1.5px solid rgba(255, 255, 255, 0.1);
             border-radius: 18px;
             padding: 40px;
             max-width: 550px;
@@ -71,10 +71,10 @@
             text-align: center;
         }
         .sponsors-option {
-            background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.04) 100%);
-            border: 1.5px solid rgba(255,255,255,0.15);
-            padding: 26px;
-            margin: 16px 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
+            border: 1.5px solid rgba(255,255,255,0.12);
+            padding: 28px;
+            margin: 14px 0;
             border-radius: 14px;
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -100,10 +100,10 @@
             left: 100%;
         }
         .sponsors-option:hover {
-            border-color: rgba(255,255,255,0.25);
-            background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.08) 100%);
-            transform: translateY(-4px);
-            box-shadow: 0 12px 36px rgba(255,255,255,0.15);
+            border-color: rgba(255,255,255,0.2);
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(255,255,255,0.12);
         }
         .sponsors-option h3 {
             margin: 0 0 12px 0;
@@ -388,16 +388,16 @@
                 
                 <!-- SECCIÓN 1: Elegir Tipo -->
                 <div id="sponsors-choice-section">
-                    <p style="color: var(--text-secondary); margin-bottom: 30px; font-size: 1rem; line-height: 1.6;">Elige tu modelo de patrocinio para esta temporada. Cada decisión tendrá implicaciones en tu presupuesto.</p>
+                    <p style="color: rgba(255,255,255,0.65); margin: 0 0 24px 0; font-size: 0.9rem; line-height: 1.5;\">Selecciona el modelo que mejor se adapte a tu estrategia de temporada:</p>
                     
                     <div class="sponsors-option" onclick="selectSponsorOption('fixed')">
                         <h3>💵 Dinero Garantizado</h3>
                         <p style="margin: 10px 0 0 0; font-size: 1rem; font-weight: 600; color: #4CAF50;">$45,000,000</p>
                         <p style="margin: 8px 0 12px 0; color: var(--text-secondary); font-size: 0.9rem;">Recibe todo el dinero al inicio de la temporada.</p>
-                        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;">
-                            <span style="background: rgba(76,175,80,0.2); color: #4CAF50; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">✓ Sin riesgo</span>
-                            <span style="background: rgba(76,175,80,0.2); color: #4CAF50; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">✓ Predecible</span>
-                            <span style="background: rgba(244,67,54,0.2); color: #f44336; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">✗ Sin bonus</span>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px;">
+                            <span style="background: rgba(76,175,80,0.15); color: #4CAF50; padding: 5px 11px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; border: 1px solid rgba(76,175,80,0.3);">✓ Sin riesgo</span>
+                            <span style="background: rgba(76,175,80,0.15); color: #4CAF50; padding: 5px 11px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; border: 1px solid rgba(76,175,80,0.3);">✓ Predecible</span>
+                            <span style="background: rgba(244,67,54,0.15); color: #f44336; padding: 5px 11px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; border: 1px solid rgba(244,67,54,0.3);">✗ Sin bonus</span>
                         </div>
                     </div>
                     
@@ -405,10 +405,10 @@
                         <h3>📈 Dinero + Bonus</h3>
                         <p style="margin: 10px 0 0 0; font-size: 1rem; font-weight: 600; color: #ffffff;">$40M - $55M</p>
                         <p style="margin: 8px 0 12px 0; color: var(--text-secondary); font-size: 0.9rem;">Base inicial + bonus por cumplir objetivos de posición.</p>
-                        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;">
-                            <span style="background: rgba(255,255,255,0.1); color: #ffffff; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">✓ Mayor dinero</span>
-                            <span style="background: rgba(255,255,255,0.1); color: #ffffff; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">✓ Bonus dinámico</span>
-                            <span style="background: rgba(244,67,54,0.2); color: #f44336; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">✗ Depende de resultados</span>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px;">
+                            <span style="background: rgba(255,152,0,0.15); color: #FF9800; padding: 5px 11px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; border: 1px solid rgba(255,152,0,0.3);">✓ Mayor dinero</span>
+                            <span style="background: rgba(255,152,0,0.15); color: #FF9800; padding: 5px 11px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; border: 1px solid rgba(255,152,0,0.3);">✓ Bonus dinámico</span>
+                            <span style="background: rgba(244,67,54,0.15); color: #f44336; padding: 5px 11px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; border: 1px solid rgba(244,67,54,0.3);">✗ Depende de resultados</span>
                         </div>
                     </div>
                 </div>
