@@ -8,6 +8,19 @@
     <link rel="stylesheet" href="mobile-responsive.css">
     <link rel="stylesheet" href="hamburger.css">
     <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .hero-section {
+            animation: fadeIn 0.8s ease-out;
+        }
+        
         .countdown-section {
             display: flex;
             flex-direction: column;
@@ -18,6 +31,7 @@
             background-color: var(--bg-secondary);
             border: 1px solid var(--border-color);
             border-radius: 8px;
+            animation: slideDown 1s ease-out 0.3s both;
         }
         .countdown-boxes {
             display: flex;
@@ -30,6 +44,7 @@
         }
         @media (max-width: 600px) {
             .countdown-boxes { gap: 10px; }
+            .countdown-section { padding: 20px; }
         }
         .countdown-box {
             background-color: var(--bg-tertiary);
@@ -44,11 +59,18 @@
             flex-direction:column;
             justify-content:center;
             align-items:center;
+            transition: all 0.3s ease;
+            animation: fadeIn 0.8s ease-out;
+        }
+        .countdown-box:hover {
+            transform: translateY(-5px);
+            border-color: #ff6b35;
+            box-shadow: 0 8px 12px rgba(255, 107, 53, 0.2);
         }
         .countdown-value {
             font-size: 2rem;
             font-weight: 700;
-            color: var(--accent);
+            color: #ff6b35;
         }
         .countdown-label {
             font-size: 0.7rem;
@@ -74,46 +96,91 @@
     </nav>
 
     <main>
-        <div class="hero-section">
+        <!-- HERO SECTION -->
+        <div class="hero-section" style="background: linear-gradient(135deg, rgba(255,107,53,0.1) 0%, rgba(208,208,208,0.05) 100%);">
             <div class="hero-content">
-                <h1 class="hero-title">🏁 BIENVENIDO A FX MANAGER</h1>
-                <p class="hero-sub">La gestión de un equipo de carreras es más que velocidad. Es estrategia, decisiones y pasión.</p>
+                <h1 class="hero-title" style="font-size: 3.5rem; color: #ff6b35;">🏁 FX MANAGER</h1>
+                <p class="hero-sub" style="font-size: 1.3rem; max-width: 700px; margin: 15px auto;">Tu visión, tu estrategia, tu equipo. Compite en la elite del automovilismo mundial.</p>
                 
-                <div class="hero-actions">
-                    <a href="equipos.html" class="btn-solid hero-btn">Ver Escuderías</a>
-                    <a href="clasificacion.html" class="btn-outline hero-btn">Ver Clasificación</a>
-                </div>
-
-                <div class="countdown-section">
-                    <p class="countdown-title">Tiempo hasta la próxima carrera</p>
-
-                    <div class="countdown-boxes" id="countdown-container">
-                        <div class="countdown-box">
-                            <div class="countdown-value" id="days">0</div>
-                            <div class="countdown-label">Días</div>
-                        </div>
-
-                        <div class="countdown-box">
-                            <div class="countdown-value" id="hours">0</div>
-                            <div class="countdown-label">Horas</div>
-                        </div>
-
-                        <div class="countdown-box">
-                            <div class="countdown-value" id="minutes">0</div>
-                            <div class="countdown-label">Minutos</div>
-                        </div>
-
-                        <div class="countdown-box">
-                            <div class="countdown-value" id="seconds">0</div>
-                            <div class="countdown-label">Segundos</div>
-                        </div>
-                    </div>
+                <div class="hero-actions" style="gap: 15px; margin-top: 30px;">
+                    <a href="login.html" class="btn-solid hero-btn" style="padding: 14px 40px; font-size: 1.1rem; background: #ff6b35;">🚀 Comenzar Ahora</a>
+                    <a href="clasificacion.html" class="btn-outline hero-btn" style="padding: 14px 40px; font-size: 1.1rem;">📊 Ver Campeonato</a>
                 </div>
             </div>
+        </div>
 
-            <div style="text-align: center; margin-top: 50px; margin-bottom: 40px;">
-                <a href="login.html" class="btn-solid" style="padding: 12px 30px; font-size: 1rem;">Iniciar Sesión</a>
+        <!-- COUNTDOWN SECTION -->
+        <div class="countdown-section" style="margin: 50px auto; max-width: 900px;">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <h2 style="margin: 0 0 10px 0; color: var(--accent);">⏱️ Próxima Carrera</h2>
+                <p style="color: var(--text-secondary); margin: 0;">Tiempo hasta el próximo Gran Premio</p>
             </div>
+
+            <div class="countdown-boxes" id="countdown-container">
+                <div class="countdown-box" style="background: linear-gradient(135deg, rgba(255,107,53,0.2), rgba(255,107,53,0.05));">
+                    <div class="countdown-value" id="days">0</div>
+                    <div class="countdown-label">Días</div>
+                </div>
+
+                <div class="countdown-box" style="background: linear-gradient(135deg, rgba(255,107,53,0.2), rgba(255,107,53,0.05));">
+                    <div class="countdown-value" id="hours">0</div>
+                    <div class="countdown-label">Horas</div>
+                </div>
+
+                <div class="countdown-box" style="background: linear-gradient(135deg, rgba(255,107,53,0.2), rgba(255,107,53,0.05));">
+                    <div class="countdown-value" id="minutes">0</div>
+                    <div class="countdown-label">Minutos</div>
+                </div>
+
+                <div class="countdown-box" style="background: linear-gradient(135deg, rgba(255,107,53,0.2), rgba(255,107,53,0.05));">
+                    <div class="countdown-value" id="seconds">0</div>
+                    <div class="countdown-label">Segundos</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FEATURES SECTION -->
+        <div style="max-width: 1000px; margin: 80px auto; padding: 0 20px;">
+            <h2 style="text-align: center; margin-bottom: 50px; font-size: 2.5rem;">¿Por qué FX Manager?</h2>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; margin-bottom: 60px;">
+                <div style="background: var(--bg-secondary); padding: 30px; border-radius: 10px; border-left: 4px solid #ff6b35;">
+                    <h3 style="margin-top: 0; color: #ff6b35; font-size: 1.5rem;">⚙️ Control Total</h3>
+                    <p style="color: var(--text-secondary);">Gestiona tu equipo desde la estrategia de carrera hasta la investigación de componentes. Cada decisión importa.</p>
+                </div>
+
+                <div style="background: var(--bg-secondary); padding: 30px; border-radius: 10px; border-left: 4px solid #ff6b35;">
+                    <h3 style="margin-top: 0; color: #ff6b35; font-size: 1.5rem;">💰 Patrocinios Dinámicos</h3>
+                    <p style="color: var(--text-secondary);">Negocia contratos de patrocinio con bonuses basados en tu desempeño. Hasta $55M si eres el mejor.</p>
+                </div>
+
+                <div style="background: var(--bg-secondary); padding: 30px; border-radius: 10px; border-left: 4px solid #ff6b35;">
+                    <h3 style="margin-top: 0; color: #ff6b35; font-size: 1.5rem;">📈 Competencia Real</h3>
+                    <p style="color: var(--text-secondary);">Compite contra otros equipos, negocia transferencias y domina el campeonato mundial.</p>
+                </div>
+
+                <div style="background: var(--bg-secondary); padding: 30px; border-radius: 10px; border-left: 4px solid #ff6b35;">
+                    <h3 style="margin-top: 0; color: #ff6b35; font-size: 1.5rem;">🎯 Estrategia Profunda</h3>
+                    <p style="color: var(--text-secondary);">Elige tu presupuesto de desarrollo, invierte en mejoras aerodinámica o motor según tu estrategia.</p>
+                </div>
+
+                <div style="background: var(--bg-secondary); padding: 30px; border-radius: 10px; border-left: 4px solid #ff6b35;">
+                    <h3 style="margin-top: 0; color: #ff6b35; font-size: 1.5rem;">🏆 Historial Competitivo</h3>
+                    <p style="color: var(--text-secondary);">Construye tu legado. Campeonatos, victorias y récords que perduren en el tiempo.</p>
+                </div>
+
+                <div style="background: var(--bg-secondary); padding: 30px; border-radius: 10px; border-left: 4px solid #ff6b35;">
+                    <h3 style="margin-top: 0; color: #ff6b35; font-size: 1.5rem;">⚡ Rápido & Accesible</h3>
+                    <p style="color: var(--text-secondary);">Interfaz intuitiva, decisiones al instante. Juega desde cualquier dispositivo, cuando quieras.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- CTA FINAL -->
+        <div style="background: linear-gradient(135deg, rgba(255,107,53,0.15) 0%, rgba(208,208,208,0.05) 100%); padding: 60px 20px; text-align: center; border-top: 1px solid var(--border-color);">
+            <h2 style="margin-top: 0; font-size: 2rem;">¿Listo para competir?</h2>
+            <p style="color: var(--text-secondary); font-size: 1.1rem; margin-bottom: 30px;">Únete a miles de managers compitiendo por la gloria en el campeonato mundial.</p>
+            <a href="login.html" class="btn-solid" style="padding: 14px 50px; font-size: 1.1rem; background: #ff6b35; display: inline-block;">Inicia tu Equipo Ahora</a>
         </div>
     </main>
 

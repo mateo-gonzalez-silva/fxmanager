@@ -560,15 +560,19 @@ window.updatePositionDisplay = function(value) {
     const slider = document.getElementById("position-slider");
     slider.value = value;
 
-    // Cálculos del contrato performance
+    // Cálculos del contrato performance con interpolación
     const targetPosition = parseInt(value);
-    const baseGuaranteed = 40000000;
-    const maxBonus = 15000000;
-    const maxTotal = 55000000;
+    
+    // Fórmula: Posición 1 = $55M, Posición 10 = $40M
+    // Linear interpolation: maxTotal = 55 - (posición - 1) * 1.6667
+    const maxTotal = Math.round(55000000 - (targetPosition - 1) * (15000000 / 9));
+    const initialPayment = Math.round(maxTotal * 0.35);
+    const maxBonus = maxTotal - initialPayment;
 
-    // Se muestra cuál sería el bonus máximo
-    document.getElementById("expected-position").textContent = targetPosition;
-    document.getElementById("estimated-base").textContent = `$${baseGuaranteed.toLocaleString()}`;
+    // Actualizar display
+    const positionText = targetPosition === 1 ? "1º" : (targetPosition === 2 ? "2º" : (targetPosition === 3 ? "3º" : targetPosition + "º"));
+    document.getElementById("expected-position").textContent = positionText;
+    document.getElementById("estimated-base").textContent = `$${initialPayment.toLocaleString()}`;
     document.getElementById("estimated-bonus").textContent = `+$${maxBonus.toLocaleString()}`;
     document.getElementById("estimated-total").textContent = `$${maxTotal.toLocaleString()}`;
 };
@@ -576,11 +580,16 @@ window.updatePositionDisplay = function(value) {
 window.confirmSponsorExpectations = function() {
     const targetPosition = parseInt(document.getElementById("position-slider").value);
 
+    // Misma fórmula que updatePositionDisplay
+    const maxTotal = Math.round(55000000 - (targetPosition - 1) * (15000000 / 9));
+    const initialPayment = Math.round(maxTotal * 0.35);
+    const maxBonus = maxTotal - initialPayment;
+
     const contract = {
         type: "performance",
-        base: 40000000,
-        bonus: 15000000,
-        max: 55000000,
+        base: initialPayment,
+        bonus: maxBonus,
+        max: maxTotal,
         targetPosition: targetPosition,
         savedAt: serverTimestamp()
     };
@@ -630,17 +639,17 @@ function calculateBonusPercentage(finalPosition, targetPosition) {
     if (difference <= 0) {
         // Mejor o en la posición objetivo
         return 100;
-    } else if (difference >= 1 && difference <= 1) {
-        // -1 o -2 puestos
+    } else if (difference === 1) {
+        // -1 puesto
         return 100;
-    } else if (difference >= 2 && difference < 4) {
+    } else if (difference === 2) {
         // -2 puestos
         return 75;
-    } else if (difference >= 4 && difference < 6) {
-        // -4 puestos
+    } else if (difference >= 3 && difference < 5) {
+        // -3 a -4 puestos
         return 55;
-    } else if (difference >= 6) {
-        // -6 o más puestos
+    } else if (difference >= 5) {
+        // -5 o más puestos
         return 40;
     }
     return 40; // Fallback

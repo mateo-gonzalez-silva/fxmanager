@@ -363,10 +363,13 @@ async function pintarTablaSponsors() {
         let botonesHTML = `<button onclick="unlockSponsorModalAdmin('${eq.id}')" class="btn-outline" style="padding: 5px 10px; font-size: 0.8rem;">Desbloquear</button>`;
         
         if (contract) {
-            tipoTexto = contract.type === "fixed" ? "Dinero Garantizado" : "Performance";
-            detallesTexto = contract.type === "fixed" 
-                ? `$${contract.guaranteed.toLocaleString()}`
-                : `Base: $${contract.base.toLocaleString()} | Bonus: $${contract.bonus.toLocaleString()} | Objetivo: Top ${contract.targetPosition}`;
+            tipoTexto = contract.type === "fixed" ? "Dinero Garantizado" : "Performance-Based";
+            if (contract.type === "fixed") {
+                detallesTexto = `Garantizado: $${contract.guaranteed.toLocaleString()}`;
+            } else {
+                const posText = contract.targetPosition === 1 ? "1º" : (contract.targetPosition === 2 ? "2º" : (contract.targetPosition === 3 ? "3º" : contract.targetPosition + "º"));
+                detallesTexto = `Objetivo: Top ${posText} | Max: $${contract.max.toLocaleString()} | Inicial: $${contract.base.toLocaleString()}`;
+            }
             
             if (team.sponsor_contract_unlocked) {
                 estadoTexto = "Desbloqueado";
