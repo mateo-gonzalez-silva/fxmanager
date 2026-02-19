@@ -52,6 +52,9 @@ document.addEventListener("DOMContentLoaded", () => {
             if (targetId === "panel-ofertas-admin") {
                 cargarOfertasAdmin();
             }
+            if (targetId === "panel-respuestas") {
+                cargarRespuestas();
+            }
         });
     });
 
@@ -68,6 +71,27 @@ document.addEventListener("DOMContentLoaded", () => {
                 equipoId: document.getElementById("msg-destinatario").value,
                 texto: document.getElementById("msg-texto").value,
                 fecha: serverTimestamp()
+            });
+        } else if (tipo === "aprobacion") {
+            // Mensaje que requiere aprobación
+            const mensajeRef = await addDoc(collection(db, "mensajes_aprobacion"), {
+                remitente: "Admin",
+                texto: document.getElementById("msg-texto").value,
+                fecha: serverTimestamp(),
+                equipos: [] // Array de equipos que han respondido
+            });
+            
+            // Enviar notificación a todos los equipos
+            const equipos = await getDocs(collection(db, "equipos"));
+            equipos.forEach(async (eqDoc) => {
+                await addDoc(collection(db, "notificaciones"), {
+                    remitente: "Admin",
+                    equipoId: eqDoc.id,
+                    texto: `📋 Mensaje que requiere aprobación: "${document.getElementById("msg-texto").value}"`,
+                    fecha: serverTimestamp(),
+                    tipo: "mensaje_aprobacion",
+                    mensajeId: mensajeRef.id
+                });
             });
         } else {
             // Comunicado de piloto a equipo
@@ -491,6 +515,9 @@ window.cambiarTipoComunicado = () => {
         equiposList.forEach(eq => {
             selectDestino.innerHTML += `<option value="${eq.id}">${eq.nombre}</option>`;
         });
+    } else if (tipo === "aprobacion") {
+        // Mensaje de aprobación - siempre a todos
+        selectDestino.innerHTML = '<option value="todos">A todos los equipos</option>';
     } else {
         // Tipo piloto - será actualizado cuando se seleccione un piloto
         selectDestino.innerHTML = '<option value="">Selecciona primero un piloto</option>';
@@ -657,3 +684,58 @@ window.rechazarOferta = async (ofertaId) => {
         }
     }
 };
+
+async function cargarRespuestas() {
+    const listaRespuestas = document.getElementById("lista-respuestas");
+    listaRespuestas.innerHTML = "<p>Cargando respuestas...</p>";
+    
+    try {
+        const mensajesSnap = await getDocs(collection(db, "mensajes_aprobacion"));
+        listaRespuestas.innerHTML = "";
+        
+        if (mensajesSnap.empty) {
+            listaRespuestas.innerHTML = "<p>No hay mensajes de aprobación enviados.</p>";
+            return;
+        }
+        
+        for (const msgDoc of mensajesSnap.docs) {
+            const mensaje = msgDoc.data();
+            const msgEl = document.createElement("div");
+            msgEl.className = "card";
+            msgEl.innerHTML = `
+                <h3>Mensaje enviado: "${mensaje.texto}"</h3>
+                <p><strong>Fecha:</strong> ${mensaje.fecha?.toDate().toLocaleString() || 'N/A'}</p>
+                <div id="respuestas-${msgDoc.id}" style="margin-top: 15px;">
+                    <p>Cargando respuestas...</p>
+                </div>
+            `;
+            listaRespuestas.appendChild(msgEl);
+            
+            // Cargar respuestas para este mensaje
+            const respuestasSnap = await getDocs(query(collection(db, "respuestas_mensajes"), where("mensajeId", "==", msgDoc.id)));
+            const respuestasDiv = document.getElementById(`respuestas-${msgDoc.id}`);
+            respuestasDiv.innerHTML = "";
+            
+            if (respuestasSnap.empty) {
+                respuestasDiv.innerHTML = "<p style='color: var(--text-secondary);'>Ningún equipo ha respondido aún.</p>";
+            } else {
+                respuestasSnap.forEach(async (respDoc) => {
+                    const resp = respDoc.data();
+                    const equipoSnap = await getDoc(doc(db, "equipos", resp.equipoId));
+                    const equipoNombre = equipoSnap.exists() ? equipoSnap.data().nombre : "Equipo desconocido";
+                    
+                    const respEl = document.createElement("div");
+                    respEl.style.cssText = "padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; margin-bottom: 5px;";
+                    respEl.innerHTML = `
+                        <strong>${equipoNombre}:</strong> ${resp.estado} 
+                        <span style="color: var(--text-secondary); font-size: 0.9rem;">(${resp.fecha?.toDate().toLocaleString() || 'N/A'})</span>
+                    `;
+                    respuestasDiv.appendChild(respEl);
+                });
+            }
+        }
+    } catch (error) {
+        console.error("Error cargando respuestas:", error);
+        listaRespuestas.innerHTML = "<p>Error al cargar las respuestas.</p>";
+    }
+}

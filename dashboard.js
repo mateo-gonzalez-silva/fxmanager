@@ -2,7 +2,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import {
     getFirestore, doc, getDoc, collection, query, where, getDocs, 
-    updateDoc, addDoc, serverTimestamp, onSnapshot
+    updateDoc, addDoc, deleteDoc, serverTimestamp, onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
@@ -479,9 +479,21 @@ function escucharNotificaciones() {
             const notif = doc.data();
             const notifEl = document.createElement("div");
             notifEl.style.cssText = "padding: 12px; border-left: 3px solid var(--accent); background-color: var(--bg-tertiary); margin-bottom: 10px; border-radius: 4px;";
+            
+            let buttons = '';
+            if (notif.tipo === "mensaje_aprobacion") {
+                buttons = `
+                    <div style="margin-top: 10px; display: flex; gap: 10px;">
+                        <button class="btn-solid" onclick="aprobarMensaje('${doc.id}', '${notif.mensajeId}')">Aprobar</button>
+                        <button class="btn-outline" onclick="denegarMensaje('${doc.id}', '${notif.mensajeId}')">Denegar</button>
+                    </div>
+                `;
+            }
+            
             notifEl.innerHTML = `
                 <strong style="color: var(--accent);">${notif.remitente || 'Sistema'}:</strong>
                 <p style="margin: 5px 0 0 0; font-size: 0.95rem;">${notif.texto}</p>
+                ${buttons}
             `;
             notificationsBox.appendChild(notifEl);
         });
@@ -942,3 +954,48 @@ async function enviarOferta() {
         alert("❌ Error al enviar la oferta");
     }
 }
+
+// Funciones para mensajes de aprobación
+async function aprobarMensaje(notifId, mensajeId) {
+    try {
+        // Guardar respuesta
+        await addDoc(collection(db, "respuestas_mensajes"), {
+            mensajeId: mensajeId,
+            equipoId: currentTeamId,
+            estado: "aprobado",
+            fecha: serverTimestamp()
+        });
+        
+        // Eliminar notificación
+        await deleteDoc(doc(db, "notificaciones", notifId));
+        
+        alert("Mensaje aprobado.");
+    } catch (error) {
+        console.error("Error aprobando mensaje:", error);
+        alert("Error al aprobar el mensaje.");
+    }
+}
+
+async function denegarMensaje(notifId, mensajeId) {
+    try {
+        // Guardar respuesta
+        await addDoc(collection(db, "respuestas_mensajes"), {
+            mensajeId: mensajeId,
+            equipoId: currentTeamId,
+            estado: "denegado",
+            fecha: serverTimestamp()
+        });
+        
+        // Eliminar notificación
+        await deleteDoc(doc(db, "notificaciones", notifId));
+        
+        alert("Mensaje denegado.");
+    } catch (error) {
+        console.error("Error denegando mensaje:", error);
+        alert("Error al denegar el mensaje.");
+    }
+}
+
+// Hacer funciones globales
+window.aprobarMensaje = aprobarMensaje;
+window.denegarMensaje = denegarMensaje;

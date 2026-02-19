@@ -40,6 +40,7 @@
             <button class="admin-tab-btn" data-target="panel-media">6. Media Center</button>
             <button class="admin-tab-btn" data-target="panel-sponsors">7. Patrocinadores</button>
             <button class="admin-tab-btn" data-target="panel-actividad">8. Actividad de Equipos</button>
+            <button class="admin-tab-btn" data-target="panel-respuestas">9. Respuestas a Mensajes</button>
         </aside>
 
         <main class="admin-content">
@@ -51,6 +52,7 @@
                         <select id="msg-tipo" required onchange="cambiarTipoComunicado()">
                             <option value="oficial">Oficial (Admin/FIA)</option>
                             <option value="piloto">De un Piloto a un Equipo</option>
+                            <option value="aprobacion">Mensaje con Aprobación Requerida</option>
                         </select>
                         
                         <div id="div-remitente-oficial" style="display: block;">
@@ -159,6 +161,11 @@
             <section id="panel-actividad" class="admin-panel">
                 <h2>Registro de Actividad</h2>
                 <div id="lista-actividad" class="media-grid" style="display: flex; flex-direction: column; gap: 15px; margin-top: 20px;"></div>
+            </section>
+
+            <section id="panel-respuestas" class="admin-panel">
+                <h2>Respuestas a Mensajes de Aprobación</h2>
+                <div id="lista-respuestas" style="display: flex; flex-direction: column; gap: 15px; margin-top: 20px;"></div>
             </section>
         </main>
     </div>
