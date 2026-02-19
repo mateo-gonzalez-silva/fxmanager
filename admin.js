@@ -283,18 +283,25 @@ async function refrescarDatosGlobales() {
     
     selectMsg.innerHTML = '<option value="todos">A todos los equipos</option>';
     selectPil.innerHTML = '<option value="">Ninguno (Agente Libre)</option>';
-    selectFiltroActividad.innerHTML = '<option value="">-- Todos los equipos --</option>';
+    
+    if (selectFiltroActividad) {
+        selectFiltroActividad.innerHTML = '<option value="">-- Todos los equipos --</option>';
+    }
     
     equiposList.forEach(eq => {
         selectMsg.innerHTML += `<option value="${eq.id}">${eq.nombre}</option>`;
         selectPil.innerHTML += `<option value="${eq.id}">${eq.nombre}</option>`;
-        selectFiltroActividad.innerHTML += `<option value="${eq.id}">${eq.nombre}</option>`;
+        if (selectFiltroActividad) {
+            selectFiltroActividad.innerHTML += `<option value="${eq.id}">${eq.nombre}</option>`;
+        }
     });
     
     // Agregar listener al selector de filtro de actividad
-    selectFiltroActividad.addEventListener("change", () => {
-        cargarActividad();
-    });
+    if (selectFiltroActividad) {
+        selectFiltroActividad.addEventListener("change", () => {
+            cargarActividad();
+        });
+    }
 
     pintarTablaEquipos();
     pintarTablaPilotos();
@@ -306,40 +313,34 @@ async function refrescarDatosGlobales() {
 // ... (Funciones de Actividad igual que antes) ...
 async function cargarActividad() {
     const contenedor = document.getElementById("lista-actividad");
-    const filtroEquipo = document.getElementById("filtro-equipo-actividad").value;
+    if (!contenedor) {
+        console.error("Elemento lista-actividad no encontrado en el DOM");
+        return;
+    }
+    
+    const filtroElement = document.getElementById("filtro-equipo-actividad");
+    const filtroEquipo = filtroElement ? filtroElement.value : "";
+    
+    console.log("Cargando actividad con filtro:", filtroEquipo);
     
     try {
-        // Cargar actividades de equipos
-        let actividadQuery;
-        if (filtroEquipo) {
-            actividadQuery = query(
-                collection(db, "actividad_equipos"), 
-                where("equipoId", "==", filtroEquipo),
-                orderBy("fecha", "desc")
-            );
-        } else {
-            actividadQuery = query(collection(db, "actividad_equipos"), orderBy("fecha", "desc"));
-        }
-        const actividadSnap = await getDocs(actividadQuery);
+        // Cargar actividades de equipos (sin orderBy para evitar problemas de índices)
+        const actividadSnap = await getDocs(collection(db, "actividad_equipos"));
+        console.log("Documentos de actividad_equipos:", actividadSnap.size);
         
-        // Cargar solicitudes admin
-        let solicitudesQuery;
-        if (filtroEquipo) {
-            solicitudesQuery = query(
-                collection(db, "solicitudes_admin"), 
-                where("equipoId", "==", filtroEquipo),
-                orderBy("fecha", "desc")
-            );
-        } else {
-            solicitudesQuery = query(collection(db, "solicitudes_admin"), orderBy("fecha", "desc"));
-        }
-        const solicitudesSnap = await getDocs(solicitudesQuery);
+        // Cargar solicitudes admin (sin orderBy para evitar problemas de índices)
+        const solicitudesSnap = await getDocs(collection(db, "solicitudes_admin"));
+        console.log("Documentos de solicitudes_admin:", solicitudesSnap.size);
         
         // Combinar ambas listas
         const todas = [];
         
         actividadSnap.forEach(doc => {
             const actividad = doc.data();
+            // Aplicar filtro aquí en memoria
+            if (filtroEquipo && actividad.equipoId !== filtroEquipo) {
+                return;
+            }
             todas.push({
                 id: doc.id,
                 tipo: "actividad",
@@ -353,6 +354,10 @@ async function cargarActividad() {
         
         solicitudesSnap.forEach(doc => {
             const solicitud = doc.data();
+            // Aplicar filtro aquí en memoria
+            if (filtroEquipo && solicitud.equipoId !== filtroEquipo) {
+                return;
+            }
             todas.push({
                 id: doc.id,
                 tipo: "solicitud",
@@ -364,8 +369,14 @@ async function cargarActividad() {
             });
         });
         
-        // Ordenar por fecha descendente
-        todas.sort((a, b) => (b.fecha?.getTime() || 0) - (a.fecha?.getTime() || 0));
+        // Ordenar por fecha descendente en memoria
+        todas.sort((a, b) => {
+            const fechaA = a.fecha?.toDate ? a.fecha.toDate() : (a.fecha instanceof Date ? a.fecha : new Date(a.fecha || 0));
+            const fechaB = b.fecha?.toDate ? b.fecha.toDate() : (b.fecha instanceof Date ? b.fecha : new Date(b.fecha || 0));
+            return fechaB.getTime() - fechaA.getTime();
+        });
+        
+        console.log("Total de elementos a mostrar:", todas.length);
         
         if(todas.length === 0) { 
             contenedor.innerHTML = "<p class='text-muted'>No hay actividad reciente.</p>"; 
@@ -399,7 +410,10 @@ async function cargarActividad() {
                 contenedor.innerHTML += `<div style="padding:12px; border:1px solid #333; margin-bottom:8px; background: rgba(255,255,255,0.02); border-radius:4px;"><strong style="color: #FFD700;">💎 ${item.nombreEquipo}</strong>: ${item.detalle}</div>`;
             }
         });
-    } catch (e) { console.log(e); }
+    } catch (e) { 
+        console.error("Error cargando actividad:", e);
+        contenedor.innerHTML = `<p class='text-muted'>Error cargando actividad: ${e.message}</p>`;
+    }
 }
 window.resolverActividad = async (id, eqId, res) => {
     if(confirm("¿Confirmar?")) {
