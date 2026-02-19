@@ -62,74 +62,93 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("form-mensaje").addEventListener("submit", async (e) => {
         e.preventDefault();
         
-        const tipo = document.getElementById("msg-tipo").value;
-        const requiereAprobacion = document.getElementById("msg-requiere-aprobacion").checked;
-        
-        if (requiereAprobacion) {
-            // Mensaje que requiere aprobación - enviar a todos los equipos
-            const mensajeRef = await addDoc(collection(db, "mensajes_aprobacion"), {
-                remitente: tipo === "oficial" ? document.getElementById("msg-remitente").value : "Sistema",
-                texto: document.getElementById("msg-texto").value,
-                fecha: serverTimestamp()
-            });
+        try {
+            const tipo = document.getElementById("msg-tipo").value;
+            const requiereAprobacion = document.getElementById("msg-requiere-aprobacion").checked;
             
-            // Enviar notificación a todos los equipos
-            const equipos = await getDocs(collection(db, "equipos"));
-            for (const eqDoc of equipos.docs) {
-                await addDoc(collection(db, "notificaciones"), {
-                    remitente: "Admin",
-                    equipoId: eqDoc.id,
-                    texto: `📋 Mensaje que requiere aprobación: "${document.getElementById("msg-texto").value}"`,
-                    fecha: serverTimestamp(),
-                    tipo: "mensaje_aprobacion",
-                    mensajeId: mensajeRef.id
-                });
-            }
-        } else {
-            // Mensaje normal
-            if (tipo === "oficial") {
-                // Comunicado oficial de Admin/FIA
-                await addDoc(collection(db, "notificaciones"), {
-                    remitente: document.getElementById("msg-remitente").value,
-                    equipoId: document.getElementById("msg-destinatario").value,
+            if (requiereAprobacion) {
+                // Mensaje que requiere aprobación - enviar a todos los equipos
+                const mensajeRef = await addDoc(collection(db, "mensajes_aprobacion"), {
+                    remitente: tipo === "oficial" ? document.getElementById("msg-remitente").value : "Sistema",
                     texto: document.getElementById("msg-texto").value,
                     fecha: serverTimestamp()
                 });
+                
+                // Enviar notificación a todos los equipos
+                const equipos = await getDocs(collection(db, "equipos"));
+                for (const eqDoc of equipos.docs) {
+                    await addDoc(collection(db, "notificaciones"), {
+                        remitente: "Admin",
+                        equipoId: eqDoc.id,
+                        texto: `📋 Mensaje que requiere aprobación: "${document.getElementById("msg-texto").value}"`,
+                        fecha: serverTimestamp(),
+                        tipo: "mensaje_aprobacion",
+                        mensajeId: mensajeRef.id
+                    });
+                }
             } else {
-                // Comunicado de piloto a equipo
-                const pilotoData = document.getElementById("msg-piloto-remitente").value.split("|");
-                const pilotoId = pilotoData[0];
-                const pilotoNombre = pilotoData[1];
-                const equipoDestinoId = document.getElementById("msg-destinatario").value;
-                const equipoOrigenId = document.getElementById("msg-equipo-piloto").value;
-                
-                // Guardar comunicado en la colección "comunicados"
-                await addDoc(collection(db, "comunicados"), {
-                    tipo: "piloto_equipo",
-                    pilotoId: pilotoId,
-                    pilotoNombre: pilotoNombre,
-                    equipoOrigenId: equipoOrigenId,
-                    equipoDestinoId: equipoDestinoId,
-                    texto: document.getElementById("msg-texto").value,
-                    leido: false,
-                    fecha: serverTimestamp()
-                });
-                
-                // Enviar notificación al equipo destinatario
-                await addDoc(collection(db, "notificaciones"), {
-                    remitente: `Piloto: ${pilotoNombre}`,
-                    equipoId: equipoDestinoId,
-                    texto: `📨 Mensaje de ${pilotoNombre}: "${document.getElementById("msg-texto").value}"`,
-                    fecha: serverTimestamp(),
-                    tipo: "comunicado_piloto",
-                    pilotoId: pilotoId,
-                    equipoOrigenId: equipoOrigenId
-                });
+                // Mensaje normal
+                if (tipo === "oficial") {
+                    const destinatario = document.getElementById("msg-destinatario").value;
+                    if (destinatario === "todos") {
+                        // Enviar a todos los equipos
+                        const equipos = await getDocs(collection(db, "equipos"));
+                        for (const eqDoc of equipos.docs) {
+                            await addDoc(collection(db, "notificaciones"), {
+                                remitente: document.getElementById("msg-remitente").value,
+                                equipoId: eqDoc.id,
+                                texto: document.getElementById("msg-texto").value,
+                                fecha: serverTimestamp()
+                            });
+                        }
+                    } else {
+                        // Comunicado oficial a un equipo específico
+                        await addDoc(collection(db, "notificaciones"), {
+                            remitente: document.getElementById("msg-remitente").value,
+                            equipoId: destinatario,
+                            texto: document.getElementById("msg-texto").value,
+                            fecha: serverTimestamp()
+                        });
+                    }
+                } else {
+                    // Comunicado de piloto a equipo
+                    const pilotoData = document.getElementById("msg-piloto-remitente").value.split("|");
+                    const pilotoId = pilotoData[0];
+                    const pilotoNombre = pilotoData[1];
+                    const equipoDestinoId = document.getElementById("msg-destinatario").value;
+                    const equipoOrigenId = document.getElementById("msg-equipo-piloto").value;
+                    
+                    // Guardar comunicado en la colección "comunicados"
+                    await addDoc(collection(db, "comunicados"), {
+                        tipo: "piloto_equipo",
+                        pilotoId: pilotoId,
+                        pilotoNombre: pilotoNombre,
+                        equipoOrigenId: equipoOrigenId,
+                        equipoDestinoId: equipoDestinoId,
+                        texto: document.getElementById("msg-texto").value,
+                        leido: false,
+                        fecha: serverTimestamp()
+                    });
+                    
+                    // Enviar notificación al equipo destinatario
+                    await addDoc(collection(db, "notificaciones"), {
+                        remitente: `Piloto: ${pilotoNombre}`,
+                        equipoId: equipoDestinoId,
+                        texto: `📨 Mensaje de ${pilotoNombre}: "${document.getElementById("msg-texto").value}"`,
+                        fecha: serverTimestamp(),
+                        tipo: "comunicado_piloto",
+                        pilotoId: pilotoId,
+                        equipoOrigenId: equipoOrigenId
+                    });
+                }
             }
+            
+            alert("Comunicado enviado."); 
+            e.target.reset();
+        } catch (error) {
+            console.error("Error enviando comunicado:", error);
+            alert("Error al enviar el comunicado: " + error.message);
         }
-        
-        alert("Comunicado enviado."); 
-        e.target.reset();
     });
 
     document.getElementById("form-equipo").addEventListener("submit", async (e) => {
