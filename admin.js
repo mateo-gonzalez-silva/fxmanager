@@ -63,10 +63,13 @@ document.addEventListener("DOMContentLoaded", () => {
         e.preventDefault();
         
         try {
+            console.log("Enviando comunicado");
             const tipo = document.getElementById("msg-tipo").value;
             const requiereAprobacion = document.getElementById("msg-requiere-aprobacion").checked;
+            console.log("Tipo:", tipo, "Requiere aprobación:", requiereAprobacion);
             
             if (requiereAprobacion) {
+                console.log("Enviando mensaje con aprobación");
                 // Mensaje que requiere aprobación - enviar a todos los equipos
                 const mensajeRef = await addDoc(collection(db, "mensajes_aprobacion"), {
                     remitente: tipo === "oficial" ? document.getElementById("msg-remitente").value : "Sistema",
@@ -87,10 +90,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     });
                 }
             } else {
+                console.log("Enviando mensaje normal");
                 // Mensaje normal
                 if (tipo === "oficial") {
+                    console.log("Tipo oficial");
                     const destinatario = document.getElementById("msg-destinatario").value;
                     if (destinatario === "todos") {
+                        console.log("Enviando a todos");
                         // Enviar a todos los equipos
                         const equipos = await getDocs(collection(db, "equipos"));
                         for (const eqDoc of equipos.docs) {
@@ -102,6 +108,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             });
                         }
                     } else {
+                        console.log("Enviando a equipo específico:", destinatario);
                         // Comunicado oficial a un equipo específico
                         await addDoc(collection(db, "notificaciones"), {
                             remitente: document.getElementById("msg-remitente").value,
@@ -111,6 +118,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         });
                     }
                 } else {
+                    console.log("Tipo piloto");
                     // Comunicado de piloto a equipo
                     const pilotoData = document.getElementById("msg-piloto-remitente").value.split("|");
                     const pilotoId = pilotoData[0];
@@ -143,6 +151,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
             
+            console.log("Comunicado enviado exitosamente");
             alert("Comunicado enviado."); 
             e.target.reset();
         } catch (error) {
