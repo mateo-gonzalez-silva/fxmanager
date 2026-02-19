@@ -248,6 +248,15 @@ async function solicitarMejora(tipo, costo) {
             fecha: serverTimestamp()
         });
 
+        // Registrar actividad para admin
+        await addDoc(collection(db, "actividad_equipos"), {
+            equipoId: currentTeamId,
+            nombreEquipo: currentTeamData.nombre,
+            tipo: "mejora",
+            detalle: `Solicita mejora de ${tipo}. Costo: $${costo.toLocaleString()}`,
+            fecha: serverTimestamp()
+        });
+
         alert("Mejora solicitada al Admin. Te notificaremos del resultado.");
         cargarDatos();
     } catch (error) {
@@ -259,7 +268,7 @@ async function investigarPiloto() {
     // Verificar límite de investigaciones usando contador persistente en el documento del equipo
     const puede = await tryConsumeInvestigation();
     if (!puede) {
-        alert("Has alcanzado el límite de 3 investigaciones hoy. Intenta mañana.");
+        alert("Has alcanzado el límite de 3 investigaciones.");
         return;
     }
 
@@ -282,6 +291,15 @@ async function investigarPiloto() {
             fecha: serverTimestamp()
         });
 
+        // Registrar actividad para admin
+        await addDoc(collection(db, "actividad_equipos"), {
+            equipoId: currentTeamId,
+            nombreEquipo: currentTeamData.nombre,
+            tipo: "investigacion",
+            detalle: `Investiga piloto: ${piloto.nombre} ${piloto.apellido || ''} - Ritmo: ${piloto.ritmo || 0}, Agresividad: ${piloto.agresividad || 0}`,
+            fecha: serverTimestamp()
+        });
+
         // Enviar notificación directa
         await addDoc(collection(db, "notificaciones"), {
             equipoId: currentTeamId,
@@ -301,7 +319,7 @@ async function investigarMejora() {
     // Verificar límite de investigaciones usando contador persistente en el documento del equipo
     const puede = await tryConsumeInvestigation();
     if (!puede) {
-        alert("Has alcanzado el límite de 3 investigaciones hoy. Intenta mañana.");
+        alert("Has alcanzado el límite de 3 investigaciones hoy.");
         return;
     }
 
@@ -324,6 +342,15 @@ async function investigarMejora() {
             fecha: serverTimestamp()
         });
 
+        // Registrar actividad para admin
+        await addDoc(collection(db, "actividad_equipos"), {
+            equipoId: currentTeamId,
+            nombreEquipo: currentTeamData.nombre,
+            tipo: "investigacion",
+            detalle: `Investiga mejora: ${equipo.nombre} - Última mejora: ${ultimaMejora}`,
+            fecha: serverTimestamp()
+        });
+
         alert("Información enviada a tu bandeja de avisos.");
         document.getElementById("select-team-upgrade").value = "";
     } catch (error) {
@@ -335,7 +362,7 @@ async function investigarComponente() {
     // Verificar límite de investigaciones usando contador persistente en el documento del equipo
     const puede = await tryConsumeInvestigation();
     if (!puede) {
-        alert("Has alcanzado el límite de 3 investigaciones hoy. Intenta mañana.");
+        alert("Has alcanzado el límite de 3 investigaciones hoy.");
         return;
     }
 
@@ -358,6 +385,15 @@ async function investigarComponente() {
             equipoId: currentTeamId,
             remitente: "Sistema",
             texto: `🔩 Nivel de ${nombreComponente} en ${equipo.nombre}: ${nivelComponente}/5`,
+            fecha: serverTimestamp()
+        });
+
+        // Registrar actividad para admin
+        await addDoc(collection(db, "actividad_equipos"), {
+            equipoId: currentTeamId,
+            nombreEquipo: currentTeamData.nombre,
+            tipo: "investigacion",
+            detalle: `Investiga nivel de ${nombreComponente}: ${equipo.nombre} - Nivel: ${nivelComponente}/5`,
             fecha: serverTimestamp()
         });
 
@@ -454,6 +490,15 @@ async function comprarInvestigacionExtra() {
         });
 
         alert("¡Has comprado una investigación extra con éxito! Ya puedes usarla.");
+        
+        // Registrar actividad para admin (SOLO para admin, no visible en equipos)
+        await addDoc(collection(db, "actividad_equipos"), {
+            equipoId: currentTeamId,
+            nombreEquipo: currentTeamData.nombre,
+            tipo: "compra_investigacion",
+            detalle: `Ha comprado una investigación extra. Costo: $${costo.toLocaleString()}`,
+            fecha: serverTimestamp()
+        });
         
         // 5. Recargamos los datos para que el presupuesto se actualice visualmente en la pantalla
         await cargarDatos(); 

@@ -55,6 +55,9 @@ document.addEventListener("DOMContentLoaded", () => {
             if (targetId === "panel-respuestas") {
                 cargarRespuestas();
             }
+            if (targetId === "panel-actividad") {
+                cargarActividad();
+            }
         });
     });
 
@@ -295,16 +298,68 @@ async function refrescarDatosGlobales() {
 async function cargarActividad() {
     const contenedor = document.getElementById("lista-actividad");
     try {
-        const q = query(collection(db, "solicitudes_admin"), orderBy("fecha", "desc"));
-        const snapshot = await getDocs(q);
-        if(snapshot.empty) { contenedor.innerHTML = "<p class='text-muted'>No hay actividad reciente.</p>"; return; }
+        // Cargar actividades de equipos
+        const actividadQuery = query(collection(db, "actividad_equipos"), orderBy("fecha", "desc"));
+        const actividadSnap = await getDocs(actividadQuery);
+        
+        // Cargar solicitudes admin
+        const solicitudesQuery = query(collection(db, "solicitudes_admin"), orderBy("fecha", "desc"));
+        const solicitudesSnap = await getDocs(solicitudesQuery);
+        
+        // Combinar ambas listas
+        const todas = [];
+        
+        actividadSnap.forEach(doc => {
+            const actividad = doc.data();
+            todas.push({
+                id: doc.id,
+                tipo: "actividad",
+                nombreEquipo: actividad.nombreEquipo,
+                detalle: actividad.detalle,
+                tipoActividad: actividad.tipo,
+                fecha: actividad.fecha,
+                equipoId: actividad.equipoId
+            });
+        });
+        
+        solicitudesSnap.forEach(doc => {
+            const solicitud = doc.data();
+            todas.push({
+                id: doc.id,
+                tipo: "solicitud",
+                nombreEquipo: solicitud.nombreEquipo,
+                detalle: solicitud.detalle,
+                estado: solicitud.estado,
+                fecha: solicitud.fecha,
+                equipoId: solicitud.equipoId
+            });
+        });
+        
+        // Ordenar por fecha descendente
+        todas.sort((a, b) => (b.fecha?.getTime() || 0) - (a.fecha?.getTime() || 0));
+        
+        if(todas.length === 0) { 
+            contenedor.innerHTML = "<p class='text-muted'>No hay actividad reciente.</p>"; 
+            return; 
+        }
+        
         contenedor.innerHTML = "";
-        snapshot.forEach(docSnap => {
-            const req = docSnap.data();
-            const id = docSnap.id;
-            let badge = req.estado === "Pendiente" ? "REQUIERE ACCIÓN" : req.estado;
-            let btns = req.estado === "Pendiente" ? `<button onclick="resolverActividad('${id}', '${req.equipoId}', 'Aprobada')">OK</button><button onclick="resolverActividad('${id}', '${req.equipoId}', 'Denegada')">NO</button>` : "";
-            contenedor.innerHTML += `<div style="padding:10px; border:1px solid #333; margin-bottom:5px;"><strong>${req.nombreEquipo}</strong>: ${req.detalle} [${badge}] ${btns}</div>`;
+        todas.forEach(item => {
+            if (item.tipo === "solicitud") {
+                // Solicitudes de mejoras
+                const badge = item.estado === "Pendiente" ? "REQUIERE ACCIÓN" : item.estado;
+                const btns = item.estado === "Pendiente" ? `<button style="margin-top:10px; margin-right:5px;" onclick="resolverActividad('${item.id}', '${item.equipoId}', 'Aprobada')">OK</button><button style="margin-top:10px;" onclick="resolverActividad('${item.id}', '${item.equipoId}', 'Denegada')">NO</button>` : "";
+                contenedor.innerHTML += `<div style="padding:12px; border:1px solid #333; margin-bottom:8px; background: rgba(255,255,255,0.02); border-radius:4px;"><strong style="color: var(--accent);">📋 ${item.nombreEquipo}</strong>: ${item.detalle} <span style="color: var(--text-secondary); font-size: 0.85rem;">[${badge}]</span> ${btns}</div>`;
+            } else if (item.tipoActividad === "compra_investigacion") {
+                // Compra de investigación (solo admin)
+                contenedor.innerHTML += `<div style="padding:12px; border:1px solid #333; margin-bottom:8px; background: rgba(255,255,255,0.02); border-radius:4px;"><strong style="color: #FFD700;">💰 ${item.nombreEquipo}</strong>: ${item.detalle}</div>`;
+            } else if (item.tipoActividad === "mejora") {
+                // Mejoras
+                contenedor.innerHTML += `<div style="padding:12px; border:1px solid #333; margin-bottom:8px; background: rgba(255,255,255,0.02); border-radius:4px;"><strong style="color: var(--accent);">⚡ ${item.nombreEquipo}</strong>: ${item.detalle}</div>`;
+            } else if (item.tipoActividad === "investigacion") {
+                // Investigaciones
+                contenedor.innerHTML += `<div style="padding:12px; border:1px solid #333; margin-bottom:8px; background: rgba(255,255,255,0.02); border-radius:4px;"><strong style="color: #00D4FF;">🔍 ${item.nombreEquipo}</strong>: ${item.detalle}</div>`;
+            }
         });
     } catch (e) { console.log(e); }
 }
