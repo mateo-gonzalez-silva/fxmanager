@@ -78,11 +78,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
                 
                 // Enviar notificación a todos los equipos
-                const equipos = await getDocs(collection(db, "equipos"));
-                for (const eqDoc of equipos.docs) {
+                for (const eq of equiposList) {
                     await addDoc(collection(db, "notificaciones"), {
                         remitente: "Admin",
-                        equipoId: eqDoc.id,
+                        equipoId: eq.id,
                         texto: `📋 Mensaje que requiere aprobación: "${document.getElementById("msg-texto").value}"`,
                         fecha: serverTimestamp(),
                         tipo: "mensaje_aprobacion",
@@ -98,11 +97,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (destinatario === "todos") {
                         console.log("Enviando a todos");
                         // Enviar a todos los equipos
-                        const equipos = await getDocs(collection(db, "equipos"));
-                        for (const eqDoc of equipos.docs) {
+                        for (const eq of equiposList) {
                             await addDoc(collection(db, "notificaciones"), {
                                 remitente: document.getElementById("msg-remitente").value,
-                                equipoId: eqDoc.id,
+                                equipoId: eq.id,
                                 texto: document.getElementById("msg-texto").value,
                                 fecha: serverTimestamp()
                             });
