@@ -163,12 +163,47 @@ function renderUI() {
     });
 
     // Niveles de mejoras (Adaptado a nivel máximo 7)
+    // Niveles de mejoras (Adaptado a nivel máximo 7)
     const aeroLevel = currentTeamData.aeroLevel || 0;
     const motorLevel = currentTeamData.motorLevel || 0;
     document.getElementById("aero-level").textContent = aeroLevel;
     document.getElementById("motor-level").textContent = motorLevel;
     document.getElementById("aero-progress").style.width = (aeroLevel * (100 / MAX_LEVEL)) + "%";
     document.getElementById("motor-progress").style.width = (motorLevel * (100 / MAX_LEVEL)) + "%";
+
+    // --- NUEVO: ACTUALIZAR TEXTOS DE LOS BOTONES AUTOMÁTICAMENTE ---
+    
+    const btnAero = document.getElementById("btn-aero");
+    if (btnAero) {
+        if (aeroLevel >= MAX_LEVEL) {
+            btnAero.textContent = "AL MÁXIMO";
+            btnAero.disabled = true;
+            btnAero.style.opacity = "0.5";
+        } else {
+            btnAero.textContent = `Mejorar Aero ($${COSTOS_AERO[aeroLevel] / 1000000}M)`;
+            btnAero.disabled = false;
+            btnAero.style.opacity = "1";
+        }
+    }
+
+    const btnMotor = document.getElementById("btn-motor");
+    if (btnMotor) {
+        if (motorLevel >= MAX_LEVEL) {
+            btnMotor.textContent = "AL MÁXIMO";
+            btnMotor.disabled = true;
+            btnMotor.style.opacity = "0.5";
+        } else {
+            btnMotor.textContent = `Mejorar Motor ($${COSTOS_MOTOR[motorLevel] / 1000000}M)`;
+            btnMotor.disabled = false;
+            btnMotor.style.opacity = "1";
+        }
+    }
+
+    const btnBuyInv = document.getElementById("btn-buy-investigation");
+    if (btnBuyInv) {
+        btnBuyInv.textContent = "Comprar Extra ($3M)";
+    }
+    // -------------------------------------------------------------
 
     // Poblar selectores de investigación
     poblarSelectores();
@@ -458,7 +493,7 @@ async function comprarInvestigacionExtra() {
     let currentCount = team.investigacionesCount || 0;
 
     if (currentCount === 0) {
-        alert("Aún tienes todas tus investigaciones gratis disponibles hoy. ¡Úsalas primero!");
+        alert("Aún tienes todas tus investigaciones gratis disponibles. ¡Úsalas primero!");
         return;
     }
 
