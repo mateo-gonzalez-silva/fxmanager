@@ -244,10 +244,6 @@
             <li><a href="dashboard.html" class="active">Mi Equipo</a></li>
         </ul>
     </nav>
-    <script>
-        function toggleMenu() { const h = document.getElementById('hamburger-btn'); const n = document.getElementById('nav-links'); h.classList.toggle('active'); n.classList.toggle('active'); }
-        document.querySelectorAll('.nav-links a').forEach(link => { link.addEventListener('click', () => { document.getElementById('hamburger-btn').classList.remove('active'); document.getElementById('nav-links').classList.remove('active'); }); });
-    </script>
 
     <main class="container" style="padding: 40px 20px;">
 
@@ -548,6 +544,7 @@
         <p>&copy; FX Manager. Todos los derechos reservados.</p>
     </footer>
 
+    <script src="nav.js" defer></script>
     <script type="module" src="dashboard.js"></script>
     <script type="module">
         import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
