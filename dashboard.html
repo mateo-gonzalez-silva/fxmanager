@@ -228,6 +228,81 @@
             color: #ffffff;
             background: rgba(255,255,255,0.08);
         }
+
+        /* Mobile Styles for Sponsors Modal */
+        @media (max-width: 768px) {
+            .sponsors-modal {
+                padding: 10px;
+            }
+            .sponsors-modal-content {
+                padding: 20px;
+                max-width: 95vw;
+                border-radius: 12px;
+            }
+            .sponsors-modal-content h2 {
+                font-size: 1.5rem;
+                margin-bottom: 20px;
+            }
+            #sponsors-choice-section > p {
+                font-size: 0.8rem;
+                margin-bottom: 15px;
+            }
+            #sponsors-choice-section > div {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            .sponsors-option {
+                padding: 16px;
+                margin: 8px 0;
+                border-radius: 10px;
+            }
+            .sponsors-option h3 {
+                font-size: 1rem;
+            }
+            .sponsors-option p {
+                font-size: 0.85rem;
+            }
+            .slider-container {
+                margin: 20px 0;
+                padding: 16px;
+                border-radius: 10px;
+            }
+            .slider-container label {
+                font-size: 0.85rem;
+                margin-bottom: 12px;
+            }
+            #expected-position {
+                font-size: 1.1rem;
+            }
+            .slider {
+                margin: 12px 0;
+            }
+            .budget-display {
+                margin: 16px 0;
+            }
+            .budget-display > div {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            .budget-display > div > div {
+                padding: 12px;
+            }
+            .budget-display > div > div p:first-child {
+                font-size: 0.75rem;
+            }
+            .budget-display > div > div p:last-child {
+                font-size: 1rem;
+            }
+            .modal-button-group {
+                flex-direction: column;
+                gap: 10px;
+                margin-top: 20px;
+            }
+            .modal-button-group button {
+                padding: 12px 16px;
+                font-size: 0.9rem;
+            }
+        }
     </style>
 </head>
 <body>
