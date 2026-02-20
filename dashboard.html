@@ -244,10 +244,6 @@
             <li><a href="dashboard.html" class="active">Mi Equipo</a></li>
         </ul>
     </nav>
-    <script>
-        function toggleMenu() { const h = document.getElementById('hamburger-btn'); const n = document.getElementById('nav-links'); h.classList.toggle('active'); n.classList.toggle('active'); }
-        document.querySelectorAll('.nav-links a').forEach(link => { link.addEventListener('click', () => { document.getElementById('hamburger-btn').classList.remove('active'); document.getElementById('nav-links').classList.remove('active'); }); });
-    </script>
 
     <main class="container" style="padding: 40px 20px;">
 
@@ -301,28 +297,30 @@
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; margin-bottom: 40px;">
             
             <div class="card">
-    <h3 style="margin-top: 0; color: var(--accent);">Chasis y Aerodinámica</h3>
-    <div style="margin: 20px 0;">
-        <p style="margin: 0 0 10px 0; color: var(--text-secondary);">Nivel actual: <strong id="aero-level">0</strong>/7</p>
-        <div style="background-color: var(--bg-tertiary); border-radius: 6px; height: 20px; overflow: hidden; margin-bottom: 15px;">
-            <div id="aero-progress" style="background: linear-gradient(90deg, #ff2e3f, #ff5a70); height: 100%; width: 0%; transition: width 0.3s ease;"></div>
-        </div>
-        <p style="font-size: 0.9rem; margin: 0 0 15px 0;">Mejora la aerodinámica para mayor velocidad en recta.</p>
-        <button class="btn-solid" id="btn-aero" style="width: 100%;">Desarrollar Mejora</button>
-    </div>
-</div>
+                <h3 style="margin-top: 0; color: var(--accent);">Chasis y Aerodinámica</h3>
+                <div style="margin: 20px 0;">
+                    <p style="margin: 0 0 10px 0; color: var(--text-secondary);">Nivel actual: <strong id="aero-level">0</strong>/7</p>
+                    <div style="background-color: var(--bg-tertiary); border-radius: 6px; height: 20px; overflow: hidden; margin-bottom: 15px;">
+                        <div id="aero-progress" style="background: linear-gradient(90deg, #ff2e3f, #ff5a70); height: 100%; width: 0%; transition: width 0.3s ease;"></div>
+                    </div>
+                    <p style="font-size: 0.9rem; margin: 0 0 15px 0;">Mejora la aerodinámica para mayor velocidad en recta.</p>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 10px;">La mejora se transmitirá a la FIA.</p>
+                    <button class="btn-solid" id="btn-aero" style="width: 100%;">Desarrollar Mejora</button>
+                </div>
+            </div>
 
-<div class="card">
-    <h3 style="margin-top: 0; color: var(--accent);">Unidad de Potencia (Motor)</h3>
-    <div style="margin: 20px 0;">
-        <p style="margin: 0 0 10px 0; color: var(--text-secondary);">Nivel actual: <strong id="motor-level">0</strong>/7</p>
-        <div style="background-color: var(--bg-tertiary); border-radius: 6px; height: 20px; overflow: hidden; margin-bottom: 15px;">
-            <div id="motor-progress" style="background: linear-gradient(90deg, #00aaff, #00ddff); height: 100%; width: 0%; transition: width 0.3s ease;"></div>
-        </div>
-        <p style="font-size: 0.9rem; margin: 0 0 15px 0;">Mejora la potencia del motor para más rendimiento.</p>
-        <button class="btn-solid" id="btn-motor" style="width: 100%;">Desarrollar Mejora</button>
-    </div>
-</div>
+            <div class="card">
+                <h3 style="margin-top: 0; color: var(--accent);">Unidad de Potencia (Motor)</h3>
+                <div style="margin: 20px 0;">
+                    <p style="margin: 0 0 10px 0; color: var(--text-secondary);">Nivel actual: <strong id="motor-level">0</strong>/7</p>
+                    <div style="background-color: var(--bg-tertiary); border-radius: 6px; height: 20px; overflow: hidden; margin-bottom: 15px;">
+                        <div id="motor-progress" style="background: linear-gradient(90deg, #00aaff, #00ddff); height: 100%; width: 0%; transition: width 0.3s ease;"></div>
+                    </div>
+                    <p style="font-size: 0.9rem; margin: 0 0 15px 0;">Mejora la potencia del motor para más rendimiento.</p>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 10px;">La mejora se transmitirá a la FIA.</p>
+                    <button class="btn-solid" id="btn-motor" style="width: 100%;">Desarrollar Mejora</button>
+                </div>
+            </div>
 
         </div>
         <!-- SECCIÓN 4.5: MERCADO DE PILOTOS -->
@@ -529,7 +527,7 @@
                     <label style="display: block; margin-bottom: 8px; font-weight: 600;">💰 Sueldo del Piloto (por carrera):</label>
                     <input type="number" id="oferta-sueldo" placeholder="Ej: 500000" min="1" required style="width: 100%; padding: 10px; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 6px; color: white; margin-bottom: 15px;">
                     
-                    <label style="display: block; margin-bottom: 8px; font-weight: 600;">📝 Mensaje (opcional):</label>
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600;">📝 Mensaje (Opcional):</label>
                     <textarea id="oferta-mensaje" placeholder="Personaliza tu oferta..." rows="2" style="width: 100%; padding: 10px; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 6px; color: white; resize: none; margin-bottom: 20px; font-family: inherit;"></textarea>
                     
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
@@ -546,6 +544,7 @@
         <p>&copy; FX Manager. Todos los derechos reservados.</p>
     </footer>
 
+    <script src="nav.js" defer></script>
     <script type="module" src="dashboard.js"></script>
     <script type="module">
         import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
