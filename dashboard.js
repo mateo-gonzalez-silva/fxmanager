@@ -385,6 +385,7 @@ async function investigarPiloto() {
     const moralTexto = piloto.moral || "Normal";
 
     try {
+        // registrar solicitud y actividad normal
         await addDoc(collection(db, "solicitudes_admin"), {
             equipoId: currentTeamId,
             nombreEquipo: currentTeamData.nombre,
@@ -394,19 +395,22 @@ async function investigarPiloto() {
             fecha: serverTimestamp()
         });
 
+        // generamos la notificación y guardamos su id para enlazar
+        const notifRef = await addDoc(collection(db, "notificaciones"), {
+            equipoId: currentTeamId,
+            remitente: "Sistema de Scouting",
+            texto: `📊 Investigación completada: ${piloto.nombre} tiene ritmo ${piloto.ritmo || 0} y agresividad ${piloto.agresividad || 0}. Su edad es: ${edadTexto}.`,
+            fecha: serverTimestamp()
+        });
+
+        // actividad con referencia a la notificación para poder filtrar más tarde
         await addDoc(collection(db, "actividad_equipos"), {
             equipoId: currentTeamId,
             nombreEquipo: currentTeamData.nombre,
             tipo: "investigacion",
             detalle: `Ha ojeado al piloto: ${piloto.nombre} ${piloto.apellido || ''}`,
-            fecha: serverTimestamp()
-        });
-
-        await addDoc(collection(db, "notificaciones"), {
-            equipoId: currentTeamId,
-            remitente: "Sistema de Scouting",
-            texto: `📊 Informe de ${piloto.nombre} ${piloto.apellido || ''}: Ritmo [${piloto.ritmo || 0}], Agresividad [${piloto.agresividad || 0}], Moral [${moralTexto}], Edad [${edadTexto}]. Sueldo estimado entre ${rangoSueldo}.`,
-            fecha: serverTimestamp()
+            fecha: serverTimestamp(),
+            notificacionId: notifRef.id
         });
 
         alert("Investigación completada. Revisa tu bandeja de avisos.");
@@ -428,7 +432,7 @@ async function investigarMejora() {
 
     try {
         const ultimaMejora = equipo.ultimaMejora || "Motor";
-        await addDoc(collection(db, "notificaciones"), {
+        const notifRef = await addDoc(collection(db, "notificaciones"), {
             equipoId: currentTeamId,
             remitente: "Sistema",
             texto: `⚙️ Última mejora de ${equipo.nombre}: ${ultimaMejora}`,
@@ -440,7 +444,8 @@ async function investigarMejora() {
             nombreEquipo: currentTeamData.nombre,
             tipo: "investigacion",
             detalle: `Investiga mejora: ${equipo.nombre} - Última mejora: ${ultimaMejora}`,
-            fecha: serverTimestamp()
+            fecha: serverTimestamp(),
+            notificacionId: notifRef.id
         });
 
         alert("✅ Investigación completada. Información enviada a tu bandeja de avisos.");
@@ -466,7 +471,7 @@ async function investigarComponente() {
         const nivelComponente = componente === "aero" ? (equipo.aeroLevel || 0) : (equipo.motorLevel || 0);
         const nombreComponente = componente === "aero" ? "Aerodinámica" : "Motor";
         
-        await addDoc(collection(db, "notificaciones"), {
+        const notifRef = await addDoc(collection(db, "notificaciones"), {
             equipoId: currentTeamId,
             remitente: "Sistema",
             texto: `🔩 Nivel de ${nombreComponente} en ${equipo.nombre}: ${nivelComponente}/${MAX_LEVEL}`,
@@ -478,7 +483,8 @@ async function investigarComponente() {
             nombreEquipo: currentTeamData.nombre,
             tipo: "investigacion",
             detalle: `Investiga nivel de ${nombreComponente}: ${equipo.nombre} - Nivel: ${nivelComponente}/${MAX_LEVEL}`,
-            fecha: serverTimestamp()
+            fecha: serverTimestamp(),
+            notificacionId: notifRef.id
         });
 
         alert("✅ Investigación completada. Información enviada a tu bandeja de avisos.");
@@ -627,6 +633,13 @@ function escucharNotificaciones() {
 async function openSponsorModal() {
     const modal = document.getElementById("sponsors-modal");
     if(modal) modal.style.display = "flex";
+
+    // si ya tenemos un contrato guardado, mostramos directamente la sección de contrato
+    if (currentTeamData && currentTeamData.sponsor_contract) {
+        mostrarSeccionContrato(currentTeamData.sponsor_contract);
+    } else {
+        mostrarSeccionOpcion();
+    }
 }
 
 function mostrarSeccionOpcion() {
@@ -719,7 +732,41 @@ window.confirmSponsorExpectations = function() {
 };
 
 async function savePerformanceContract(contract) {
-    // Implementación original...
+    try {
+        // añadimos el contrato y damos el dinero base inmediato
+        await updateDoc(doc(db, "equipos", currentTeamId), {
+            sponsor_contract: contract,
+            sponsor_contract_unlocked: false,
+            presupuesto: (currentTeamData.presupuesto || 0) + (contract.base || 0)
+        });
+
+        const notifRef = await addDoc(collection(db, "notificaciones"), {
+            equipoId: currentTeamId,
+            remitente: "Sistema",
+            texto: `💎 Contrato de patrocinio por rendimiento firmado. Base: $${(contract.base || 0).toLocaleString()}, objetivo: posición ${contract.targetPosition}.`,
+            fecha: serverTimestamp()
+        });
+
+        await addDoc(collection(db, "actividad_equipos"), {
+            equipoId: currentTeamId,
+            nombreEquipo: currentTeamData.nombre,
+            tipo: "contrato_sponsor",
+            detalle: `Firma contrato por rendimiento con base de $${(contract.base || 0).toLocaleString()} y objetivo top ${contract.targetPosition}`,
+            fecha: serverTimestamp(),
+            notificacionId: notifRef.id
+        });
+
+        currentTeamData.sponsor_contract = contract;
+        currentTeamData.presupuesto = (currentTeamData.presupuesto || 0) + (contract.base || 0);
+
+        mostrarSeccionContrato(contract);
+        alert("Contrato guardado correctamente.");
+        await cargarDatos();
+        await cargarDatos();
+    } catch (error) {
+        console.error("Error guardando contrato por rendimiento:", error);
+        alert("No se pudo guardar el contrato por rendimiento. Reintenta más tarde.");
+    }
 }
 
 window.cancelSponsorOption = function() { mostrarSeccionOpcion(); };

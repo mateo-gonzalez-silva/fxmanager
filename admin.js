@@ -333,6 +333,11 @@ async function cargarActividad() {
         const actividadSnap = await getDocs(collection(db, "actividad_equipos"));
         console.log("📊 Documentos en actividad_equipos:", actividadSnap.size);
         
+        // build set of existing notification ids so we can drop orphan activities
+        const notifsSnap = await getDocs(collection(db, "notificaciones"));
+        const notifsSet = new Set();
+        notifsSnap.forEach(n => notifsSet.add(n.id));
+        
         actividadSnap.forEach(doc => {
             const data = doc.data();
             console.log(`  - ${data.nombreEquipo} (${data.equipoId}): ${data.tipo} - ${data.detalle}`);
@@ -352,6 +357,11 @@ async function cargarActividad() {
         
         actividadSnap.forEach(doc => {
             const actividad = doc.data();
+            // si la actividad está ligada a una notificación y ésta ya no existe, saltarla
+            if (actividad.notificacionId && !notifsSet.has(actividad.notificacionId)) {
+                console.log(`  Ignorando actividad ${doc.id} porque su notificación fue borrada`);
+                return;
+            }
             // Aplicar filtro aquí en memoria
             if (filtroEquipo && actividad.equipoId !== filtroEquipo) {
                 console.log(`  Filtrando: ${actividad.nombreEquipo} (${actividad.equipoId}) != ${filtroEquipo}`);
