@@ -238,28 +238,7 @@ function setupListeners() {
     const btnMotor = document.getElementById("btn-motor");
     
     // Remueve listeners antiguos clonando el nodo
-    const newBtnAero = btnAero.cloneNode(true);
-    const newBtnMotor = btnMotor.cloneNode(true);
-    btnAero.parentNode.replaceChild(newBtnAero, btnAero);
-    btnMotor.parentNode.replaceChild(newBtnMotor, btnMotor);
-
-    newBtnAero.addEventListener("click", () => {
-        const currentLevel = currentTeamData.aeroLevel || 0;
-        if (currentLevel >= MAX_LEVEL) {
-            alert("El Chasis/Aerodinámica ya está al nivel máximo permitido.");
-            return;
-        }
-        solicitarMejora("Chasis y Aerodinámica", COSTOS_AERO[currentLevel]);
-    });
-
-    newBtnMotor.addEventListener("click", () => {
-        const currentLevel = currentTeamData.motorLevel || 0;
-        if (currentLevel >= MAX_LEVEL) {
-            alert("El Motor ya está al nivel máximo permitido.");
-            return;
-        }
-        solicitarMejora("Motor", COSTOS_MOTOR[currentLevel]);
-    });
+    setupListeners
 
     // Botones de investigación (Asegurar que no se dupliquen listeners igual que arriba si se llama varias veces)
     const btnRPilot = document.getElementById("btn-research-pilot");
@@ -303,7 +282,7 @@ function setupListeners() {
     }
 }
 
-async function solicitarMejora(tipo, costo) {
+async function solicitarMejora(tipo, costo, campoNivel, nivelActual) {
     if (currentTeamData.presupuesto < costo) {
         alert(`Presupuesto insuficiente. Se requieren $${costo.toLocaleString()} para mejorar al siguiente nivel.`);
         return;
@@ -313,15 +292,21 @@ async function solicitarMejora(tipo, costo) {
     if (!confirmar) return;
 
     try {
-        await updateDoc(doc(db, "equipos", currentTeamId), {
+        // 1. PREPARAMOS LOS DATOS: RESTAMOS DINERO Y SUMAMOS +1 AL NIVEL
+        const datosActualizar = {
             presupuesto: currentTeamData.presupuesto - costo
-        });
+        };
+        datosActualizar[campoNivel] = nivelActual + 1; // Aquí se sube el nivel
 
+        // Guardamos en Firebase
+        await updateDoc(doc(db, "equipos", currentTeamId), datosActualizar);
+
+        // 2. Enviamos el aviso al Admin
         await addDoc(collection(db, "solicitudes_admin"), {
             equipoId: currentTeamId,
             nombreEquipo: currentTeamData.nombre,
             tipo: "Mejora de Componente",
-            detalle: `Solicita mejora de ${tipo}. Costo: $${costo.toLocaleString()}`,
+            detalle: `Ha comprado la mejora de ${tipo} al Nivel ${nivelActual + 1}. Costo: $${costo.toLocaleString()}`,
             estado: "Pendiente",
             fecha: serverTimestamp()
         });
@@ -330,60 +315,84 @@ async function solicitarMejora(tipo, costo) {
             equipoId: currentTeamId,
             nombreEquipo: currentTeamData.nombre,
             tipo: "mejora",
-            detalle: `Solicita mejora de ${tipo}. Costo: $${costo.toLocaleString()}`,
+            detalle: `Ha mejorado ${tipo} al Nivel ${nivelActual + 1}. Costo: $${costo.toLocaleString()}`,
             fecha: serverTimestamp()
         });
 
-        alert("Mejora solicitada al Admin. Te notificaremos del resultado.");
-        cargarDatos();
+        alert(`¡Mejora completada! Nivel subido a ${nivelActual + 1}. La FIA ha sido notificada.`);
+        
+        // 3. Recargamos la interfaz para que la barra se llene y cambie el precio
+        await cargarDatos(); 
+        
     } catch (error) {
-        console.error("Error:", error);
+        console.error("Error comprando mejora:", error);
+        alert("Hubo un error de conexión al comprar la mejora.");
     }
 }
 
 async function investigarPiloto() {
-    const puede = await tryConsumeInvestigation();
-    if (!puede) {
-        alert("Has alcanzado el límite de 3 investigaciones.");
-        return;
-    }
+    const puede = await tryConsumeInvestigation();
+    if (!puede) {
+        alert("Has alcanzado el límite de 3 investigaciones.");
+        return;
+    }
 
-    const pilotoId = document.getElementById("select-pilot-research").value;
-    if (!pilotoId) return alert("Selecciona un piloto");
+    const pilotoId = document.getElementById("select-pilot-research").value;
+    if (!pilotoId) return alert("Selecciona un piloto");
 
-    const piloto = allPilotos.find(p => p.id === pilotoId);
-    if (!piloto) return;
+    const piloto = allPilotos.find(p => p.id === pilotoId);
+    if (!piloto) return;
 
-    try {
-        await addDoc(collection(db, "solicitudes_admin"), {
-            equipoId: currentTeamId,
-            nombreEquipo: currentTeamData.nombre,
-            tipo: "Investigación",
-            detalle: `Investigar piloto: ${piloto.nombre} ${piloto.apellido || ''} - Ritmo: ${piloto.ritmo || 0}, Agresividad: ${piloto.agresividad || 0}`,
-            estado: "Info",
-            fecha: serverTimestamp()
-        });
+    // --- LÓGICA DE RANGO DE SUELDO Y DATOS EXTRA ---
+    const salarioReal = piloto.salario || 0;
+    let rangoSueldo = "Desconocido";
+    
+    if (salarioReal > 0) {
+        // Calcula un margen del 15% arriba y abajo, redondeado a la centena de mil más cercana
+        const min = Math.round((salarioReal * 0.85) / 100000) * 100000;
+        const max = Math.round((salarioReal * 1.15) / 100000) * 100000;
+        rangoSueldo = `$${min.toLocaleString()} y $${max.toLocaleString()}`;
+    } else {
+        rangoSueldo = "Sin contrato / $0";
+    }
 
-        await addDoc(collection(db, "actividad_equipos"), {
-            equipoId: currentTeamId,
-            nombreEquipo: currentTeamData.nombre,
-            tipo: "investigacion",
-            detalle: `Investiga piloto: ${piloto.nombre} ${piloto.apellido || ''} - Ritmo: ${piloto.ritmo || 0}, Agresividad: ${piloto.agresividad || 0}`,
-            fecha: serverTimestamp()
-        });
+    const edadTexto = piloto.edad ? `${piloto.edad} años` : "Desconocida";
+    const moralTexto = piloto.moral || "Normal";
+    // -----------------------------------------------
 
-        await addDoc(collection(db, "notificaciones"), {
-            equipoId: currentTeamId,
-            remitente: "Sistema",
-            texto: `📊 Investigación completada: ${piloto.nombre} tiene ritmo ${piloto.ritmo || 0} y agresividad ${piloto.agresividad || 0}.`,
-            fecha: serverTimestamp()
-        });
+    try {
+        // Guardar en Admin (con toda la información detallada)
+        await addDoc(collection(db, "solicitudes_admin"), {
+            equipoId: currentTeamId,
+            nombreEquipo: currentTeamData.nombre,
+            tipo: "Investigación",
+            detalle: `Investigar piloto: ${piloto.nombre} ${piloto.apellido || ''} - Ritmo: ${piloto.ritmo || 0}, Agresividad: ${piloto.agresividad || 0}, Moral: ${moralTexto}, Edad: ${edadTexto}`,
+            estado: "Info",
+            fecha: serverTimestamp()
+        });
 
-        alert("Investigación completada. Revisa tu bandeja de avisos.");
-        document.getElementById("select-pilot-research").value = "";
-    } catch (error) {
-        console.error("Error:", error);
-    }
+        // Guardar en Actividad Global
+        await addDoc(collection(db, "actividad_equipos"), {
+            equipoId: currentTeamId,
+            nombreEquipo: currentTeamData.nombre,
+            tipo: "investigacion",
+            detalle: `Ha ojeado al piloto: ${piloto.nombre} ${piloto.apellido || ''}`,
+            fecha: serverTimestamp()
+        });
+
+        // Enviar la notificación a la bandeja de avisos del equipo
+        await addDoc(collection(db, "notificaciones"), {
+            equipoId: currentTeamId,
+            remitente: "Sistema de Scouting",
+            texto: `📊 Informe de ${piloto.nombre} ${piloto.apellido || ''}: Ritmo [${piloto.ritmo || 0}], Agresividad [${piloto.agresividad || 0}], Moral [${moralTexto}], Edad [${edadTexto}]. Sueldo estimado entre ${rangoSueldo}.`,
+            fecha: serverTimestamp()
+        });
+
+        alert("Investigación completada. Revisa tu bandeja de avisos.");
+        document.getElementById("select-pilot-research").value = "";
+    } catch (error) {
+        console.error("Error:", error);
+    }
 }
 
 async function investigarMejora() {
@@ -1016,6 +1025,10 @@ async function denegarMensaje(notifId, mensajeId) {
         console.error("Error denegando mensaje:", error);
         alert("Error al denegar el mensaje.");
     }
+}
+
+window.aprobarMensaje = aprobarMensaje;
+window.denegarMensaje = denegarMensaje;
 }
 
 window.aprobarMensaje = aprobarMensaje;
