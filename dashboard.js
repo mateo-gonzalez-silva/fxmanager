@@ -557,25 +557,37 @@ async function comprarInvestigacionExtra() {
 }
 
 function escucharNotificaciones() {
-    // Restaurado el orderBy que se había borrado
+    // Le quitamos el orderBy a Firebase para que no pida crear el índice
     const q = query(
         collection(db, "notificaciones"), 
-        where("equipoId", "==", currentTeamId),
-        orderBy("fecha", "desc")
+        where("equipoId", "==", currentTeamId)
     );
     
     const notificationsBox = document.getElementById("notifications-box");
 
     onSnapshot(q, (snapshot) => {
         notificationsBox.innerHTML = "";
+        
         if (snapshot.empty) {
             notificationsBox.innerHTML = '<p style="text-align:center; color: var(--text-secondary);">Sin notificaciones</p>';
             return;
         }
 
+        // 1. Metemos todos los mensajes en un array
+        let notificaciones = [];
         snapshot.forEach(doc => {
-            const notif = doc.data();
-            
+            notificaciones.push({ id: doc.id, ...doc.data() });
+        });
+
+        // 2. LOS ORDENAMOS AQUÍ CON JAVASCRIPT (Del más nuevo al más viejo)
+        notificaciones.sort((a, b) => {
+            const tiempoA = a.fecha && a.fecha.toMillis ? a.fecha.toMillis() : 0;
+            const tiempoB = b.fecha && b.fecha.toMillis ? b.fecha.toMillis() : 0;
+            return tiempoB - tiempoA; // De mayor (nuevo) a menor (viejo)
+        });
+
+        // 3. Ahora sí, los pintamos en la pantalla ordenados
+        notificaciones.forEach(notif => {
             let fechaTexto = "";
             if (notif.fecha && notif.fecha.toDate) {
                 fechaTexto = notif.fecha.toDate().toLocaleString();
@@ -588,8 +600,8 @@ function escucharNotificaciones() {
             if (notif.tipo === "mensaje_aprobacion") {
                 buttons = `
                     <div style="margin-top: 10px; display: flex; gap: 10px;">
-                        <button class="btn-solid" onclick="aprobarMensaje('${doc.id}', '${notif.mensajeId}')">Aprobar</button>
-                        <button class="btn-outline" onclick="denegarMensaje('${doc.id}', '${notif.mensajeId}')">Denegar</button>
+                        <button class="btn-solid" onclick="aprobarMensaje('${notif.id}', '${notif.mensajeId}')">Aprobar</button>
+                        <button class="btn-outline" onclick="denegarMensaje('${notif.id}', '${notif.mensajeId}')">Denegar</button>
                     </div>
                 `;
             }
@@ -606,11 +618,10 @@ function escucharNotificaciones() {
         });
     }, (error) => {
         console.error("Error cargando avisos:", error);
-        if (error.code === 'failed-precondition') {
-            notificationsBox.innerHTML = '<p style="color:orange; padding:10px;">Falta el índice en Firebase. Abre la consola F12 y haz clic en el enlace azul.</p>';
-        }
+        notificationsBox.innerHTML = '<p style="color:orange; text-align:center;">Error de conexión cargando los avisos.</p>';
     });
 }
+
 
 // ============== SISTEMA DE SPONSORS ==============
 async function openSponsorModal() {
