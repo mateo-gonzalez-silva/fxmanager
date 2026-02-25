@@ -375,7 +375,7 @@ async function investigarPiloto() {
         await addDoc(collection(db, "notificaciones"), {
             equipoId: currentTeamId,
             remitente: "Sistema",
-            texto: `📊 Investigación completada: ${piloto.nombre} tiene ritmo ${piloto.ritmo || 0} y agresividad ${piloto.agresividad || 0}.`,
+            texto: `📊 Investigación completada: ${piloto.nombre} tiene ritmo ${piloto.ritmo || 0} y agresividad ${piloto.agresividad || 0}. Su edad es: ${edadTexto}, su moral es ${moralTexto} y su sueldo se estima entre ${rangoSueldo}.`,
             fecha: serverTimestamp()
         });
 
@@ -638,15 +638,22 @@ window.selectSponsorOption = function(type) {
 
 async function saveFixedContract() {
     try {
+        // 1. FORZAMOS QUE EL PRESUPUESTO SEA UN NÚMERO ESTRICTO
+        let presupuestoActual = Number(currentTeamData.presupuesto);
+        if (isNaN(presupuestoActual)) presupuestoActual = 0;
+        
+        const nuevoPresupuesto = presupuestoActual + 45000000;
+
         const contract = {
             type: "fixed",
             guaranteed: 45000000,
             savedAt: serverTimestamp()
         };
 
+        // 2. ACTUALIZAMOS FIREBASE
         await updateDoc(doc(db, "equipos", currentTeamId), {
             sponsor_contract: contract,
-            presupuesto: currentTeamData.presupuesto + 45000000
+            presupuesto: nuevoPresupuesto
         });
         
         await addDoc(collection(db, "actividad_equipos"), {
@@ -657,13 +664,16 @@ async function saveFixedContract() {
             fecha: serverTimestamp()
         });
 
-        currentTeamData.sponsor_contract = contract;
-        currentTeamData.presupuesto += 45000000;
+        // 3. OBLIGAMOS A REFRESCAR LA PANTALLA CON LOS DATOS REALES DE FIREBASE
+        await cargarDatos();
         mostrarSeccionContrato(contract);
-        document.getElementById("team-budget").textContent = `$${currentTeamData.presupuesto.toLocaleString()}`;
+        
+        // 4. CONFIRMACIÓN AL USUARIO
+        alert("✅ ¡Contrato firmado con éxito! Se han añadido $45,000,000 a tu presupuesto.");
+        
     } catch (error) {
-        console.error("Error al guardar contrato fijo:", error);
-        alert("Error al guardar el contrato");
+        console.error("Error FATAL al guardar contrato fijo:", error);
+        alert("❌ Error al guardar en la base de datos. Revisa tu conexión.");
     }
 }
 
@@ -674,7 +684,7 @@ const sponsorBudgetTable = {
 
 window.updatePositionDisplay = function(value) {
     const slider = document.getElementById("position-slider");
-    slider.value = value;
+    if (slider) slider.value = value;
 
     const targetPosition = parseInt(value);
     const maxTotal = sponsorBudgetTable[targetPosition];
@@ -690,11 +700,13 @@ window.updatePositionDisplay = function(value) {
 
 window.confirmSponsorExpectations = function() {
     const targetPosition = parseInt(document.getElementById("position-slider").value);
-
     const maxTotal = sponsorBudgetTable[targetPosition];
     const initialPayment = Math.round(maxTotal * 0.5);
     const maxBonus = maxTotal - initialPayment;
-    const perRaceBonus = Math.floor(maxBonus / TOTAL_CARRERAS); // BONUS POR CARRERA AÑADIDO
+    
+    // Seguro en caso de que TOTAL_CARRERAS no cargue
+    const carrerasTotales = typeof TOTAL_CARRERAS !== 'undefined' ? TOTAL_CARRERAS : 10;
+    const perRaceBonus = Math.floor(maxBonus / carrerasTotales);
 
     const contract = {
         type: "performance",
@@ -712,26 +724,37 @@ window.confirmSponsorExpectations = function() {
 
 async function savePerformanceContract(contract) {
     try {
+        // 1. FORZAMOS QUE EL PRESUPUESTO SEA UN NÚMERO ESTRICTO
+        let presupuestoActual = Number(currentTeamData.presupuesto);
+        if (isNaN(presupuestoActual)) presupuestoActual = 0;
+        
+        const pagoBase = Number(contract.base);
+        const nuevoPresupuesto = presupuestoActual + pagoBase;
+
+        // 2. ACTUALIZAMOS FIREBASE
         await updateDoc(doc(db, "equipos", currentTeamId), {
             sponsor_contract: contract,
-            presupuesto: currentTeamData.presupuesto + contract.base
+            presupuesto: nuevoPresupuesto
         });
         
         await addDoc(collection(db, "actividad_equipos"), {
             equipoId: currentTeamId,
             nombreEquipo: currentTeamData.nombre,
             tipo: "contrato_sponsor",
-            detalle: `Firma contrato con objetivo ${contract.targetPosition}: $${contract.base.toLocaleString()} base + $${contract.perRaceBonus.toLocaleString()} bonus/carrera`,
+            detalle: `Firma contrato (Objetivo ${contract.targetPosition}º): $${pagoBase.toLocaleString()} base + $${contract.perRaceBonus.toLocaleString()} bonus/carrera`,
             fecha: serverTimestamp()
         });
 
-        currentTeamData.sponsor_contract = contract;
-        currentTeamData.presupuesto += contract.base;
+        // 3. OBLIGAMOS A REFRESCAR LA PANTALLA CON LOS DATOS REALES DE FIREBASE
+        await cargarDatos();
         mostrarSeccionContrato(contract);
-        document.getElementById("team-budget").textContent = `$${currentTeamData.presupuesto.toLocaleString()}`;
+        
+        // 4. CONFIRMACIÓN AL USUARIO
+        alert(`✅ ¡Contrato firmado! El pago inicial de $${pagoBase.toLocaleString()} se ha añadido a tu presupuesto.`);
+        
     } catch (error) {
-        console.error("Error al guardar contrato performance:", error);
-        alert("Error al guardar el contrato");
+        console.error("Error FATAL al guardar contrato performance:", error);
+        alert("❌ Error al guardar en la base de datos. Revisa tu conexión.");
     }
 }
 
@@ -740,12 +763,15 @@ window.cancelSponsorOption = function() {
 };
 
 window.closeSponsorModal = function() {
-    document.getElementById("sponsors-modal").style.display = "none";
+    const modal = document.getElementById("sponsors-modal");
+    if (modal) {
+        modal.style.display = "none";
+    }
 };
 
 document.addEventListener("click", function(event) {
     const modal = document.getElementById("sponsors-modal");
-    if (event.target === modal) {
+    if (modal && event.target === modal) {
         modal.style.display = "none";
     }
 });
