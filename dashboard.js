@@ -686,7 +686,48 @@ window.selectSponsorOption = function(type) {
 };
 
 async function saveFixedContract() {
-    // Implementación original...
+    // contrato fijo: recibes cantidad garantizada inmediatamente
+    const amount = 45000000;
+    const contract = {
+        type: "fixed",
+        guaranteed: amount,
+        savedAt: serverTimestamp()
+    };
+
+    try {
+        await updateDoc(doc(db, "equipos", currentTeamId), {
+            sponsor_contract: contract,
+            sponsor_contract_unlocked: false,
+            presupuesto: (currentTeamData.presupuesto || 0) + amount
+        });
+
+        const notifRef = await addDoc(collection(db, "notificaciones"), {
+            equipoId: currentTeamId,
+            remitente: "Sistema",
+            texto: `💎 Contrato de patrocinio fijo firmado. Recibiste $${amount.toLocaleString()}.`,
+            fecha: serverTimestamp()
+        });
+
+        await addDoc(collection(db, "actividad_equipos"), {
+            equipoId: currentTeamId,
+            nombreEquipo: currentTeamData.nombre,
+            tipo: "contrato_sponsor",
+            detalle: `Firma contrato fijo con garantía de $${amount.toLocaleString()}`,
+            fecha: serverTimestamp(),
+            notificacionId: notifRef.id
+        });
+
+        // actualizar datos locales y refrescar UI
+        currentTeamData.sponsor_contract = contract;
+        currentTeamData.presupuesto = (currentTeamData.presupuesto || 0) + amount;
+
+        mostrarSeccionContrato(contract);
+        alert("Contrato guardado correctamente.");
+        await cargarDatos();
+    } catch (error) {
+        console.error("Error guardando contrato fijo:", error);
+        alert("No se pudo guardar el contrato de patrocinio. Reintenta más tarde.");
+    }
 }
 
 const sponsorBudgetTable = {
