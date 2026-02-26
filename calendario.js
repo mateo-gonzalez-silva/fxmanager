@@ -68,25 +68,14 @@ async function cargarCalendario() {
             let botonHTML = `<button class="btn-outline" disabled style="opacity:0.5; cursor:not-allowed;">Esperando resultados</button>`;
 
             if (c.completada || c.test) {
-                // Información de primer puesto
-                let nombreGanador = "Desconocido";
-                let colorGanador = "var(--border-color)";
-                let infoExtra = "";
-
                 if (c.test) {
-                    // en test usamos la primera posición de entrenamientos
-                    const pid = c.entrenamientos && c.entrenamientos[0];
-                    if (pid && pilotosMap[pid]) {
-                        const p = pilotosMap[pid];
-                        nombreGanador = `${p.nombre} ${p.apellido}`;
-                        const eq = equiposMap[p.equipoId];
-                        if (eq) colorGanador = eq.color;
-                        const t = c.entrenamientos_tiempo && c.entrenamientos_tiempo[0];
-                        const v = c.entrenamientos_vueltas && c.entrenamientos_vueltas[0];
-                        if (t) infoExtra += `${t}`;
-                        if (v) infoExtra += (infoExtra? ' / ' : '') + `${v}v`;
-                    }
+                    estadoHTML = `<span class="race-status status-done">Terminado</span>`;
                 } else {
+                    // Información de primer puesto
+                    let nombreGanador = "Desconocido";
+                    let colorGanador = "var(--border-color)";
+                    let infoExtra = "";
+
                     const ganadorId = c.resultados_20 ? c.resultados_20[0] : null;
                     if (ganadorId && pilotosMap[ganadorId]) {
                         const p = pilotosMap[ganadorId];
@@ -99,19 +88,19 @@ async function cargarCalendario() {
                         if (t) infoExtra += `${t}`;
                         if (v) infoExtra += (infoExtra? ' / ' : '') + `${v}v`;
                     }
-                }
 
-                estadoHTML = `
-                    <div style="text-align:right;">
-                        <span style="display:block; font-size:0.7rem; color:var(--text-secondary); text-transform:uppercase;">
-                            Terminado
-                        </span>
-                        <strong style="color:${colorGanador}; font-size:1.1rem;">
-                            ${c.test ? '🧪 ' : '🏆 '}${nombreGanador}
-                        </strong>
-                        ${infoExtra ? `<div style="font-size:0.7rem; color:var(--text-secondary);">${infoExtra}</div>` : ''}
-                    </div>
-                `;
+                    estadoHTML = `
+                        <div style="text-align:right;">
+                            <span style="display:block; font-size:0.7rem; color:var(--text-secondary); text-transform:uppercase;">
+                                Terminado
+                            </span>
+                            <strong style="color:${colorGanador}; font-size:1.1rem;">
+                                🏆 ${nombreGanador}
+                            </strong>
+                            ${infoExtra ? `<div style="font-size:0.7rem; color:var(--text-secondary);">${infoExtra}</div>` : ''}
+                        </div>
+                    `;
+                }
 
                 const dataString = encodeURIComponent(JSON.stringify(c));
                 botonHTML = `<button class="btn-solid" onclick="abrirDetalles('${dataString}')">Ver Resultados</button>`;
@@ -156,8 +145,11 @@ window.abrirDetalles = (dataEncoded) => {
         document.getElementById('view-qual').style.display = 'none';
         document.getElementById('view-race').style.display = 'none';
         document.getElementById('view-prac').style.display = 'block';
+        // saltar la llamada posterior a verPestana
+        window._skipTabSwitch = true;
     } else {
         document.querySelectorAll('#modal-detalles .btn-outline').forEach((b) => b.style.display = 'inline-block');
+        window._skipTabSwitch = false;
     }
     
     // Info Pole y VR
@@ -180,7 +172,7 @@ window.abrirDetalles = (dataEncoded) => {
     llenarTabla("table-prac-body", data.entrenamientos, data.entrenamientos_tiempo || [], data.entrenamientos_vueltas || []);
 
     // Resetear pestañas y mostrar modal
-    window.verPestana('race'); // Función definida en el HTML
+    if (!window._skipTabSwitch) window.verPestana('race'); // Función definida en el HTML
     document.getElementById("modal-detalles").style.display = "flex";
 };
 
