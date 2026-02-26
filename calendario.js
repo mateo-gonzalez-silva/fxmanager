@@ -69,7 +69,7 @@ async function cargarCalendario() {
 
             if (c.completada || c.test) {
                 if (c.test) {
-                    estadoHTML = `<span class="race-status" style="background: var(--info); color: #000; padding: 5px 15px; border-radius: 4px; font-weight: bold;">🔧 TEST</span>`;
+                    estadoHTML = `<span class="race-status" style="background: var(--info); color: #000; padding: 5px 15px; border-radius: 4px; font-weight: bold;">TEST</span>`;
                 } else {
                     let nombreGanador = "Desconocido";
                     let colorGanador = "var(--border-color)";
