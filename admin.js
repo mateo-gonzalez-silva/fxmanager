@@ -522,8 +522,9 @@ window.editarCarrera = (data) => {
     // restaurar texto del botón test
     const btn = document.getElementById('car-btn-test');
     if (btn) btn.textContent = 'Test';
-    // habilitar pestañas en caso de que estuvieran desactivadas por un test previo
-    document.querySelectorAll('.modal-tab-btn').forEach(b => b.disabled = false);
+    // asegurar que todas las pestañas estén visibles
+    document.querySelectorAll('.modal-tab-btn').forEach(b => b.style.display = 'inline-block');
+    document.querySelectorAll('.session-content').forEach(c => c.style.display = 'block');
 
     document.getElementById("car-id").value = data.id || "";
     document.getElementById("car-ronda").value = data.ronda || "";
@@ -586,14 +587,24 @@ window.editarCarrera = (data) => {
     document.getElementById("modal-carrera").style.display = "flex";
 }
 
-// marca la carrera como “test”: borra qualy/carrera, desactiva tabs y asegura que no se calculen puntos
+// marca la carrera como “test”: borra qualy/carrera, oculta pestañas no-práctica y asegura que no se calculen puntos
 function marcarCarreraTest() {
     const btn = document.getElementById('car-btn-test');
+    const hideExtras = (hide) => {
+        const tabs = document.querySelectorAll('.modal-tab-btn');
+        const sessions = document.querySelectorAll('.session-content');
+        tabs.forEach((b, idx) => {
+            if (idx > 0) b.style.display = hide ? 'none' : 'inline-block';
+        });
+        sessions.forEach((c, idx) => {
+            if (idx > 0) c.style.display = hide ? 'none' : 'block';
+        });
+    };
+
     // toggle
     if (esTestCarrera) {
         esTestCarrera = false;
-        // reactivar las pestañas
-        document.querySelectorAll('.modal-tab-btn').forEach(b => b.disabled = false);
+        hideExtras(false);
         if (btn) btn.textContent = 'Test';
         alert('Modo TEST desactivado. Puedes volver a introducir qualy/carrera.');
         return;
@@ -607,20 +618,16 @@ function marcarCarreraTest() {
         const r = document.getElementById(`pos-race-${i}`);
         if (q) q.value = '';
         if (r) r.value = '';
-        const qt = document.getElementById(`pos-qual-${i}-tiempo`);
-        const qv = document.getElementById(`pos-qual-${i}-vueltas`);
-        const rt = document.getElementById(`pos-race-${i}-tiempo`);
-        const rv = document.getElementById(`pos-race-${i}-vueltas`);
-        if (qt) qt.value = '';
-        if (qv) qv.value = '';
-        if (rt) rt.value = '';
-        if (rv) rv.value = '';
+        ['qual','race'].forEach(pref => {
+            ['tiempo','vueltas'].forEach(suf => {
+                const el = document.getElementById(`pos-${pref}-${i}-${suf}`);
+                if (el) el.value = '';
+            });
+        });
     }
     document.getElementById('car-completada').checked = false;
-    // deshabilitar pestañas no prácticas
-    document.querySelectorAll('.modal-tab-btn').forEach((b, idx) => {
-        if (idx > 0) b.disabled = true;
-    });
+    // ocultar pestañas no prácticas
+    hideExtras(true);
     // forzar vista de práctica
     cambiarPestanaSesion('practica');
     alert('Carrera marcada como TEST: sólo prácticas y no contará para puntos.');
