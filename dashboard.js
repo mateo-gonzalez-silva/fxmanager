@@ -1,8 +1,8 @@
-// Dashboard.js - NUEVO Dashboard completamente rediseñado y funcional
+// dashboard.js - NUEVO Dashboard completamente rediseñado y funcional
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import {
     getFirestore, doc, getDoc, collection, query, where, getDocs, 
-    updateDoc, addDoc, deleteDoc, serverTimestamp, onSnapshot
+    updateDoc, addDoc, deleteDoc, serverTimestamp, onSnapshot, orderBy
 } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
@@ -92,12 +92,18 @@ function renderUI() {
     const carDisplay = document.getElementById("team-car-display");
     if (currentTeamData.imagenCoche) {
         carDisplay.innerHTML = `<img src="${currentTeamData.imagenCoche}" style="max-width: 100%; max-height: 100%; object-fit: contain;">`;
+    } else {
+        carDisplay.innerHTML = `<span style="color: var(--text-secondary);">Sin coche asignado</span>`;
     }
 
     // Pilotos
     const pilotosMiEquipo = allPilotos.filter(p => p.equipoId === currentTeamId);
     const driversContainer = document.getElementById("drivers-container");
     driversContainer.innerHTML = "";
+
+    if (pilotosMiEquipo.length === 0) {
+        driversContainer.innerHTML = `<p style="text-align:center; color: var(--text-secondary); width: 100%;">No tienes pilotos contratados.</p>`;
+    }
 
     pilotosMiEquipo.forEach(piloto => {
         const card = document.createElement("div");
@@ -115,7 +121,7 @@ function renderUI() {
                 </div>
                 <div style="flex: 1;">
                     <p class="driver-name-modern" style="margin: 0 0 4px 0; font-size: 1.2rem; font-weight: bold;">#${piloto.numero} ${piloto.nombre} <span style="color: ${currentTeamData.color}; font-weight: 600;">${piloto.apellido || ''}</span></p>
-                    <p class="driver-number-modern" style="margin: 0; color: var(--text-secondary); font-size: 0.9rem;">${piloto.pais} • ${piloto.edad} años</p>
+                    <p class="driver-number-modern" style="margin: 0; color: var(--text-secondary); font-size: 0.9rem;">${piloto.pais} • ${piloto.edad || '?'} años</p>
                     <div style="margin-top: 6px; display: flex; gap: 6px; flex-wrap: wrap;">
                         <span style="background: rgba(255,255,255,0.1); color: #ffffff; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">Activo ✓</span>
                     </div>
@@ -163,7 +169,6 @@ function renderUI() {
     });
 
     // Niveles de mejoras (Adaptado a nivel máximo 7)
-    // Niveles de mejoras (Adaptado a nivel máximo 7)
     const aeroLevel = currentTeamData.aeroLevel || 0;
     const motorLevel = currentTeamData.motorLevel || 0;
     document.getElementById("aero-level").textContent = aeroLevel;
@@ -171,8 +176,7 @@ function renderUI() {
     document.getElementById("aero-progress").style.width = (aeroLevel * (100 / MAX_LEVEL)) + "%";
     document.getElementById("motor-progress").style.width = (motorLevel * (100 / MAX_LEVEL)) + "%";
 
-    // --- NUEVO: ACTUALIZAR TEXTOS DE LOS BOTONES AUTOMÁTICAMENTE ---
-    
+    // ACTUALIZAR TEXTOS DE LOS BOTONES AUTOMÁTICAMENTE
     const btnAero = document.getElementById("btn-aero");
     if (btnAero) {
         if (aeroLevel >= MAX_LEVEL) {
@@ -203,87 +207,94 @@ function renderUI() {
     if (btnBuyInv) {
         btnBuyInv.textContent = "Comprar Extra ($3M)";
     }
-    // -------------------------------------------------------------
 
-    // Poblar selectores de investigación
     poblarSelectores();
 }
 
 function poblarSelectores() {
     const pilotosRivales = allPilotos.filter(p => p.equipoId !== currentTeamId);
     const selectPilot = document.getElementById("select-pilot-research");
-    selectPilot.innerHTML = '<option value="">-- Seleccionar piloto --</option>';
-    pilotosRivales.forEach(p => {
-        selectPilot.innerHTML += `<option value="${p.id}">${p.nombre} ${p.apellido || ''} (#${p.numero})</option>`;
-    });
+    if (selectPilot) {
+        selectPilot.innerHTML = '<option value="">-- Seleccionar piloto --</option>';
+        pilotosRivales.forEach(p => {
+            selectPilot.innerHTML += `<option value="${p.id}">${p.nombre} ${p.apellido || ''} (#${p.numero})</option>`;
+        });
+    }
 
     const equiposRivales = allEquipos.filter(e => e.id !== currentTeamId);
     const selectTeamUpgrade = document.getElementById("select-team-upgrade");
-    selectTeamUpgrade.innerHTML = '<option value="">-- Seleccionar equipo --</option>';
-    equiposRivales.forEach(e => {
-        selectTeamUpgrade.innerHTML += `<option value="${e.id}">${e.nombre}</option>`;
-    });
+    if (selectTeamUpgrade) {
+        selectTeamUpgrade.innerHTML = '<option value="">-- Seleccionar equipo --</option>';
+        equiposRivales.forEach(e => {
+            selectTeamUpgrade.innerHTML += `<option value="${e.id}">${e.nombre}</option>`;
+        });
+    }
 
     const selectTeamComponent = document.getElementById("select-team-component");
-    selectTeamComponent.innerHTML = '<option value="">-- Seleccionar equipo --</option>';
-    equiposRivales.forEach(e => {
-        selectTeamComponent.innerHTML += `<option value="${e.id}">${e.nombre}</option>`;
-    });
+    if (selectTeamComponent) {
+        selectTeamComponent.innerHTML = '<option value="">-- Seleccionar equipo --</option>';
+        equiposRivales.forEach(e => {
+            selectTeamComponent.innerHTML += `<option value="${e.id}">${e.nombre}</option>`;
+        });
+    }
 }
 
-// Limpiar event listeners anteriores (clonando botones si fuera necesario para evitar múltiples binds, o sobreescribiendo)
+// Limpiar event listeners anteriores mediante clonación de nodos a prueba de fallos
 function setupListeners() {
     // Botones de mejoras dinámicos
     const btnAero = document.getElementById("btn-aero");
+    if (btnAero) {
+        const newBtnAero = btnAero.cloneNode(true);
+        btnAero.parentNode.replaceChild(newBtnAero, btnAero);
+        newBtnAero.addEventListener("click", () => {
+            const currentLevel = currentTeamData.aeroLevel || 0;
+            if (currentLevel >= MAX_LEVEL) return alert("El Chasis/Aerodinámica ya está al nivel máximo permitido.");
+            solicitarMejora("Chasis y Aerodinámica", COSTOS_AERO[currentLevel], "aeroLevel", currentLevel);
+        });
+    }
+
     const btnMotor = document.getElementById("btn-motor");
-    
-    // Remueve listeners antiguos clonando el nodo
-    const newBtnAero = btnAero.cloneNode(true);
-    const newBtnMotor = btnMotor.cloneNode(true);
-    btnAero.parentNode.replaceChild(newBtnAero, btnAero);
-    btnMotor.parentNode.replaceChild(newBtnMotor, btnMotor);
+    if (btnMotor) {
+        const newBtnMotor = btnMotor.cloneNode(true);
+        btnMotor.parentNode.replaceChild(newBtnMotor, btnMotor);
+        newBtnMotor.addEventListener("click", () => {
+            const currentLevel = currentTeamData.motorLevel || 0;
+            if (currentLevel >= MAX_LEVEL) return alert("El Motor ya está al nivel máximo permitido.");
+            solicitarMejora("Motor", COSTOS_MOTOR[currentLevel], "motorLevel", currentLevel);
+        });
+    }
 
-    newBtnAero.addEventListener("click", () => {
-        const currentLevel = currentTeamData.aeroLevel || 0;
-        if (currentLevel >= MAX_LEVEL) {
-            alert("El Chasis/Aerodinámica ya está al nivel máximo permitido.");
-            return;
-        }
-        solicitarMejora("Chasis y Aerodinámica", COSTOS_AERO[currentLevel]);
-    });
-
-    newBtnMotor.addEventListener("click", () => {
-        const currentLevel = currentTeamData.motorLevel || 0;
-        if (currentLevel >= MAX_LEVEL) {
-            alert("El Motor ya está al nivel máximo permitido.");
-            return;
-        }
-        solicitarMejora("Motor", COSTOS_MOTOR[currentLevel]);
-    });
-
-    // Botones de investigación (Asegurar que no se dupliquen listeners igual que arriba si se llama varias veces)
+    // Botones de investigación
     const btnRPilot = document.getElementById("btn-research-pilot");
-    const newBtnRPilot = btnRPilot.cloneNode(true);
-    btnRPilot.parentNode.replaceChild(newBtnRPilot, btnRPilot);
-    newBtnRPilot.addEventListener("click", investigarPiloto);
+    if (btnRPilot) {
+        const newBtnRPilot = btnRPilot.cloneNode(true);
+        btnRPilot.parentNode.replaceChild(newBtnRPilot, btnRPilot);
+        newBtnRPilot.addEventListener("click", investigarPiloto);
+    }
 
     const btnRUp = document.getElementById("btn-research-upgrade");
-    const newBtnRUp = btnRUp.cloneNode(true);
-    btnRUp.parentNode.replaceChild(newBtnRUp, btnRUp);
-    newBtnRUp.addEventListener("click", investigarMejora);
+    if (btnRUp) {
+        const newBtnRUp = btnRUp.cloneNode(true);
+        btnRUp.parentNode.replaceChild(newBtnRUp, btnRUp);
+        newBtnRUp.addEventListener("click", investigarMejora);
+    }
 
     const btnRComp = document.getElementById("btn-research-component");
-    const newBtnRComp = btnRComp.cloneNode(true);
-    btnRComp.parentNode.replaceChild(newBtnRComp, btnRComp);
-    newBtnRComp.addEventListener("click", investigarComponente);
+    if (btnRComp) {
+        const newBtnRComp = btnRComp.cloneNode(true);
+        btnRComp.parentNode.replaceChild(newBtnRComp, btnRComp);
+        newBtnRComp.addEventListener("click", investigarComponente);
+    }
     
-    // Botón de sponsors
+    // Botón de sponsors (Si existe en el HTML)
     const btnSponsor = document.getElementById("btn-sponsors");
-    const newBtnSponsor = btnSponsor.cloneNode(true);
-    btnSponsor.parentNode.replaceChild(newBtnSponsor, btnSponsor);
-    newBtnSponsor.addEventListener("click", openSponsorModal);
+    if (btnSponsor) {
+        const newBtnSponsor = btnSponsor.cloneNode(true);
+        btnSponsor.parentNode.replaceChild(newBtnSponsor, btnSponsor);
+        newBtnSponsor.addEventListener("click", openSponsorModal);
+    }
     
-    // Formulario de ofertas
+    // Formulario de ofertas (Si existe)
     const formOferta = document.getElementById("form-oferta");
     if (formOferta) {
         const newFormOferta = formOferta.cloneNode(true);
@@ -303,7 +314,7 @@ function setupListeners() {
     }
 }
 
-async function solicitarMejora(tipo, costo) {
+async function solicitarMejora(tipo, costo, campoNivel, nivelActual) {
     if (currentTeamData.presupuesto < costo) {
         alert(`Presupuesto insuficiente. Se requieren $${costo.toLocaleString()} para mejorar al siguiente nivel.`);
         return;
@@ -313,15 +324,18 @@ async function solicitarMejora(tipo, costo) {
     if (!confirmar) return;
 
     try {
-        await updateDoc(doc(db, "equipos", currentTeamId), {
+        const datosActualizar = {
             presupuesto: currentTeamData.presupuesto - costo
-        });
+        };
+        datosActualizar[campoNivel] = nivelActual + 1; // Aquí se sube el nivel directamente
+
+        await updateDoc(doc(db, "equipos", currentTeamId), datosActualizar);
 
         await addDoc(collection(db, "solicitudes_admin"), {
             equipoId: currentTeamId,
             nombreEquipo: currentTeamData.nombre,
             tipo: "Mejora de Componente",
-            detalle: `Solicita mejora de ${tipo}. Costo: $${costo.toLocaleString()}`,
+            detalle: `Ha comprado la mejora de ${tipo} al Nivel ${nivelActual + 1}. Costo: $${costo.toLocaleString()}`,
             estado: "Pendiente",
             fecha: serverTimestamp()
         });
@@ -330,21 +344,23 @@ async function solicitarMejora(tipo, costo) {
             equipoId: currentTeamId,
             nombreEquipo: currentTeamData.nombre,
             tipo: "mejora",
-            detalle: `Solicita mejora de ${tipo}. Costo: $${costo.toLocaleString()}`,
+            detalle: `Ha mejorado ${tipo} al Nivel ${nivelActual + 1}. Costo: $${costo.toLocaleString()}`,
             fecha: serverTimestamp()
         });
 
-        alert("Mejora solicitada al Admin. Te notificaremos del resultado.");
-        cargarDatos();
+        alert(`¡Mejora completada! Nivel subido a ${nivelActual + 1}. La FIA ha sido notificada.`);
+        await cargarDatos(); 
+        
     } catch (error) {
-        console.error("Error:", error);
+        console.error("Error comprando mejora:", error);
+        alert("Hubo un error de conexión al comprar la mejora.");
     }
 }
 
 async function investigarPiloto() {
     const puede = await tryConsumeInvestigation();
     if (!puede) {
-        alert("Has alcanzado el límite de 3 investigaciones.");
+        alert("Has alcanzado el límite de 3 investigaciones diarias gratuitas.");
         return;
     }
 
@@ -354,29 +370,47 @@ async function investigarPiloto() {
     const piloto = allPilotos.find(p => p.id === pilotoId);
     if (!piloto) return;
 
+    const salarioReal = piloto.salario || 0;
+    let rangoSueldo = "Desconocido";
+    
+    if (salarioReal > 0) {
+        const min = Math.round((salarioReal * 0.85) / 100000) * 100000;
+        const max = Math.round((salarioReal * 1.15) / 100000) * 100000;
+        rangoSueldo = `$${min.toLocaleString()} y $${max.toLocaleString()}`;
+    } else {
+        rangoSueldo = "Sin contrato / $0";
+    }
+
+    const edadTexto = piloto.edad ? `${piloto.edad} años` : "Desconocida";
+    const moralTexto = piloto.moral || "Normal";
+
     try {
+        // registrar solicitud y actividad normal
         await addDoc(collection(db, "solicitudes_admin"), {
             equipoId: currentTeamId,
             nombreEquipo: currentTeamData.nombre,
             tipo: "Investigación",
-            detalle: `Investigar piloto: ${piloto.nombre} ${piloto.apellido || ''} - Ritmo: ${piloto.ritmo || 0}, Agresividad: ${piloto.agresividad || 0}`,
+            detalle: `Investigar piloto: ${piloto.nombre} ${piloto.apellido || ''} - Ritmo: ${piloto.ritmo || 0}, Agresividad: ${piloto.agresividad || 0}, Moral: ${moralTexto}, Edad: ${edadTexto}`,
             estado: "Info",
             fecha: serverTimestamp()
         });
 
+        // generamos la notificación y guardamos su id para enlazar
+        const notifRef = await addDoc(collection(db, "notificaciones"), {
+            equipoId: currentTeamId,
+            remitente: "Sistema de Scouting",
+            texto: `📊 Investigación completada: ${piloto.nombre} tiene ritmo ${piloto.ritmo || 0} y agresividad ${piloto.agresividad || 0}. Su edad es: ${edadTexto}.`,
+            fecha: serverTimestamp()
+        });
+
+        // actividad con referencia a la notificación para poder filtrar más tarde
         await addDoc(collection(db, "actividad_equipos"), {
             equipoId: currentTeamId,
             nombreEquipo: currentTeamData.nombre,
             tipo: "investigacion",
-            detalle: `Investiga piloto: ${piloto.nombre} ${piloto.apellido || ''} - Ritmo: ${piloto.ritmo || 0}, Agresividad: ${piloto.agresividad || 0}`,
-            fecha: serverTimestamp()
-        });
-
-        await addDoc(collection(db, "notificaciones"), {
-            equipoId: currentTeamId,
-            remitente: "Sistema",
-            texto: `📊 Investigación completada: ${piloto.nombre} tiene ritmo ${piloto.ritmo || 0} y agresividad ${piloto.agresividad || 0}.`,
-            fecha: serverTimestamp()
+            detalle: `Ha ojeado al piloto: ${piloto.nombre} ${piloto.apellido || ''}`,
+            fecha: serverTimestamp(),
+            notificacionId: notifRef.id
         });
 
         alert("Investigación completada. Revisa tu bandeja de avisos.");
@@ -388,7 +422,7 @@ async function investigarPiloto() {
 
 async function investigarMejora() {
     const puede = await tryConsumeInvestigation();
-    if (!puede) return alert("Has alcanzado el límite de 3 investigaciones.");
+    if (!puede) return alert("Has alcanzado el límite de 3 investigaciones diarias gratuitas.");
 
     const equipoId = document.getElementById("select-team-upgrade").value;
     if (!equipoId) return alert("Selecciona un equipo");
@@ -398,7 +432,7 @@ async function investigarMejora() {
 
     try {
         const ultimaMejora = equipo.ultimaMejora || "Motor";
-        await addDoc(collection(db, "notificaciones"), {
+        const notifRef = await addDoc(collection(db, "notificaciones"), {
             equipoId: currentTeamId,
             remitente: "Sistema",
             texto: `⚙️ Última mejora de ${equipo.nombre}: ${ultimaMejora}`,
@@ -410,7 +444,8 @@ async function investigarMejora() {
             nombreEquipo: currentTeamData.nombre,
             tipo: "investigacion",
             detalle: `Investiga mejora: ${equipo.nombre} - Última mejora: ${ultimaMejora}`,
-            fecha: serverTimestamp()
+            fecha: serverTimestamp(),
+            notificacionId: notifRef.id
         });
 
         alert("✅ Investigación completada. Información enviada a tu bandeja de avisos.");
@@ -423,7 +458,7 @@ async function investigarMejora() {
 
 async function investigarComponente() {
     const puede = await tryConsumeInvestigation();
-    if (!puede) return alert("Has alcanzado el límite de 3 investigaciones.");
+    if (!puede) return alert("Has alcanzado el límite de 3 investigaciones diarias gratuitas.");
 
     const equipoId = document.getElementById("select-team-component").value;
     const componente = document.getElementById("select-component-type").value;
@@ -436,7 +471,7 @@ async function investigarComponente() {
         const nivelComponente = componente === "aero" ? (equipo.aeroLevel || 0) : (equipo.motorLevel || 0);
         const nombreComponente = componente === "aero" ? "Aerodinámica" : "Motor";
         
-        await addDoc(collection(db, "notificaciones"), {
+        const notifRef = await addDoc(collection(db, "notificaciones"), {
             equipoId: currentTeamId,
             remitente: "Sistema",
             texto: `🔩 Nivel de ${nombreComponente} en ${equipo.nombre}: ${nivelComponente}/${MAX_LEVEL}`,
@@ -448,7 +483,8 @@ async function investigarComponente() {
             nombreEquipo: currentTeamData.nombre,
             tipo: "investigacion",
             detalle: `Investiga nivel de ${nombreComponente}: ${equipo.nombre} - Nivel: ${nivelComponente}/${MAX_LEVEL}`,
-            fecha: serverTimestamp()
+            fecha: serverTimestamp(),
+            notificacionId: notifRef.id
         });
 
         alert("✅ Investigación completada. Información enviada a tu bandeja de avisos.");
@@ -480,10 +516,10 @@ async function tryConsumeInvestigation() {
 }
 
 async function comprarInvestigacionExtra() {
-    const costo = 3000000; // PRECIO ACTUALIZADO A 3 MILLONES
+    const costo = 3000000; 
     
     if (currentTeamData.presupuesto < costo) {
-        alert("Presupuesto insuficiente para comprar una investigación extra (Costo: $3,000,000).");
+        alert(`Presupuesto insuficiente para comprar una investigación extra (Costo: $${costo.toLocaleString()}).`);
         return;
     }
 
@@ -527,18 +563,42 @@ async function comprarInvestigacionExtra() {
 }
 
 function escucharNotificaciones() {
-    const q = query(collection(db, "notificaciones"), where("equipoId", "==", currentTeamId));
+    // Le quitamos el orderBy a Firebase para que no pida crear el índice
+    const q = query(
+        collection(db, "notificaciones"), 
+        where("equipoId", "==", currentTeamId)
+    );
+    
     const notificationsBox = document.getElementById("notifications-box");
 
     onSnapshot(q, (snapshot) => {
         notificationsBox.innerHTML = "";
+        
         if (snapshot.empty) {
             notificationsBox.innerHTML = '<p style="text-align:center; color: var(--text-secondary);">Sin notificaciones</p>';
             return;
         }
 
+        // 1. Metemos todos los mensajes en un array
+        let notificaciones = [];
         snapshot.forEach(doc => {
-            const notif = doc.data();
+            notificaciones.push({ id: doc.id, ...doc.data() });
+        });
+
+        // 2. LOS ORDENAMOS AQUÍ CON JAVASCRIPT (Del más nuevo al más viejo)
+        notificaciones.sort((a, b) => {
+            const tiempoA = a.fecha && a.fecha.toMillis ? a.fecha.toMillis() : 0;
+            const tiempoB = b.fecha && b.fecha.toMillis ? b.fecha.toMillis() : 0;
+            return tiempoB - tiempoA; // De mayor (nuevo) a menor (viejo)
+        });
+
+        // 3. Ahora sí, los pintamos en la pantalla ordenados
+        notificaciones.forEach(notif => {
+            let fechaTexto = "";
+            if (notif.fecha && notif.fecha.toDate) {
+                fechaTexto = notif.fecha.toDate().toLocaleString();
+            }
+
             const notifEl = document.createElement("div");
             notifEl.style.cssText = "padding: 12px; border-left: 3px solid var(--accent); background-color: var(--bg-tertiary); margin-bottom: 10px; border-radius: 4px;";
             
@@ -546,46 +606,38 @@ function escucharNotificaciones() {
             if (notif.tipo === "mensaje_aprobacion") {
                 buttons = `
                     <div style="margin-top: 10px; display: flex; gap: 10px;">
-                        <button class="btn-solid" onclick="aprobarMensaje('${doc.id}', '${notif.mensajeId}')">Aprobar</button>
-                        <button class="btn-outline" onclick="denegarMensaje('${doc.id}', '${notif.mensajeId}')">Denegar</button>
+                        <button class="btn-solid" onclick="aprobarMensaje('${notif.id}', '${notif.mensajeId}')">Aprobar</button>
+                        <button class="btn-outline" onclick="denegarMensaje('${notif.id}', '${notif.mensajeId}')">Denegar</button>
                     </div>
                 `;
             }
             
             notifEl.innerHTML = `
-                <strong style="color: var(--accent);">${notif.remitente || 'Sistema'}:</strong>
-                <p style="margin: 5px 0 0 0; font-size: 0.95rem;">${notif.texto}</p>
+                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                    <strong style="color: var(--accent);">${notif.remitente || 'Sistema'}:</strong>
+                    <span style="color: var(--text-secondary); font-size:0.75rem;">${fechaTexto}</span>
+                </div>
+                <p style="margin: 0; font-size: 0.95rem;">${notif.texto}</p>
                 ${buttons}
             `;
             notificationsBox.appendChild(notifEl);
         });
+    }, (error) => {
+        console.error("Error cargando avisos:", error);
+        notificationsBox.innerHTML = '<p style="color:orange; text-align:center;">Error de conexión cargando los avisos.</p>';
     });
 }
 
-// ============== SISTEMA DE SPONSORS ==============
 
+// ============== SISTEMA DE SPONSORS ==============
 async function openSponsorModal() {
     const modal = document.getElementById("sponsors-modal");
-    modal.style.display = "flex";
+    if(modal) modal.style.display = "flex";
 
-    try {
-        const teamRef = doc(db, "equipos", currentTeamId);
-        const teamSnap = await getDoc(teamRef);
-        const team = teamSnap.data() || {};
-
-        const contract = team.sponsor_contract;
-        const isUnlocked = team.sponsor_contract_unlocked || false;
-
-        if (!contract || isUnlocked) {
-            mostrarSeccionOpcion();
-            if (isUnlocked && contract) {
-                await updateDoc(teamRef, { sponsor_contract_unlocked: false });
-            }
-        } else {
-            mostrarSeccionContrato(contract);
-        }
-    } catch (error) {
-        console.error("Error al abrir modal de sponsors:", error);
+    // si ya tenemos un contrato guardado, mostramos directamente la sección de contrato
+    if (currentTeamData && currentTeamData.sponsor_contract) {
+        mostrarSeccionContrato(currentTeamData.sponsor_contract);
+    } else {
         mostrarSeccionOpcion();
     }
 }
@@ -600,7 +652,7 @@ function mostrarSeccionExpectativas() {
     document.getElementById("sponsors-choice-section").style.display = "none";
     document.getElementById("sponsors-expectations-section").style.display = "block";
     document.getElementById("sponsors-contract-section").style.display = "none";
-    updatePositionDisplay(5);
+    if(window.updatePositionDisplay) window.updatePositionDisplay(5);
 }
 
 function mostrarSeccionContrato(contract) {
@@ -629,41 +681,52 @@ function mostrarSeccionContrato(contract) {
 }
 
 window.selectSponsorOption = function(type) {
-    if (type === "fixed") {
-        saveFixedContract();
-    } else if (type === "performance") {
-        mostrarSeccionExpectativas();
-    }
+    if (type === "fixed") saveFixedContract();
+    else if (type === "performance") mostrarSeccionExpectativas();
 };
 
 async function saveFixedContract() {
-    try {
-        const contract = {
-            type: "fixed",
-            guaranteed: 45000000,
-            savedAt: serverTimestamp()
-        };
+    // contrato fijo: recibes cantidad garantizada inmediatamente
+    const amount = 45000000;
+    const contract = {
+        type: "fixed",
+        guaranteed: amount,
+        savedAt: serverTimestamp()
+    };
 
+    try {
         await updateDoc(doc(db, "equipos", currentTeamId), {
             sponsor_contract: contract,
-            presupuesto: currentTeamData.presupuesto + 45000000
+            sponsor_contract_unlocked: false,
+            presupuesto: (currentTeamData.presupuesto || 0) + amount
         });
-        
+
+        const notifRef = await addDoc(collection(db, "notificaciones"), {
+            equipoId: currentTeamId,
+            remitente: "Sistema",
+            texto: `💎 Contrato de patrocinio fijo firmado. Recibiste $${amount.toLocaleString()}.`,
+            fecha: serverTimestamp()
+        });
+
         await addDoc(collection(db, "actividad_equipos"), {
             equipoId: currentTeamId,
             nombreEquipo: currentTeamData.nombre,
             tipo: "contrato_sponsor",
-            detalle: `Firma contrato de patrocinio fijo: $45,000,000 garantizados`,
-            fecha: serverTimestamp()
+            detalle: `Firma contrato fijo con garantía de $${amount.toLocaleString()}`,
+            fecha: serverTimestamp(),
+            notificacionId: notifRef.id
         });
 
+        // actualizar datos locales y refrescar UI
         currentTeamData.sponsor_contract = contract;
-        currentTeamData.presupuesto += 45000000;
+        currentTeamData.presupuesto = (currentTeamData.presupuesto || 0) + amount;
+
         mostrarSeccionContrato(contract);
-        document.getElementById("team-budget").textContent = `$${currentTeamData.presupuesto.toLocaleString()}`;
+        alert("Contrato guardado correctamente.");
+        await cargarDatos();
     } catch (error) {
-        console.error("Error al guardar contrato fijo:", error);
-        alert("Error al guardar el contrato");
+        console.error("Error guardando contrato fijo:", error);
+        alert("No se pudo guardar el contrato de patrocinio. Reintenta más tarde.");
     }
 }
 
@@ -674,7 +737,7 @@ const sponsorBudgetTable = {
 
 window.updatePositionDisplay = function(value) {
     const slider = document.getElementById("position-slider");
-    slider.value = value;
+    if(slider) slider.value = value;
 
     const targetPosition = parseInt(value);
     const maxTotal = sponsorBudgetTable[targetPosition];
@@ -690,11 +753,10 @@ window.updatePositionDisplay = function(value) {
 
 window.confirmSponsorExpectations = function() {
     const targetPosition = parseInt(document.getElementById("position-slider").value);
-
     const maxTotal = sponsorBudgetTable[targetPosition];
     const initialPayment = Math.round(maxTotal * 0.5);
     const maxBonus = maxTotal - initialPayment;
-    const perRaceBonus = Math.floor(maxBonus / TOTAL_CARRERAS); // BONUS POR CARRERA AÑADIDO
+    const perRaceBonus = Math.floor(maxBonus / TOTAL_CARRERAS); 
 
     const contract = {
         type: "performance",
@@ -712,104 +774,54 @@ window.confirmSponsorExpectations = function() {
 
 async function savePerformanceContract(contract) {
     try {
+        // añadimos el contrato y damos el dinero base inmediato
         await updateDoc(doc(db, "equipos", currentTeamId), {
             sponsor_contract: contract,
-            presupuesto: currentTeamData.presupuesto + contract.base
+            sponsor_contract_unlocked: false,
+            presupuesto: (currentTeamData.presupuesto || 0) + (contract.base || 0)
         });
-        
+
+        const notifRef = await addDoc(collection(db, "notificaciones"), {
+            equipoId: currentTeamId,
+            remitente: "Sistema",
+            texto: `💎 Contrato de patrocinio por rendimiento firmado. Base: $${(contract.base || 0).toLocaleString()}, objetivo: posición ${contract.targetPosition}.`,
+            fecha: serverTimestamp()
+        });
+
         await addDoc(collection(db, "actividad_equipos"), {
             equipoId: currentTeamId,
             nombreEquipo: currentTeamData.nombre,
             tipo: "contrato_sponsor",
-            detalle: `Firma contrato con objetivo ${contract.targetPosition}: $${contract.base.toLocaleString()} base + $${contract.perRaceBonus.toLocaleString()} bonus/carrera`,
-            fecha: serverTimestamp()
+            detalle: `Firma contrato por rendimiento con base de $${(contract.base || 0).toLocaleString()} y objetivo top ${contract.targetPosition}`,
+            fecha: serverTimestamp(),
+            notificacionId: notifRef.id
         });
 
         currentTeamData.sponsor_contract = contract;
-        currentTeamData.presupuesto += contract.base;
+        currentTeamData.presupuesto = (currentTeamData.presupuesto || 0) + (contract.base || 0);
+
         mostrarSeccionContrato(contract);
-        document.getElementById("team-budget").textContent = `$${currentTeamData.presupuesto.toLocaleString()}`;
+        alert("Contrato guardado correctamente.");
+        await cargarDatos();
+        await cargarDatos();
     } catch (error) {
-        console.error("Error al guardar contrato performance:", error);
-        alert("Error al guardar el contrato");
+        console.error("Error guardando contrato por rendimiento:", error);
+        alert("No se pudo guardar el contrato por rendimiento. Reintenta más tarde.");
     }
 }
 
-window.cancelSponsorOption = function() {
-    mostrarSeccionOpcion();
-};
-
-window.closeSponsorModal = function() {
-    document.getElementById("sponsors-modal").style.display = "none";
+window.cancelSponsorOption = function() { mostrarSeccionOpcion(); };
+window.closeSponsorModal = function() { 
+    const modal = document.getElementById("sponsors-modal");
+    if(modal) modal.style.display = "none"; 
 };
 
 document.addEventListener("click", function(event) {
     const modal = document.getElementById("sponsors-modal");
-    if (event.target === modal) {
+    if (modal && event.target === modal) {
         modal.style.display = "none";
     }
 });
-
-// NUEVA FUNCIÓN DE CÁLCULO DE BONUS POR CARRERA
-function calculateRaceBonusPercentage(racePosition, targetPosition) {
-    const difference = racePosition - targetPosition;
-    
-    if (difference <= 0) return 100;
-    if (difference === 1) return 100;
-    if (difference === 2) return 75;
-    if (difference >= 3 && difference < 5) return 55;
-    return 40; // Fallback y para 5 o más
-}
-
-// NUEVA FUNCIÓN PARA PROCESAR EL BONUS CARRERA A CARRERA (Para el Admin o Simulador)
-window.processRaceSponsorBonus = async function(teamId, racePosition, raceNumber) {
-    try {
-        const teamRef = doc(db, "equipos", teamId);
-        const teamSnap = await getDoc(teamRef);
-        
-        if (!teamSnap.exists()) return false;
-        
-        const team = teamSnap.data();
-        const contract = team.sponsor_contract;
-        
-        if (!contract || contract.type !== "performance") return false;
-        if (contract.racesProcessed >= TOTAL_CARRERAS) return false;
-        
-        const bonusPercentage = calculateRaceBonusPercentage(racePosition, contract.targetPosition);
-        const raceBonusAmount = Math.floor((contract.perRaceBonus * bonusPercentage) / 100);
-        
-        await updateDoc(teamRef, {
-            presupuesto: team.presupuesto + raceBonusAmount,
-            "sponsor_contract.racesProcessed": contract.racesProcessed + 1
-        });
-        
-        await addDoc(collection(db, "actividad_equipos"), {
-            equipoId: teamId,
-            nombreEquipo: team.nombre,
-            tipo: "ingreso_carrera",
-            detalle: `Bonus Carrera ${raceNumber}: Finalizó ${racePosition}º (Objetivo: ${contract.targetPosition}º). Ingreso: $${raceBonusAmount.toLocaleString()} (${bonusPercentage}%)`,
-            fecha: serverTimestamp()
-        });
-        
-        return { bonusPercentage, raceBonusAmount, currentBudget: team.presupuesto + raceBonusAmount };
-    } catch (error) {
-        console.error("Error procesando bonus de carrera:", error);
-        return false;
-    }
-};
-
-window.unlockSponsorContracts = async function(teamId) {
-    try {
-        const teamRef = doc(db, "equipos", teamId);
-        await updateDoc(teamRef, {
-            sponsor_contract_unlocked: true
-        });
-        return true;
-    } catch (error) {
-        console.error("Error desbloqueando contratos:", error);
-        return false;
-    }
-};
 
 // ============== FUNCIONES DE PILOTOS ==============
 
@@ -876,7 +888,7 @@ window.verDetalles = function(pilotoId) {
         `Nombre: ${piloto.nombre} ${piloto.apellido || ""}\n` +
         `Dorsal: #${piloto.numero}\n` +
         `País: ${piloto.pais}\n` +
-        `Edad: ${piloto.edad} años\n\n` +
+        `Edad: ${piloto.edad || '?'} años\n\n` +
         `Desempeño:\n` +
         `• Ritmo: ${piloto.ritmo || 0}/100\n` +
         `• Agresividad: ${piloto.agresividad || 0}/100\n` +
@@ -895,39 +907,22 @@ window.abrirModalSeleccionarPiloto = function() {
     if (pilotosRivales.length === 0) return alert("No hay pilotos rivales disponibles");
     
     const selectPiloto = document.getElementById("oferta-piloto-select");
-    selectPiloto.innerHTML = '<option value="">-- Selecciona un piloto --</option>';
-    
-    pilotosRivales.forEach(piloto => {
-        const equipo = allEquipos.find(e => e.id === piloto.equipoId);
-        const texto = `#${piloto.numero} ${piloto.nombre} ${piloto.apellido || ''} (${equipo?.nombre || 'Equipo'})`;
-        selectPiloto.innerHTML += `<option value="${piloto.id}">${texto}</option>`;
-    });
-    
-    document.getElementById("modal-oferta").style.display = "flex";
-    document.getElementById("form-oferta").reset();
-    document.getElementById("oferta-piloto-info").style.display = "none";
-};
-
-document.addEventListener("DOMContentLoaded", () => {
-    const selectPiloto = document.getElementById("oferta-piloto-select");
-    if (selectPiloto) {
-        selectPiloto.addEventListener("change", function() {
-            if (this.value) {
-                const piloto = allPilotos.find(p => p.id === this.value);
-                const equipo = allEquipos.find(e => e.id === piloto.equipoId);
-                
-                document.getElementById("oferta-piloto-nombre").textContent = `#${piloto.numero} ${piloto.nombre} ${piloto.apellido || ''}`;
-                document.getElementById("oferta-piloto-equipo").textContent = `Equipo actual: ${equipo?.nombre || 'Desconocido'}`;
-                document.getElementById("oferta-piloto-info").style.display = "block";
-            } else {
-                document.getElementById("oferta-piloto-info").style.display = "none";
-            }
+    if(selectPiloto) {
+        selectPiloto.innerHTML = '<option value="">-- Selecciona un piloto --</option>';
+        pilotosRivales.forEach(piloto => {
+            const equipo = allEquipos.find(e => e.id === piloto.equipoId);
+            const texto = `#${piloto.numero} ${piloto.nombre} ${piloto.apellido || ''} (${equipo?.nombre || 'Equipo'})`;
+            selectPiloto.innerHTML += `<option value="${piloto.id}">${texto}</option>`;
         });
     }
-});
+    
+    document.getElementById("modal-oferta").style.display = "flex";
+    if(document.getElementById("form-oferta")) document.getElementById("form-oferta").reset();
+    if(document.getElementById("oferta-piloto-info")) document.getElementById("oferta-piloto-info").style.display = "none";
+};
 
 window.cerrarModalOferta = function() {
-    document.getElementById("modal-oferta").style.display = "none";
+    if(document.getElementById("modal-oferta")) document.getElementById("modal-oferta").style.display = "none";
 };
 
 async function enviarOferta() {

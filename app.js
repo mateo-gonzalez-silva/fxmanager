@@ -59,6 +59,6 @@ if (btnLogin) {
 // 5. Truco: Si ya han iniciado sesión antes, los mandamos directo a HOME
 onAuthStateChanged(auth, (user) => {
     if (user && (window.location.pathname.endsWith('index.html') || window.location.pathname === '/')) {
-        window.location.href = "home.html";
+        window.location.href = "index.html";
     }
 });

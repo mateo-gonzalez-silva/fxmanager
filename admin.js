@@ -18,6 +18,7 @@ const auth = getAuth(app);
 
 let equiposList = [];
 let pilotosList = [];
+let esTestCarrera = false; // indica si la carrera es sólo de prueba (solo práctica, no puntos)
 
 document.addEventListener("DOMContentLoaded", () => {
     console.log("=== ADMIN.JS CARGADO ===");
@@ -231,15 +232,28 @@ document.addEventListener("DOMContentLoaded", () => {
     // FORMULARIO CARRERA ACTUALIZADO
     document.getElementById("form-carrera").addEventListener("submit", async (e) => {
         e.preventDefault();
+
         
-        // Función auxiliar para recoger 20 inputs
+        // Función auxiliar para recoger 20 inputs más tiempo/vueltas
         const recogerPosiciones = (prefijo) => {
-            const arr = [];
+            // si se ha marcado como test, sólo devolvemos datos para prácticas (y vaciamos tiempos/vueltas)
+            const pilotos = [];
+            const tiempos = [];
+            const vueltas = [];
             for (let i = 1; i <= 20; i++) {
-                arr.push(document.getElementById(`${prefijo}-${i}`).value);
+                pilotos.push(document.getElementById(`${prefijo}-${i}`).value);
+                tiempos.push(document.getElementById(`${prefijo}-${i}-tiempo`) ? document.getElementById(`${prefijo}-${i}-tiempo`).value : '');
+                vueltas.push(document.getElementById(`${prefijo}-${i}-vueltas`) ? document.getElementById(`${prefijo}-${i}-vueltas`).value : '');
             }
-            return arr;
+            if (esTestCarrera && prefijo !== 'pos-prac') {
+                return { pilotos: [], tiempos: [], vueltas: [] };
+            }
+            return { pilotos, tiempos, vueltas };
         };
+
+        const ent = recogerPosiciones('pos-prac');
+        const qual = recogerPosiciones('pos-qual');
+        const race = recogerPosiciones('pos-race');
 
         const data = {
             ronda: parseInt(document.getElementById("car-ronda").value),
@@ -248,13 +262,25 @@ document.addEventListener("DOMContentLoaded", () => {
             fecha: document.getElementById("car-fecha").value,
             pole: document.getElementById("car-pole").value,
             vr: document.getElementById("car-vr").value,
-            entrenamientos: recogerPosiciones('pos-prac'), // Nuevo
-            clasificacion: recogerPosiciones('pos-qual'), // Nuevo
-            resultados_20: recogerPosiciones('pos-race'), // Carrera (mantiene nombre legacy para compatibilidad)
-            completada: document.getElementById("car-completada").checked
+            entrenamientos: ent.pilotos,
+            entrenamientos_tiempo: ent.tiempos,
+            entrenamientos_vueltas: ent.vueltas,
+            clasificacion: qual.pilotos,
+            clasificacion_tiempo: qual.tiempos,
+            clasificacion_vueltas: qual.vueltas,
+            resultados_20: race.pilotos,
+            resultados_tiempo: race.tiempos,
+            resultados_vueltas: race.vueltas,
+            completada: document.getElementById("car-completada").checked,
+            test: esTestCarrera
         };
         await guardarDoc('carreras', document.getElementById("car-id").value, data, 'modal-carrera');
     });
+
+    // listener para botón de test (se puede pulsar en cualquier momento antes de guardar)
+    const btnTest = document.getElementById("car-btn-test");
+    if (btnTest) btnTest.addEventListener("click", marcarCarreraTest);
+
 
     document.getElementById("form-media").addEventListener("submit", async (e) => {
         e.preventDefault();
@@ -333,6 +359,11 @@ async function cargarActividad() {
         const actividadSnap = await getDocs(collection(db, "actividad_equipos"));
         console.log("📊 Documentos en actividad_equipos:", actividadSnap.size);
         
+        // build set of existing notification ids so we can drop orphan activities
+        const notifsSnap = await getDocs(collection(db, "notificaciones"));
+        const notifsSet = new Set();
+        notifsSnap.forEach(n => notifsSet.add(n.id));
+        
         actividadSnap.forEach(doc => {
             const data = doc.data();
             console.log(`  - ${data.nombreEquipo} (${data.equipoId}): ${data.tipo} - ${data.detalle}`);
@@ -352,6 +383,11 @@ async function cargarActividad() {
         
         actividadSnap.forEach(doc => {
             const actividad = doc.data();
+            // si la actividad está ligada a una notificación y ésta ya no existe, saltarla
+            if (actividad.notificacionId && !notifsSet.has(actividad.notificacionId)) {
+                console.log(`  Ignorando actividad ${doc.id} porque su notificación fue borrada`);
+                return;
+            }
             // Aplicar filtro aquí en memoria
             if (filtroEquipo && actividad.equipoId !== filtroEquipo) {
                 console.log(`  Filtrando: ${actividad.nombreEquipo} (${actividad.equipoId}) != ${filtroEquipo}`);
@@ -464,7 +500,7 @@ async function pintarTablaCarreras() {
     snap.forEach(d => {
         const c = d.data();
         const cData = { id: d.id, ...c };
-        const status = c.completada ? '<span style="color:var(--success);">Completada</span>' : '<span style="color:var(--warning);">Pendiente</span>';
+        const status = c.test ? '<span style="color:var(--info);">TEST</span>' : (c.completada ? '<span style="color:var(--success);">Completada</span>' : '<span style="color:var(--warning);">Pendiente</span>');
         
         tbody.innerHTML += `
             <tr>
@@ -481,6 +517,15 @@ async function pintarTablaCarreras() {
 
 // FUNCIÓN DE EDICIÓN ACTUALIZADA PARA 3 PESTAÑAS
 window.editarCarrera = (data) => {
+    // reset flag a cada apertura
+    esTestCarrera = false;
+    // restaurar texto del botón test
+    const btn = document.getElementById('car-btn-test');
+    if (btn) btn.textContent = 'Test';
+    // asegurar que todas las pestañas estén visibles
+    document.querySelectorAll('.modal-tab-btn').forEach(b => b.style.display = 'inline-block');
+    document.querySelectorAll('.session-content').forEach(c => c.style.display = 'block');
+
     document.getElementById("car-id").value = data.id || "";
     document.getElementById("car-ronda").value = data.ronda || "";
     document.getElementById("car-nombre").value = data.nombre || "";
@@ -499,37 +544,93 @@ window.editarCarrera = (data) => {
     if(data.vr) vrSelect.value = data.vr;
 
     // Generar 20 selects para cada pestaña
-    const generarSelects = (containerId, prefijo, datosGuardados) => {
+    const generarSelects = (containerId, prefijo, datosGuardados, tiemposGuardados, vueltasGuardados) => {
         const container = document.getElementById(containerId);
         container.innerHTML = "";
         for (let i = 1; i <= 20; i++) {
             container.innerHTML += `
-                <div style="display:flex; flex-direction:column;">
+                <div style="display:flex; flex-direction:column; gap:4px;">
                     <label style="font-size:0.8rem;">P${i}</label>
                     <select id="${prefijo}-${i}" style="padding:8px; border-radius:4px; border:1px solid var(--border-color); background:var(--bg-primary); color:white;">
                         ${opcionesPilotos}
                     </select>
+                    <input type="text" id="${prefijo}-${i}-tiempo" placeholder="tiempo" style="padding:4px; border-radius:4px; border:1px solid var(--border-color); background:var(--bg-primary); color:white;" />
+                    <input type="number" id="${prefijo}-${i}-vueltas" placeholder="vueltas" min="0" style="padding:4px; border-radius:4px; border:1px solid var(--border-color); background:var(--bg-primary); color:white;" />
                 </div>`;
-            // Rellenar si hay datos
-            if (datosGuardados && datosGuardados[i-1]) {
-                // Hay que esperar a que el DOM se pinte, pero en síncrono funciona en el innerHTML
-                // Asignación de valor post-renderizado
-            }
+            // Rellenar si hay datos (se hará después en el bucle superior)
         }
     };
 
-    generarSelects("container-practica", "pos-prac", data.entrenamientos);
-    generarSelects("container-clasificacion", "pos-qual", data.clasificacion);
-    generarSelects("container-carrera", "pos-race", data.resultados_20);
+    generarSelects("container-practica", "pos-prac", data.entrenamientos, data.entrenamientos_tiempo, data.entrenamientos_vueltas);
+    generarSelects("container-clasificacion", "pos-qual", data.clasificacion, data.clasificacion_tiempo, data.clasificacion_vueltas);
+    generarSelects("container-carrera", "pos-race", data.resultados_20, data.resultados_tiempo, data.resultados_vueltas);
+
+    // si el documento ya venía marcado como test (o no tiene qualy/carrera y no está completada)
+    if (data.test || (!data.completada && (!data.clasificacion || data.clasificacion.every(v=>!v)) && (!data.resultados_20 || data.resultados_20.every(v=>!v)))) {
+        esTestCarrera = true;
+        marcarCarreraTest();
+    }
 
     // Asignar valores después de generar el HTML
     for (let i = 1; i <= 20; i++) {
         if(data.entrenamientos && data.entrenamientos[i-1]) document.getElementById(`pos-prac-${i}`).value = data.entrenamientos[i-1];
+        if(data.entrenamientos_tiempo && data.entrenamientos_tiempo[i-1]) document.getElementById(`pos-prac-${i}-tiempo`).value = data.entrenamientos_tiempo[i-1];
+        if(data.entrenamientos_vueltas && data.entrenamientos_vueltas[i-1]) document.getElementById(`pos-prac-${i}-vueltas`).value = data.entrenamientos_vueltas[i-1];
         if(data.clasificacion && data.clasificacion[i-1]) document.getElementById(`pos-qual-${i}`).value = data.clasificacion[i-1];
+        if(data.clasificacion_tiempo && data.clasificacion_tiempo[i-1]) document.getElementById(`pos-qual-${i}-tiempo`).value = data.clasificacion_tiempo[i-1];
+        if(data.clasificacion_vueltas && data.clasificacion_vueltas[i-1]) document.getElementById(`pos-qual-${i}-vueltas`).value = data.clasificacion_vueltas[i-1];
         if(data.resultados_20 && data.resultados_20[i-1]) document.getElementById(`pos-race-${i}`).value = data.resultados_20[i-1];
+        if(data.resultados_tiempo && data.resultados_tiempo[i-1]) document.getElementById(`pos-race-${i}-tiempo`).value = data.resultados_tiempo[i-1];
+        if(data.resultados_vueltas && data.resultados_vueltas[i-1]) document.getElementById(`pos-race-${i}-vueltas`).value = data.resultados_vueltas[i-1];
     }
 
     document.getElementById("modal-carrera").style.display = "flex";
+}
+
+// marca la carrera como “test”: borra qualy/carrera, oculta pestañas no-práctica y asegura que no se calculen puntos
+function marcarCarreraTest() {
+    const btn = document.getElementById('car-btn-test');
+    const hideExtras = (hide) => {
+        const tabs = document.querySelectorAll('.modal-tab-btn');
+        const sessions = document.querySelectorAll('.session-content');
+        tabs.forEach((b, idx) => {
+            if (idx > 0) b.style.display = hide ? 'none' : 'inline-block';
+        });
+        sessions.forEach((c, idx) => {
+            if (idx > 0) c.style.display = hide ? 'none' : 'block';
+        });
+    };
+
+    // toggle
+    if (esTestCarrera) {
+        esTestCarrera = false;
+        hideExtras(false);
+        if (btn) btn.textContent = 'Test';
+        alert('Modo TEST desactivado. Puedes volver a introducir qualy/carrera.');
+        return;
+    }
+
+    esTestCarrera = true;
+    if (btn) btn.textContent = 'Test (activo)';
+    // limpiar selects de clasificación y carrera y sus tiempos/vueltas
+    for (let i = 1; i <= 20; i++) {
+        const q = document.getElementById(`pos-qual-${i}`);
+        const r = document.getElementById(`pos-race-${i}`);
+        if (q) q.value = '';
+        if (r) r.value = '';
+        ['qual','race'].forEach(pref => {
+            ['tiempo','vueltas'].forEach(suf => {
+                const el = document.getElementById(`pos-${pref}-${i}-${suf}`);
+                if (el) el.value = '';
+            });
+        });
+    }
+    document.getElementById('car-completada').checked = false;
+    // ocultar pestañas no prácticas
+    hideExtras(true);
+    // forzar vista de práctica
+    cambiarPestanaSesion('practica');
+    alert('Carrera marcada como TEST: sólo prácticas y no contará para puntos.');
 }
 
 // ... (Resto de funciones pintarTablaEquipos, Pilotos, Media, etc. igual que antes) ...
@@ -584,11 +685,13 @@ async function recalcularClasificacion() {
     const pilotosMap = {}; const equiposMap = {};
     equiposList.forEach(eq => { equiposMap[eq.id] = 0; });
     pilotosList.forEach(p => { pilotosMap[p.id] = { puntos: 0, equipoId: p.equipoId }; });
-    const q = query(collection(db, "carreras"), where("completada", "==", true));
+    const q = query(collection(db, "carreras"), where("completada", "==", true)); // later skip test races in iteration
     const carrerasSnap = await getDocs(q);
     const puntosF1 = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
     carrerasSnap.forEach(docSnap => {
         const carrera = docSnap.data();
+        // ignorar carreras marcadas como test
+        if (carrera.test) return;
         const resultados = carrera.resultados_20 || [];
         for (let i = 0; i < 10; i++) {
             const pilotoId = resultados[i];
