@@ -117,7 +117,7 @@
             <section id="panel-carreras" class="admin-panel">
                 <div style="display:flex; justify-content:space-between; margin-bottom: 20px;">
                     <h2>Gestión del Calendario</h2>
-                    <button class="btn-outline" onclick="abrirModal('modal-carrera')">+ Crear Carrera</button>
+                    <button class="btn-outline" onclick="editarCarrera({})">+ Crear Carrera</button>
                 </div>
                 <div class="table-container">
                     <table class="admin-table">
@@ -279,6 +279,7 @@
                 </label>
 
                 <div style="display:flex; gap:10px; margin-top:20px;">
+                    <button type="button" id="car-btn-test" class="btn-outline" style="flex:1;">Test</button>
                     <button type="submit" class="btn-solid" style="flex:1;">Guardar Todo</button>
                     <button type="button" class="btn-outline" onclick="cerrarModal('modal-carrera')" style="flex:1;">Cancelar</button>
                 </div>

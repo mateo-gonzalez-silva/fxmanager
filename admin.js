@@ -18,6 +18,7 @@ const auth = getAuth(app);
 
 let equiposList = [];
 let pilotosList = [];
+let esTestCarrera = false; // indica si la carrera es sólo de prueba (solo práctica, no puntos)
 
 document.addEventListener("DOMContentLoaded", () => {
     console.log("=== ADMIN.JS CARGADO ===");
@@ -231,9 +232,14 @@ document.addEventListener("DOMContentLoaded", () => {
     // FORMULARIO CARRERA ACTUALIZADO
     document.getElementById("form-carrera").addEventListener("submit", async (e) => {
         e.preventDefault();
+
         
         // Función auxiliar para recoger 20 inputs
         const recogerPosiciones = (prefijo) => {
+            // si se ha marcado como test, sólo devolvemos datos para prácticas
+            if (esTestCarrera && prefijo !== 'pos-prac') {
+                return [];
+            }
             const arr = [];
             for (let i = 1; i <= 20; i++) {
                 arr.push(document.getElementById(`${prefijo}-${i}`).value);
@@ -251,10 +257,16 @@ document.addEventListener("DOMContentLoaded", () => {
             entrenamientos: recogerPosiciones('pos-prac'), // Nuevo
             clasificacion: recogerPosiciones('pos-qual'), // Nuevo
             resultados_20: recogerPosiciones('pos-race'), // Carrera (mantiene nombre legacy para compatibilidad)
-            completada: document.getElementById("car-completada").checked
+            completada: esTestCarrera ? false : document.getElementById("car-completada").checked,
+            test: esTestCarrera
         };
         await guardarDoc('carreras', document.getElementById("car-id").value, data, 'modal-carrera');
     });
+
+    // listener para botón de test (se puede pulsar en cualquier momento antes de guardar)
+    const btnTest = document.getElementById("car-btn-test");
+    if (btnTest) btnTest.addEventListener("click", marcarCarreraTest);
+
 
     document.getElementById("form-media").addEventListener("submit", async (e) => {
         e.preventDefault();
@@ -474,7 +486,7 @@ async function pintarTablaCarreras() {
     snap.forEach(d => {
         const c = d.data();
         const cData = { id: d.id, ...c };
-        const status = c.completada ? '<span style="color:var(--success);">Completada</span>' : '<span style="color:var(--warning);">Pendiente</span>';
+        const status = c.test ? '<span style="color:var(--info);">TEST</span>' : (c.completada ? '<span style="color:var(--success);">Completada</span>' : '<span style="color:var(--warning);">Pendiente</span>');
         
         tbody.innerHTML += `
             <tr>
@@ -491,6 +503,14 @@ async function pintarTablaCarreras() {
 
 // FUNCIÓN DE EDICIÓN ACTUALIZADA PARA 3 PESTAÑAS
 window.editarCarrera = (data) => {
+    // reset flag a cada apertura
+    esTestCarrera = false;
+    // restaurar texto del botón test
+    const btn = document.getElementById('car-btn-test');
+    if (btn) btn.textContent = 'Test';
+    // habilitar pestañas en caso de que estuvieran desactivadas por un test previo
+    document.querySelectorAll('.modal-tab-btn').forEach(b => b.disabled = false);
+
     document.getElementById("car-id").value = data.id || "";
     document.getElementById("car-ronda").value = data.ronda || "";
     document.getElementById("car-nombre").value = data.nombre || "";
@@ -532,6 +552,12 @@ window.editarCarrera = (data) => {
     generarSelects("container-clasificacion", "pos-qual", data.clasificacion);
     generarSelects("container-carrera", "pos-race", data.resultados_20);
 
+    // si el documento ya venía marcado como test (o no tiene qualy/carrera y no está completada)
+    if (data.test || (!data.completada && (!data.clasificacion || data.clasificacion.every(v=>!v)) && (!data.resultados_20 || data.resultados_20.every(v=>!v)))) {
+        esTestCarrera = true;
+        marcarCarreraTest();
+    }
+
     // Asignar valores después de generar el HTML
     for (let i = 1; i <= 20; i++) {
         if(data.entrenamientos && data.entrenamientos[i-1]) document.getElementById(`pos-prac-${i}`).value = data.entrenamientos[i-1];
@@ -540,6 +566,38 @@ window.editarCarrera = (data) => {
     }
 
     document.getElementById("modal-carrera").style.display = "flex";
+}
+
+// marca la carrera como “test”: borra qualy/carrera, desactiva tabs y asegura que no se calculen puntos
+function marcarCarreraTest() {
+    const btn = document.getElementById('car-btn-test');
+    // toggle
+    if (esTestCarrera) {
+        esTestCarrera = false;
+        // reactivar las pestañas
+        document.querySelectorAll('.modal-tab-btn').forEach(b => b.disabled = false);
+        if (btn) btn.textContent = 'Test';
+        alert('Modo TEST desactivado. Puedes volver a introducir qualy/carrera.');
+        return;
+    }
+
+    esTestCarrera = true;
+    if (btn) btn.textContent = 'Test (activo)';
+    // limpiar selects de clasificación y carrera
+    for (let i = 1; i <= 20; i++) {
+        const q = document.getElementById(`pos-qual-${i}`);
+        const r = document.getElementById(`pos-race-${i}`);
+        if (q) q.value = '';
+        if (r) r.value = '';
+    }
+    document.getElementById('car-completada').checked = false;
+    // deshabilitar pestañas no prácticas
+    document.querySelectorAll('.modal-tab-btn').forEach((b, idx) => {
+        if (idx > 0) b.disabled = true;
+    });
+    // forzar vista de práctica
+    cambiarPestanaSesion('practica');
+    alert('Carrera marcada como TEST: sólo prácticas y no contará para puntos.');
 }
 
 // ... (Resto de funciones pintarTablaEquipos, Pilotos, Media, etc. igual que antes) ...
@@ -594,11 +652,13 @@ async function recalcularClasificacion() {
     const pilotosMap = {}; const equiposMap = {};
     equiposList.forEach(eq => { equiposMap[eq.id] = 0; });
     pilotosList.forEach(p => { pilotosMap[p.id] = { puntos: 0, equipoId: p.equipoId }; });
-    const q = query(collection(db, "carreras"), where("completada", "==", true));
+    const q = query(collection(db, "carreras"), where("completada", "==", true)); // later skip test races in iteration
     const carrerasSnap = await getDocs(q);
     const puntosF1 = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
     carrerasSnap.forEach(docSnap => {
         const carrera = docSnap.data();
+        // ignorar carreras marcadas como test
+        if (carrera.test) return;
         const resultados = carrera.resultados_20 || [];
         for (let i = 0; i < 10; i++) {
             const pilotoId = resultados[i];
