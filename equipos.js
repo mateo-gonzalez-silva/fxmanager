@@ -146,6 +146,7 @@ function togglePilotos(btn) {
 }
 
 function agregarEventos() {
+    if (cfg.campeonato.estado === 'offseason') {
     const botonesAsignar = document.querySelectorAll(".btn-asignar");
     botonesAsignar.forEach(boton => {
         boton.addEventListener("click", async (e) => {
@@ -153,7 +154,7 @@ function agregarEventos() {
             const teamId = e.target.getAttribute("data-team-id");
             const equipo = equiposData.find(e => e.id === teamId);
             
-            const confirmar = confirm(`¿Confirmas que quieres dirigir a ${equipo.nombre}? ¡Es un contrato vinculante!`);
+            const confirmar = confirm(`¿Confirmas que quieres dirigir a ${equipo.nombre}?\n\nRecuerda que solo puedes dirigir un equipo a la vez.`);
             
             if (confirmar) {
                 try {
@@ -170,6 +171,10 @@ function agregarEventos() {
             }
         });
     });
+    }
+    else {
+
+} 
 }
 
 window.togglePilotos = togglePilotos;
