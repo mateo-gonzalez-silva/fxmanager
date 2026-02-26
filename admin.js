@@ -234,18 +234,26 @@ document.addEventListener("DOMContentLoaded", () => {
         e.preventDefault();
 
         
-        // Función auxiliar para recoger 20 inputs
+        // Función auxiliar para recoger 20 inputs más tiempo/vueltas
         const recogerPosiciones = (prefijo) => {
-            // si se ha marcado como test, sólo devolvemos datos para prácticas
-            if (esTestCarrera && prefijo !== 'pos-prac') {
-                return [];
-            }
-            const arr = [];
+            // si se ha marcado como test, sólo devolvemos datos para prácticas (y vaciamos tiempos/vueltas)
+            const pilotos = [];
+            const tiempos = [];
+            const vueltas = [];
             for (let i = 1; i <= 20; i++) {
-                arr.push(document.getElementById(`${prefijo}-${i}`).value);
+                pilotos.push(document.getElementById(`${prefijo}-${i}`).value);
+                tiempos.push(document.getElementById(`${prefijo}-${i}-tiempo`) ? document.getElementById(`${prefijo}-${i}-tiempo`).value : '');
+                vueltas.push(document.getElementById(`${prefijo}-${i}-vueltas`) ? document.getElementById(`${prefijo}-${i}-vueltas`).value : '');
             }
-            return arr;
+            if (esTestCarrera && prefijo !== 'pos-prac') {
+                return { pilotos: [], tiempos: [], vueltas: [] };
+            }
+            return { pilotos, tiempos, vueltas };
         };
+
+        const ent = recogerPosiciones('pos-prac');
+        const qual = recogerPosiciones('pos-qual');
+        const race = recogerPosiciones('pos-race');
 
         const data = {
             ronda: parseInt(document.getElementById("car-ronda").value),
@@ -254,10 +262,16 @@ document.addEventListener("DOMContentLoaded", () => {
             fecha: document.getElementById("car-fecha").value,
             pole: document.getElementById("car-pole").value,
             vr: document.getElementById("car-vr").value,
-            entrenamientos: recogerPosiciones('pos-prac'), // Nuevo
-            clasificacion: recogerPosiciones('pos-qual'), // Nuevo
-            resultados_20: recogerPosiciones('pos-race'), // Carrera (mantiene nombre legacy para compatibilidad)
-            completada: esTestCarrera ? false : document.getElementById("car-completada").checked,
+            entrenamientos: ent.pilotos,
+            entrenamientos_tiempo: ent.tiempos,
+            entrenamientos_vueltas: ent.vueltas,
+            clasificacion: qual.pilotos,
+            clasificacion_tiempo: qual.tiempos,
+            clasificacion_vueltas: qual.vueltas,
+            resultados_20: race.pilotos,
+            resultados_tiempo: race.tiempos,
+            resultados_vueltas: race.vueltas,
+            completada: document.getElementById("car-completada").checked,
             test: esTestCarrera
         };
         await guardarDoc('carreras', document.getElementById("car-id").value, data, 'modal-carrera');
@@ -529,28 +543,26 @@ window.editarCarrera = (data) => {
     if(data.vr) vrSelect.value = data.vr;
 
     // Generar 20 selects para cada pestaña
-    const generarSelects = (containerId, prefijo, datosGuardados) => {
+    const generarSelects = (containerId, prefijo, datosGuardados, tiemposGuardados, vueltasGuardados) => {
         const container = document.getElementById(containerId);
         container.innerHTML = "";
         for (let i = 1; i <= 20; i++) {
             container.innerHTML += `
-                <div style="display:flex; flex-direction:column;">
+                <div style="display:flex; flex-direction:column; gap:4px;">
                     <label style="font-size:0.8rem;">P${i}</label>
                     <select id="${prefijo}-${i}" style="padding:8px; border-radius:4px; border:1px solid var(--border-color); background:var(--bg-primary); color:white;">
                         ${opcionesPilotos}
                     </select>
+                    <input type="text" id="${prefijo}-${i}-tiempo" placeholder="tiempo" style="padding:4px; border-radius:4px; border:1px solid var(--border-color); background:var(--bg-primary); color:white;" />
+                    <input type="number" id="${prefijo}-${i}-vueltas" placeholder="vueltas" min="0" style="padding:4px; border-radius:4px; border:1px solid var(--border-color); background:var(--bg-primary); color:white;" />
                 </div>`;
-            // Rellenar si hay datos
-            if (datosGuardados && datosGuardados[i-1]) {
-                // Hay que esperar a que el DOM se pinte, pero en síncrono funciona en el innerHTML
-                // Asignación de valor post-renderizado
-            }
+            // Rellenar si hay datos (se hará después en el bucle superior)
         }
     };
 
-    generarSelects("container-practica", "pos-prac", data.entrenamientos);
-    generarSelects("container-clasificacion", "pos-qual", data.clasificacion);
-    generarSelects("container-carrera", "pos-race", data.resultados_20);
+    generarSelects("container-practica", "pos-prac", data.entrenamientos, data.entrenamientos_tiempo, data.entrenamientos_vueltas);
+    generarSelects("container-clasificacion", "pos-qual", data.clasificacion, data.clasificacion_tiempo, data.clasificacion_vueltas);
+    generarSelects("container-carrera", "pos-race", data.resultados_20, data.resultados_tiempo, data.resultados_vueltas);
 
     // si el documento ya venía marcado como test (o no tiene qualy/carrera y no está completada)
     if (data.test || (!data.completada && (!data.clasificacion || data.clasificacion.every(v=>!v)) && (!data.resultados_20 || data.resultados_20.every(v=>!v)))) {
@@ -561,8 +573,14 @@ window.editarCarrera = (data) => {
     // Asignar valores después de generar el HTML
     for (let i = 1; i <= 20; i++) {
         if(data.entrenamientos && data.entrenamientos[i-1]) document.getElementById(`pos-prac-${i}`).value = data.entrenamientos[i-1];
+        if(data.entrenamientos_tiempo && data.entrenamientos_tiempo[i-1]) document.getElementById(`pos-prac-${i}-tiempo`).value = data.entrenamientos_tiempo[i-1];
+        if(data.entrenamientos_vueltas && data.entrenamientos_vueltas[i-1]) document.getElementById(`pos-prac-${i}-vueltas`).value = data.entrenamientos_vueltas[i-1];
         if(data.clasificacion && data.clasificacion[i-1]) document.getElementById(`pos-qual-${i}`).value = data.clasificacion[i-1];
+        if(data.clasificacion_tiempo && data.clasificacion_tiempo[i-1]) document.getElementById(`pos-qual-${i}-tiempo`).value = data.clasificacion_tiempo[i-1];
+        if(data.clasificacion_vueltas && data.clasificacion_vueltas[i-1]) document.getElementById(`pos-qual-${i}-vueltas`).value = data.clasificacion_vueltas[i-1];
         if(data.resultados_20 && data.resultados_20[i-1]) document.getElementById(`pos-race-${i}`).value = data.resultados_20[i-1];
+        if(data.resultados_tiempo && data.resultados_tiempo[i-1]) document.getElementById(`pos-race-${i}-tiempo`).value = data.resultados_tiempo[i-1];
+        if(data.resultados_vueltas && data.resultados_vueltas[i-1]) document.getElementById(`pos-race-${i}-vueltas`).value = data.resultados_vueltas[i-1];
     }
 
     document.getElementById("modal-carrera").style.display = "flex";
@@ -583,12 +601,20 @@ function marcarCarreraTest() {
 
     esTestCarrera = true;
     if (btn) btn.textContent = 'Test (activo)';
-    // limpiar selects de clasificación y carrera
+    // limpiar selects de clasificación y carrera y sus tiempos/vueltas
     for (let i = 1; i <= 20; i++) {
         const q = document.getElementById(`pos-qual-${i}`);
         const r = document.getElementById(`pos-race-${i}`);
         if (q) q.value = '';
         if (r) r.value = '';
+        const qt = document.getElementById(`pos-qual-${i}-tiempo`);
+        const qv = document.getElementById(`pos-qual-${i}-vueltas`);
+        const rt = document.getElementById(`pos-race-${i}-tiempo`);
+        const rv = document.getElementById(`pos-race-${i}-vueltas`);
+        if (qt) qt.value = '';
+        if (qv) qv.value = '';
+        if (rt) rt.value = '';
+        if (rv) rv.value = '';
     }
     document.getElementById('car-completada').checked = false;
     // deshabilitar pestañas no prácticas

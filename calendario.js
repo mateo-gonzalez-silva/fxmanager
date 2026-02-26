@@ -67,12 +67,12 @@ async function cargarCalendario() {
             let estadoHTML = `<span class="race-status status-pending">📅 Pendiente</span>`;
             let botonHTML = `<button class="btn-outline" disabled style="opacity:0.5; cursor:not-allowed;">Esperando resultados</button>`;
 
-            if (c.completada) {
-                // Buscar nombre del ganador
+            if (c.completada || c.test) {
+                // Buscar nombre del ganador sólo si hay resultados
                 const ganadorId = c.resultados_20 ? c.resultados_20[0] : null;
                 let nombreGanador = "Desconocido";
                 let colorGanador = "var(--border-color)";
-                
+
                 if (ganadorId && pilotosMap[ganadorId]) {
                     const p = pilotosMap[ganadorId];
                     nombreGanador = `${p.nombre} ${p.apellido}`;
@@ -82,13 +82,15 @@ async function cargarCalendario() {
 
                 estadoHTML = `
                     <div style="text-align:right;">
-                        <span style="display:block; font-size:0.7rem; color:var(--text-secondary); text-transform:uppercase;">Ganador</span>
-                        <strong style="color:${colorGanador}; font-size:1.1rem;">🏆 ${nombreGanador}</strong>
+                        <span style="display:block; font-size:0.7rem; color:var(--text-secondary); text-transform:uppercase;">
+                            ${c.test ? 'PRÁCTICA (TEST)' : 'Ganador'}
+                        </span>
+                        <strong style="color:${colorGanador}; font-size:1.1rem;">
+                            ${c.test ? '🧪 ' : '🏆 '}${nombreGanador}
+                        </strong>
                     </div>
                 `;
-                
-                // Guardamos todos los datos de la carrera en el botón para pasarlos al modal
-                // IMPORTANTE: Serializar con cuidado para evitar errores de comillas
+
                 const dataString = encodeURIComponent(JSON.stringify(c));
                 botonHTML = `<button class="btn-solid" onclick="abrirDetalles('${dataString}')">Ver Resultados</button>`;
             }
@@ -121,6 +123,9 @@ window.abrirDetalles = (dataEncoded) => {
     const data = JSON.parse(decodeURIComponent(dataEncoded));
     
     document.getElementById("modal-titulo").textContent = `${data.nombre} - Resultados`;
+    // banner test
+    const banner = document.getElementById("modal-test-banner");
+    banner.textContent = data.test ? '🔧 Carrera de prueba (no puntúa)' : '';
     
     // Info Pole y VR
     const divPole = document.getElementById("info-pole");
@@ -137,9 +142,9 @@ window.abrirDetalles = (dataEncoded) => {
     divVr.innerHTML = `<span style="color:var(--text-secondary); font-size:0.8rem; text-transform:uppercase;">Vuelta Rápida</span><br>${getPilotoHTML(data.vr)}`;
 
     // Rellenar Tablas
-    llenarTabla("table-race-body", data.resultados_20);
-    llenarTabla("table-qual-body", data.clasificacion);
-    llenarTabla("table-prac-body", data.entrenamientos);
+    llenarTabla("table-race-body", data.resultados_20, data.resultados_tiempo || [], data.resultados_vueltas || []);
+    llenarTabla("table-qual-body", data.clasificacion, data.clasificacion_tiempo || [], data.clasificacion_vueltas || []);
+    llenarTabla("table-prac-body", data.entrenamientos, data.entrenamientos_tiempo || [], data.entrenamientos_vueltas || []);
 
     // Resetear pestañas y mostrar modal
     window.verPestana('race'); // Función definida en el HTML
