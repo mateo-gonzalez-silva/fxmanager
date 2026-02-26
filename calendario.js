@@ -68,26 +68,48 @@ async function cargarCalendario() {
             let botonHTML = `<button class="btn-outline" disabled style="opacity:0.5; cursor:not-allowed;">Esperando resultados</button>`;
 
             if (c.completada || c.test) {
-                // Buscar nombre del ganador sólo si hay resultados
-                const ganadorId = c.resultados_20 ? c.resultados_20[0] : null;
+                // Información de primer puesto
                 let nombreGanador = "Desconocido";
                 let colorGanador = "var(--border-color)";
+                let infoExtra = "";
 
-                if (ganadorId && pilotosMap[ganadorId]) {
-                    const p = pilotosMap[ganadorId];
-                    nombreGanador = `${p.nombre} ${p.apellido}`;
-                    const eq = equiposMap[p.equipoId];
-                    if(eq) colorGanador = eq.color;
+                if (c.test) {
+                    // en test usamos la primera posición de entrenamientos
+                    const pid = c.entrenamientos && c.entrenamientos[0];
+                    if (pid && pilotosMap[pid]) {
+                        const p = pilotosMap[pid];
+                        nombreGanador = `${p.nombre} ${p.apellido}`;
+                        const eq = equiposMap[p.equipoId];
+                        if (eq) colorGanador = eq.color;
+                        const t = c.entrenamientos_tiempo && c.entrenamientos_tiempo[0];
+                        const v = c.entrenamientos_vueltas && c.entrenamientos_vueltas[0];
+                        if (t) infoExtra += `${t}`;
+                        if (v) infoExtra += (infoExtra? ' / ' : '') + `${v}v`;
+                    }
+                } else {
+                    const ganadorId = c.resultados_20 ? c.resultados_20[0] : null;
+                    if (ganadorId && pilotosMap[ganadorId]) {
+                        const p = pilotosMap[ganadorId];
+                        nombreGanador = `${p.nombre} ${p.apellido}`;
+                        const eq = equiposMap[p.equipoId];
+                        if(eq) colorGanador = eq.color;
+                        const idx = c.resultados_20.indexOf(ganadorId);
+                        const t = c.resultados_tiempo && c.resultados_tiempo[idx];
+                        const v = c.resultados_vueltas && c.resultados_vueltas[idx];
+                        if (t) infoExtra += `${t}`;
+                        if (v) infoExtra += (infoExtra? ' / ' : '') + `${v}v`;
+                    }
                 }
 
                 estadoHTML = `
                     <div style="text-align:right;">
                         <span style="display:block; font-size:0.7rem; color:var(--text-secondary); text-transform:uppercase;">
-                            ${c.test ? 'PRÁCTICA (TEST)' : 'Ganador'}
+                            Terminado
                         </span>
                         <strong style="color:${colorGanador}; font-size:1.1rem;">
                             ${c.test ? '🧪 ' : '🏆 '}${nombreGanador}
                         </strong>
+                        ${infoExtra ? `<div style="font-size:0.7rem; color:var(--text-secondary);">${infoExtra}</div>` : ''}
                     </div>
                 `;
 
@@ -126,6 +148,17 @@ window.abrirDetalles = (dataEncoded) => {
     // banner test
     const banner = document.getElementById("modal-test-banner");
     banner.textContent = data.test ? '🔧 Carrera de prueba (no puntúa)' : '';
+    // si es test ocultar tabs de qualy/carrera aquí también
+    if (data.test) {
+        document.querySelectorAll('#modal-detalles .btn-outline').forEach((b, idx) => {
+            if (idx > 0) b.style.display = 'none';
+        });
+        document.getElementById('view-qual').style.display = 'none';
+        document.getElementById('view-race').style.display = 'none';
+        document.getElementById('view-prac').style.display = 'block';
+    } else {
+        document.querySelectorAll('#modal-detalles .btn-outline').forEach((b) => b.style.display = 'inline-block');
+    }
     
     // Info Pole y VR
     const divPole = document.getElementById("info-pole");
