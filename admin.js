@@ -488,7 +488,86 @@ window.resolverActividad = async (id, eqId, res) => {
         cargarActividad();
     }
 }
+// ==========================================
+// FUNCIÓN PARA COBRAR SUELDOS DE PILOTOS
+// ==========================================
+window.cobrarSueldosPilotos = async function() {
+    if (!confirm("¿Estás seguro de que quieres cobrar los sueldos de TODOS los pilotos a sus respectivos equipos? Esta acción restará el dinero del presupuesto de cada equipo.")) {
+        return;
+    }
 
+    console.log("Iniciando cobro de sueldos...");
+    
+    // Objeto para llevar la cuenta de cuánto hay que restar a cada equipo
+    const gastosPorEquipo = {};
+    
+    // Inicializar el objeto con los equipos existentes
+    equiposList.forEach(eq => {
+        gastosPorEquipo[eq.id] = {
+            nombre: eq.nombre,
+            presupuestoActual: eq.presupuesto || 0,
+            totalASumar: 0,
+            pilotos: [] // Para el log/detalle
+        };
+    });
+
+    // Calcular el gasto por piloto para cada equipo
+    pilotosList.forEach(piloto => {
+        if (piloto.equipoId && piloto.salario > 0 && gastosPorEquipo[piloto.equipoId]) {
+            gastosPorEquipo[piloto.equipoId].totalASumar += piloto.salario;
+            gastosPorEquipo[piloto.equipoId].pilotos.push(`${piloto.nombre} ($${piloto.salario.toLocaleString()})`);
+        }
+    });
+
+    let equiposAfectados = 0;
+    const promesas = [];
+
+    // Procesar los pagos
+    for (const eqId in gastosPorEquipo) {
+        const info = gastosPorEquipo[eqId];
+        
+        if (info.totalASumar > 0) {
+            equiposAfectados++;
+            const nuevoPresupuesto = info.presupuestoActual - info.totalASumar;
+            
+            // 1. Actualizar el presupuesto del equipo en Firestore
+            promesas.push(updateDoc(doc(db, "equipos", eqId), { presupuesto: nuevoPresupuesto }));
+            
+            // 2. Registrar en la actividad del equipo
+            promesas.push(addDoc(collection(db, "actividad_equipos"), {
+                equipoId: eqId,
+                nombreEquipo: info.nombre,
+                tipo: "pago_sueldos",
+                detalle: `Pago de sueldos de pilotos por carrera: -$${info.totalASumar.toLocaleString()} (${info.pilotos.join(", ")})`,
+                fecha: serverTimestamp()
+            }));
+
+            // 3. Enviar notificación al equipo
+            promesas.push(addDoc(collection(db, "notificaciones"), {
+                equipoId: eqId,
+                remitente: "Sistema Financiero",
+                texto: `💸 Se ha deducido el sueldo de tus pilotos por carrera: -$${info.totalASumar.toLocaleString()}.`,
+                fecha: serverTimestamp()
+            }));
+            
+            console.log(`Equipo ${info.nombre}: -$${info.totalASumar} (Nuevo pres: ${nuevoPresupuesto})`);
+        }
+    }
+
+    if (equiposAfectados === 0) {
+        alert("Ningún piloto tiene asignado un equipo o un salario mayor a 0. No se ha cobrado nada.");
+        return;
+    }
+
+    try {
+        await Promise.all(promesas); // Ejecutar todas las actualizaciones a la vez
+        alert(`Sueldos cobrados con éxito. Se actualizó el presupuesto de ${equiposAfectados} equipos.`);
+        await refrescarDatosGlobales(); // Recargar datos para ver los cambios
+    } catch (error) {
+        console.error("Error al cobrar sueldos:", error);
+        alert("Ocurrió un error al intentar cobrar los sueldos. Revisa la consola.");
+    }
+};
 // ==========================================
 // FUNCIONES DE TABLAS Y EDICIÓN
 // ==========================================
