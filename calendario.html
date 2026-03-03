@@ -40,6 +40,7 @@
                 <h2 id="modal-titulo" style="margin:0; font-size:1.8rem;">Detalles del GP</h2>
                 <button onclick="document.getElementById('modal-detalles').style.display='none'" style="background:none; border:none; color:white; font-size:1.5rem; cursor:pointer;">&times;</button>
             </div>
+            <div id="modal-test-banner" style="color:var(--warning); font-weight:bold; margin-bottom:15px;"></div>
 
             <div style="display:flex; gap:10px; margin-bottom:20px;">
                 <button class="btn-outline active" id="btn-tab-race" onclick="verPestana('race')">Carrera</button>
@@ -53,7 +54,7 @@
                     <div id="info-vr"></div>
                 </div>
                 <table class="standings-table">
-                    <thead><tr><th>Pos</th><th>Piloto</th><th>Equipo</th></tr></thead>
+                    <thead><tr><th>Pos</th><th>Piloto</th><th>Equipo</th><th>Tiempo</th><th>Vueltas</th></tr></thead>
                     <tbody id="table-race-body"></tbody>
                 </table>
             </div>
@@ -61,7 +62,7 @@
             <div id="view-qual" class="view-session" style="display:none;">
                 <h4 style="color:var(--text-secondary);">Resultados de Clasificación</h4>
                 <table class="standings-table">
-                    <thead><tr><th>Pos</th><th>Piloto</th><th>Equipo</th></tr></thead>
+                    <thead><tr><th>Pos</th><th>Piloto</th><th>Equipo</th><th>Tiempo</th><th>Vueltas</th></tr></thead>
                     <tbody id="table-qual-body"></tbody>
                 </table>
             </div>
@@ -69,7 +70,7 @@
             <div id="view-prac" class="view-session" style="display:none;">
                 <h4 style="color:var(--text-secondary);">Resultados de Entrenamientos</h4>
                 <table class="standings-table">
-                    <thead><tr><th>Pos</th><th>Piloto</th><th>Equipo</th></tr></thead>
+                    <thead><tr><th>Pos</th><th>Piloto</th><th>Equipo</th><th>Tiempo</th><th>Vueltas</th></tr></thead>
                     <tbody id="table-prac-body"></tbody>
                 </table>
             </div>

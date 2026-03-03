@@ -34,13 +34,14 @@
         <aside class="admin-sidebar">
             <button class="admin-tab-btn active" data-target="panel-mensajes">1. Comunicados</button>
             <button class="admin-tab-btn" data-target="panel-ofertas-admin">2. Ofertas de Pilotos</button>
-            <button class="admin-tab-btn" data-target="panel-equipos">3. Equipos</button>
+            <button class="admin-tab-btn" data-target="panel-equipos">3. Equipos y Tokens</button>
             <button class="admin-tab-btn" data-target="panel-pilotos">4. Pilotos</button>
             <button class="admin-tab-btn" data-target="panel-carreras">5. Carreras y Resultados</button>
             <button class="admin-tab-btn" data-target="panel-media">6. Media Center</button>
             <button class="admin-tab-btn" data-target="panel-sponsors">7. Patrocinadores</button>
             <button class="admin-tab-btn" data-target="panel-actividad">8. Actividad de Equipos</button>
             <button class="admin-tab-btn" data-target="panel-respuestas">9. Respuestas a Mensajes</button>
+            <button class="admin-tab-btn" data-target="panel-estrategias" style="color: var(--accent); font-weight: bold;">10. Estrategias S2 🏁</button>
         </aside>
 
         <main class="admin-content">
@@ -98,7 +99,7 @@
                 </div>
                 <div class="table-container">
                     <table class="admin-table">
-                        <thead><tr><th>Logo</th><th>Nombre</th><th>Color</th><th>Acciones</th></tr></thead>
+                        <thead><tr><th>Logo</th><th>Nombre</th><th>Tokens</th><th>Color</th><th>Acciones</th></tr></thead>
                         <tbody id="tabla-equipos"></tbody>
                     </table>
                 </div>
@@ -176,6 +177,24 @@
                 <h2>Respuestas a Mensajes de Aprobación</h2>
                 <div id="lista-respuestas" style="display: flex; flex-direction: column; gap: 15px; margin-top: 20px;"></div>
             </section>
+
+            <section id="panel-estrategias" class="admin-panel">
+                <h2>🏁 Estrategias de Carrera (S2)</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">Revisa las estrategias configuradas por cada equipo para aplicarlas al simulador de la próxima carrera.</p>
+                <div class="table-container">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Equipo</th>
+                                <th>Gestión Paradas</th>
+                                <th>Modo Motor</th>
+                                <th>Órdenes de Equipo</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-estrategias"></tbody>
+                    </table>
+                </div>
+            </section>
         </main>
     </div>
 
@@ -185,7 +204,10 @@
             <form id="form-equipo">
                 <input type="hidden" id="eq-id">
                 <label>Nombre</label><input type="text" id="eq-nombre" required>
-                <label>Color</label><input type="color" id="eq-color" style="height:40px; padding:0;" required>
+                <div style="display: flex; gap: 10px;">
+                    <div style="flex: 1;"><label>Color</label><input type="color" id="eq-color" style="height:40px; padding:0;" required></div>
+                    <div style="flex: 1;"><label>Tokens I+D</label><input type="number" id="eq-tokens" min="0" value="0" required></div>
+                </div>
                 <label>Foto Coche</label><input type="text" id="eq-coche">
                 <label>Logo</label><input type="text" id="eq-logo">
                 <div style="display:flex; gap:10px; margin-top:20px;">
@@ -298,7 +320,6 @@
             document.querySelectorAll('.modal-tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.session-content').forEach(c => c.classList.remove('active'));
             
-            // Buscar botón por texto (chapuza rápida pero efectiva) o por orden
             const buttons = document.querySelectorAll('.modal-tab-btn');
             if(tabName === 'practica') buttons[0].classList.add('active');
             if(tabName === 'clasificacion') buttons[1].classList.add('active');

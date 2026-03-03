@@ -45,7 +45,7 @@ document.addEventListener("DOMContentLoaded", () => {
             });
 
             // 3. Redirigir al inicio una vez completado el registro
-            window.location.href = "home.html";
+            window.location.href = "index.html";
 
         } catch (error) {
             console.error("Error en registro:", error.code);

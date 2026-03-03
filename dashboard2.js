@@ -1,4 +1,4 @@
-// dashboard.js - NUEVO Dashboard completamente rediseñado y funcional
+// dashboard.js - NUEVO Dashboard con sistema de Tokens S2 y Estrategias
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import {
     getFirestore, doc, getDoc, collection, query, where, getDocs, 
@@ -88,6 +88,18 @@ function renderUI() {
     document.getElementById("team-wins").textContent = currentTeamData.victorias || 0;
     document.getElementById("team-championships").textContent = currentTeamData.mundiales || 0;
 
+    // REGLA S2: Cargar Tokens
+    const numTokens = currentTeamData.tokens || 0;
+    const tokenDisplay = document.getElementById("team-tokens");
+    if (tokenDisplay) tokenDisplay.textContent = numTokens;
+
+    // Cargar Estrategia guardada (si existe)
+    if (currentTeamData.estrategia) {
+        if(document.getElementById("strat-paradas")) document.getElementById("strat-paradas").value = currentTeamData.estrategia.paradas || "estandar";
+        if(document.getElementById("strat-motor")) document.getElementById("strat-motor").value = currentTeamData.estrategia.motor || "estandar";
+        if(document.getElementById("strat-ordenes")) document.getElementById("strat-ordenes").value = currentTeamData.estrategia.ordenes || "libre";
+    }
+
     // Coche del equipo
     const carDisplay = document.getElementById("team-car-display");
     if (currentTeamData.imagenCoche) {
@@ -176,7 +188,14 @@ function renderUI() {
     document.getElementById("aero-progress").style.width = (aeroLevel * (100 / MAX_LEVEL)) + "%";
     document.getElementById("motor-progress").style.width = (motorLevel * (100 / MAX_LEVEL)) + "%";
 
-    // ACTUALIZAR TEXTOS DE LOS BOTONES AUTOMÁTICAMENTE
+    // ACTUALIZAR TEXTOS DE LOS BOTONES AUTOMÁTICAMENTE (REGLAS S2 CON TOKENS)
+    const getCostoTokens = (nivel) => {
+        if (nivel >= 0 && nivel <= 2) return 1;
+        if (nivel >= 3 && nivel <= 4) return 2;
+        if (nivel >= 5 && nivel <= 6) return 3;
+        return 0;
+    };
+
     const btnAero = document.getElementById("btn-aero");
     if (btnAero) {
         if (aeroLevel >= MAX_LEVEL) {
@@ -184,7 +203,9 @@ function renderUI() {
             btnAero.disabled = true;
             btnAero.style.opacity = "0.5";
         } else {
-            btnAero.textContent = `Mejorar Aero ($${COSTOS_AERO[aeroLevel] / 1000000}M)`;
+            const costeM = COSTOS_AERO[aeroLevel] / 1000000;
+            const costeT = getCostoTokens(aeroLevel);
+            btnAero.innerHTML = `Mejorar Aero <br><span style="font-size:0.8em; opacity:0.8;">$${costeM}M + ${costeT} Token(s)</span>`;
             btnAero.disabled = false;
             btnAero.style.opacity = "1";
         }
@@ -197,7 +218,9 @@ function renderUI() {
             btnMotor.disabled = true;
             btnMotor.style.opacity = "0.5";
         } else {
-            btnMotor.textContent = `Mejorar Motor ($${COSTOS_MOTOR[motorLevel] / 1000000}M)`;
+            const costeM = COSTOS_MOTOR[motorLevel] / 1000000;
+            const costeT = getCostoTokens(motorLevel);
+            btnMotor.innerHTML = `Mejorar Motor <br><span style="font-size:0.8em; opacity:0.8;">$${costeM}M + ${costeT} Token(s)</span>`;
             btnMotor.disabled = false;
             btnMotor.style.opacity = "1";
         }
@@ -312,22 +335,51 @@ function setupListeners() {
         btnBuyInv.parentNode.replaceChild(newBtnBuyInv, btnBuyInv);
         newBtnBuyInv.addEventListener("click", comprarInvestigacionExtra);
     }
+
+    // Formulario de Estrategia S2
+    const formEstrategia = document.getElementById("form-estrategia");
+    if (formEstrategia) {
+        const newFormEstrategia = formEstrategia.cloneNode(true);
+        formEstrategia.parentNode.replaceChild(newFormEstrategia, formEstrategia);
+        newFormEstrategia.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            await guardarEstrategia();
+        });
+    }
 }
 
-async function solicitarMejora(tipo, costo, campoNivel, nivelActual) {
-    if (currentTeamData.presupuesto < costo) {
-        alert(`Presupuesto insuficiente. Se requieren $${costo.toLocaleString()} para mejorar al siguiente nivel.`);
+// REGLAS S2: Solicitar Mejora (Cobra Dinero + Tokens)
+async function solicitarMejora(tipo, costoDolares, campoNivel, nivelActual) {
+    
+    const getCostoTokens = (nivel) => {
+        if (nivel >= 0 && nivel <= 2) return 1;
+        if (nivel >= 3 && nivel <= 4) return 2;
+        if (nivel >= 5 && nivel <= 6) return 3;
+        return 0;
+    };
+
+    const costoTokens = getCostoTokens(nivelActual);
+    const tokensActuales = currentTeamData.tokens || 0;
+
+    if (currentTeamData.presupuesto < costoDolares) {
+        alert(`Presupuesto insuficiente. Necesitas $${costoDolares.toLocaleString()}.`);
+        return;
+    }
+    
+    if (tokensActuales < costoTokens) {
+        alert(`Tokens insuficientes. Tienes ${tokensActuales} y necesitas ${costoTokens} Token(s) para subir a Nivel ${nivelActual + 1}.`);
         return;
     }
 
-    const confirmar = confirm(`¿Invertir $${costo.toLocaleString()} en mejorar ${tipo}?`);
+    const confirmar = confirm(`¿Gastar $${costoDolares.toLocaleString()} y ${costoTokens} Token(s) en mejorar ${tipo}?`);
     if (!confirmar) return;
 
     try {
         const datosActualizar = {
-            presupuesto: currentTeamData.presupuesto - costo
+            presupuesto: currentTeamData.presupuesto - costoDolares,
+            tokens: tokensActuales - costoTokens
         };
-        datosActualizar[campoNivel] = nivelActual + 1; // Aquí se sube el nivel directamente
+        datosActualizar[campoNivel] = nivelActual + 1;
 
         await updateDoc(doc(db, "equipos", currentTeamId), datosActualizar);
 
@@ -335,7 +387,7 @@ async function solicitarMejora(tipo, costo, campoNivel, nivelActual) {
             equipoId: currentTeamId,
             nombreEquipo: currentTeamData.nombre,
             tipo: "Mejora de Componente",
-            detalle: `Ha comprado la mejora de ${tipo} al Nivel ${nivelActual + 1}. Costo: $${costo.toLocaleString()}`,
+            detalle: `Solicita mejora de ${tipo} al Nivel ${nivelActual + 1}. Coste pagado: $${costoDolares.toLocaleString()} y ${costoTokens} Token(s).`,
             estado: "Pendiente",
             fecha: serverTimestamp()
         });
@@ -344,16 +396,54 @@ async function solicitarMejora(tipo, costo, campoNivel, nivelActual) {
             equipoId: currentTeamId,
             nombreEquipo: currentTeamData.nombre,
             tipo: "mejora",
-            detalle: `Ha mejorado ${tipo} al Nivel ${nivelActual + 1}. Costo: $${costo.toLocaleString()}`,
+            detalle: `Fábrica desarrollando ${tipo} (Nv ${nivelActual + 1}). Tiempo est: 24h.`,
             fecha: serverTimestamp()
         });
 
-        alert(`¡Mejora completada! Nivel subido a ${nivelActual + 1}. La FIA ha sido notificada.`);
+        alert(`¡Desarrollo iniciado! Se han deducido los fondos y los tokens. La FIA te avisará en 24h con el resultado.`);
         await cargarDatos(); 
         
     } catch (error) {
         console.error("Error comprando mejora:", error);
-        alert("Hubo un error de conexión al comprar la mejora.");
+        alert("Hubo un error de conexión al procesar el pago.");
+    }
+}
+
+// Nueva función para guardar la Estrategia (Regla S2)
+async function guardarEstrategia() {
+    const btn = document.querySelector("#form-estrategia button");
+    const textoOriginal = btn.textContent;
+    btn.textContent = "Guardando...";
+    btn.disabled = true;
+
+    const estrategia = {
+        paradas: document.getElementById("strat-paradas").value,
+        motor: document.getElementById("strat-motor").value,
+        ordenes: document.getElementById("strat-ordenes").value,
+        ultimaActualizacion: new Date().toISOString()
+    };
+
+    try {
+        await updateDoc(doc(db, "equipos", currentTeamId), {
+            estrategia: estrategia
+        });
+        
+        alert("🏁 Estrategia guardada con éxito. El simulador la usará en el próximo Gran Premio.");
+        
+        await addDoc(collection(db, "actividad_equipos"), {
+            equipoId: currentTeamId,
+            nombreEquipo: currentTeamData.nombre,
+            tipo: "estrategia",
+            detalle: `Ha configurado su estrategia para la próxima carrera.`,
+            fecha: serverTimestamp()
+        });
+
+    } catch (error) {
+        console.error("Error guardando estrategia:", error);
+        alert("Error al guardar la estrategia.");
+    } finally {
+        btn.textContent = textoOriginal;
+        btn.disabled = false;
     }
 }
 
@@ -563,7 +653,6 @@ async function comprarInvestigacionExtra() {
 }
 
 function escucharNotificaciones() {
-    // Le quitamos el orderBy a Firebase para que no pida crear el índice
     const q = query(
         collection(db, "notificaciones"), 
         where("equipoId", "==", currentTeamId)
@@ -579,20 +668,17 @@ function escucharNotificaciones() {
             return;
         }
 
-        // 1. Metemos todos los mensajes en un array
         let notificaciones = [];
         snapshot.forEach(doc => {
             notificaciones.push({ id: doc.id, ...doc.data() });
         });
 
-        // 2. LOS ORDENAMOS AQUÍ CON JAVASCRIPT (Del más nuevo al más viejo)
         notificaciones.sort((a, b) => {
             const tiempoA = a.fecha && a.fecha.toMillis ? a.fecha.toMillis() : 0;
             const tiempoB = b.fecha && b.fecha.toMillis ? b.fecha.toMillis() : 0;
-            return tiempoB - tiempoA; // De mayor (nuevo) a menor (viejo)
+            return tiempoB - tiempoA; 
         });
 
-        // 3. Ahora sí, los pintamos en la pantalla ordenados
         notificaciones.forEach(notif => {
             let fechaTexto = "";
             if (notif.fecha && notif.fecha.toDate) {
@@ -634,7 +720,6 @@ async function openSponsorModal() {
     const modal = document.getElementById("sponsors-modal");
     if(modal) modal.style.display = "flex";
 
-    // si ya tenemos un contrato guardado, mostramos directamente la sección de contrato
     if (currentTeamData && currentTeamData.sponsor_contract) {
         mostrarSeccionContrato(currentTeamData.sponsor_contract);
     } else {
@@ -686,7 +771,6 @@ window.selectSponsorOption = function(type) {
 };
 
 async function saveFixedContract() {
-    // contrato fijo: recibes cantidad garantizada inmediatamente
     const amount = 45000000;
     const contract = {
         type: "fixed",
@@ -717,7 +801,6 @@ async function saveFixedContract() {
             notificacionId: notifRef.id
         });
 
-        // actualizar datos locales y refrescar UI
         currentTeamData.sponsor_contract = contract;
         currentTeamData.presupuesto = (currentTeamData.presupuesto || 0) + amount;
 
@@ -774,7 +857,6 @@ window.confirmSponsorExpectations = function() {
 
 async function savePerformanceContract(contract) {
     try {
-        // añadimos el contrato y damos el dinero base inmediato
         await updateDoc(doc(db, "equipos", currentTeamId), {
             sponsor_contract: contract,
             sponsor_contract_unlocked: false,
@@ -802,7 +884,6 @@ async function savePerformanceContract(contract) {
 
         mostrarSeccionContrato(contract);
         alert("Contrato guardado correctamente.");
-        await cargarDatos();
         await cargarDatos();
     } catch (error) {
         console.error("Error guardando contrato por rendimiento:", error);

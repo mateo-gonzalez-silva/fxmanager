@@ -18,6 +18,7 @@ const auth = getAuth(app);
 
 let currentUserData = null;
 let equiposData = [];
+let campeonatoEstado = null; // guarda el estado actual (offseason/inseason) del campeonato
 
 document.addEventListener("DOMContentLoaded", () => {
     const gridEquipos = document.getElementById("grid-equipos");
@@ -50,6 +51,10 @@ document.addEventListener("DOMContentLoaded", () => {
 async function cargarEquipos() {
     equiposData = [];
     try {
+        // obtener estado del campeonato para saber si estamos en offseason
+        const cfgSnap = await getDoc(doc(db, "configuracion", "campeonato"));
+        campeonatoEstado = cfgSnap.exists() ? cfgSnap.data().estado : null;
+
         const equiposSnap = await getDocs(collection(db, "equipos"));
         const pilotosSnap = await getDocs(collection(db, "pilotos"));
         const todosLosPilotos = [];
@@ -91,7 +96,8 @@ function renderEquipos() {
         const isLibre = !equipo.ownerId || equipo.ownerId === "";
         const usuarioLogueado = currentUserData !== null;
         const usuarioSinEquipo = usuarioLogueado && (!currentUserData.equipo || currentUserData.equipo === "");
-        const puedeAsignarse = isLibre && usuarioLogueado && usuarioSinEquipo;
+        // sólo asignable durante el offseason
+        const puedeAsignarse = isLibre && usuarioLogueado && usuarioSinEquipo && campeonatoEstado === 'offseason';
 
         let htmlPilotos = "";
         if (equipo.pilotos.length > 0) {
@@ -153,7 +159,7 @@ function agregarEventos() {
             const teamId = e.target.getAttribute("data-team-id");
             const equipo = equiposData.find(e => e.id === teamId);
             
-            const confirmar = confirm(`¿Confirmas que quieres dirigir a ${equipo.nombre}? ¡Es un contrato vinculante!`);
+            const confirmar = confirm(`¿Confirmas que quieres dirigir a ${equipo.nombre}?\n\nRecuerda que solo puedes dirigir un equipo a la vez.`);
             
             if (confirmar) {
                 try {
