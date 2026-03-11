@@ -95,10 +95,9 @@ function pintarMedia(filtro) {
         const fechaFormateada = pub.fecha ? new Date(pub.fecha.toDate()).toLocaleDateString() : 'Reciente';
 
         const elemento = document.createElement('div');
-        // Estilos modernos en línea si no tienes clase "card" en CSS. Si la tienes, pon "card"
         elemento.style.cssText = "background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; transition: transform 0.2s;";
         
-        // Efecto hover sutil necesario
+        // Efecto hover sutil
         elemento.onmouseover = () => elemento.style.transform = "translateY(-5px)";
         elemento.onmouseout = () => elemento.style.transform = "translateY(0)";
 
@@ -110,18 +109,21 @@ function pintarMedia(filtro) {
                 <div style="position:relative; padding-bottom:56.25%; height:0; overflow:hidden; background:#000;">
                     <iframe src="${pub.url}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:none;" allowfullscreen></iframe>
                 </div>`;
-            } else if (pub.url) {
-                // Imagen (Proporción 4:5 exacta garantizada en todos los móviles)
-                contenidoMultimedia = `
-                    <div style="width: 100%; padding-top: 125%; position: relative; background: #000; border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
-                        <img src="${pub.url}" alt="${pub.titulo}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain;">
-                    </div>`;
-            }
+        } else if (pub.url) {
+            // Imagen
+            contenidoMultimedia = `
+                <div style="width: 100%; padding-top: 125%; position: relative; background: #000; border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                    <img src="${pub.url}" alt="${pub.titulo}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain;">
+                </div>`;
+        }
 
         // Tipo de badge
         let badgeColor = "#3b82f6"; // Azul por defecto (Noticia)
         if (pub.tipo === "foto") badgeColor = "#eab308"; // Amarillo
         if (pub.tipo === "video") badgeColor = "#ef4444"; // Rojo
+
+        // Texto completo (reemplazando saltos de línea por <br> para respetar los párrafos)
+        const textoCompleto = (pub.texto || '').replace(/\n/g, '<br>');
 
         elemento.innerHTML = `
             ${contenidoMultimedia}
@@ -133,12 +135,40 @@ function pintarMedia(filtro) {
                     <span style="color: var(--text-secondary); font-size: 0.8rem;">${fechaFormateada}</span>
                 </div>
                 <h2 style="margin: 0 0 10px 0; font-size: 1.3rem; line-height: 1.3;">${pub.titulo}</h2>
-                <p style="color: var(--text-secondary); line-height: 1.6; font-size: 0.95rem; margin: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
-                    ${pub.texto || ''}
-                </p>
+                
+                <div class="texto-publicacion">
+                    <p class="texto-corto" style="color: var(--text-secondary); line-height: 1.6; font-size: 0.95rem; margin: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+                        ${pub.texto || ''}
+                    </p>
+                    <p class="texto-largo" style="color: var(--text-secondary); line-height: 1.6; font-size: 0.95rem; margin: 0; display: none;">
+                        ${textoCompleto}
+                    </p>
+                </div>
+                ${pub.texto && pub.texto.length > 150 ? `
+                    <button class="btn-leer-mas" style="background:none; border:none; color:var(--accent); padding:10px 0 0 0; cursor:pointer; font-weight:bold; font-size:0.9rem;">Leer artículo completo ↓</button>
+                ` : ''}
             </div>
         `;
 
         gridMedia.appendChild(elemento);
+
+        // Darle vida al botón "Leer más"
+        const btnLeerMas = elemento.querySelector('.btn-leer-mas');
+        if (btnLeerMas) {
+            btnLeerMas.addEventListener('click', function() {
+                const txtCorto = elemento.querySelector('.texto-corto');
+                const txtLargo = elemento.querySelector('.texto-largo');
+                
+                if (txtCorto.style.display !== 'none') {
+                    txtCorto.style.display = 'none';
+                    txtLargo.style.display = 'block';
+                    this.textContent = 'Ocultar ↑';
+                } else {
+                    txtCorto.style.display = '-webkit-box';
+                    txtLargo.style.display = 'none';
+                    this.textContent = 'Leer artículo completo ↓';
+                }
+            });
+        }
     });
 }

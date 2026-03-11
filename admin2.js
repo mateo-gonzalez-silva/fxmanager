@@ -207,7 +207,8 @@ document.addEventListener("DOMContentLoaded", () => {
             nombre: document.getElementById("eq-nombre").value,
             color: document.getElementById("eq-color").value,
             imagenCoche: document.getElementById("eq-coche").value,
-            logo: document.getElementById("eq-logo").value
+            logo: document.getElementById("eq-logo").value,
+            tokens: parseInt(document.getElementById("eq-tokens").value) || 0
         };
         await guardarDoc('equipos', document.getElementById("eq-id").value, data, 'modal-equipo');
     });
@@ -338,9 +339,10 @@ async function refrescarDatosGlobales() {
     pintarTablaCarreras();
     pintarTablaMedia();
     pintarTablaSponsors();
+    pintarTablaEstrategias(); // Nueva función S2
 }
 
-// ... (Funciones de Actividad igual que antes) ...
+// ... Funciones de Actividad ...
 async function cargarActividad() {
     const contenedor = document.getElementById("lista-actividad");
     if (!contenedor) {
@@ -355,42 +357,23 @@ async function cargarActividad() {
     console.log("Filtro equipo:", filtroEquipo || "(Sin filtro)");
     
     try {
-        // Cargar actividades de equipos (sin orderBy para evitar problemas de índices)
         const actividadSnap = await getDocs(collection(db, "actividad_equipos"));
         console.log("📊 Documentos en actividad_equipos:", actividadSnap.size);
         
-        // build set of existing notification ids so we can drop orphan activities
         const notifsSnap = await getDocs(collection(db, "notificaciones"));
         const notifsSet = new Set();
         notifsSnap.forEach(n => notifsSet.add(n.id));
         
-        actividadSnap.forEach(doc => {
-            const data = doc.data();
-            console.log(`  - ${data.nombreEquipo} (${data.equipoId}): ${data.tipo} - ${data.detalle}`);
-        });
-        
-        // Cargar solicitudes admin (sin orderBy para evitar problemas de índices)
         const solicitudesSnap = await getDocs(collection(db, "solicitudes_admin"));
-        console.log("📋 Documentos en solicitudes_admin:", solicitudesSnap.size);
         
-        solicitudesSnap.forEach(doc => {
-            const data = doc.data();
-            console.log(`  - ${data.nombreEquipo} (${data.equipoId}): ${data.tipo} - ${data.detalle}`);
-        });
-        
-        // Combinar ambas listas
         const todas = [];
         
         actividadSnap.forEach(doc => {
             const actividad = doc.data();
-            // si la actividad está ligada a una notificación y ésta ya no existe, saltarla
             if (actividad.notificacionId && !notifsSet.has(actividad.notificacionId)) {
-                console.log(`  Ignorando actividad ${doc.id} porque su notificación fue borrada`);
                 return;
             }
-            // Aplicar filtro aquí en memoria
             if (filtroEquipo && actividad.equipoId !== filtroEquipo) {
-                console.log(`  Filtrando: ${actividad.nombreEquipo} (${actividad.equipoId}) != ${filtroEquipo}`);
                 return;
             }
             todas.push({
@@ -406,7 +389,6 @@ async function cargarActividad() {
         
         solicitudesSnap.forEach(doc => {
             const solicitud = doc.data();
-            // Aplicar filtro aquí en memoria
             if (filtroEquipo && solicitud.equipoId !== filtroEquipo) {
                 return;
             }
@@ -421,14 +403,11 @@ async function cargarActividad() {
             });
         });
         
-        // Ordenar por fecha descendente en memoria
         todas.sort((a, b) => {
             const fechaA = a.fecha?.toDate ? a.fecha.toDate() : (a.fecha instanceof Date ? a.fecha : new Date(a.fecha || 0));
             const fechaB = b.fecha?.toDate ? b.fecha.toDate() : (b.fecha instanceof Date ? b.fecha : new Date(b.fecha || 0));
             return fechaB.getTime() - fechaA.getTime();
         });
-        
-        console.log("✅ Total de elementos después de filtrar:", todas.length);
         
         if(todas.length === 0) { 
             contenedor.innerHTML = "<p class='text-muted'>No hay actividad reciente.</p>"; 
@@ -437,11 +416,9 @@ async function cargarActividad() {
         
         contenedor.innerHTML = "";
         todas.forEach(item => {
-            // Obtener el color del equipo
             const equipo = equiposList.find(e => e.id === item.equipoId);
             const colorEquipo = equipo?.color || "var(--accent)";
             
-            // Función para generar el HTML del item
             const getItemHTML = () => {
                 const estiloBase = `
                     padding: 16px;
@@ -454,7 +431,6 @@ async function cargarActividad() {
                 `;
                 
                 if (item.tipo === "solicitud") {
-                    // Solicitudes de mejoras
                     const badge = item.estado === "Pendiente" ? "REQUIERE ACCIÓN" : item.estado;
                     const btns = item.estado === "Pendiente" ? `<div style="margin-top:12px; display: flex; gap: 8px;"><button class="btn-solid" style="flex: 1; padding: 6px 12px; font-size: 0.8rem;" onclick="resolverActividad('${item.id}', '${item.equipoId}', 'Aprobada')">✓ OK</button><button class="btn-outline" style="flex: 1; padding: 6px 12px; font-size: 0.8rem;" onclick="resolverActividad('${item.id}', '${item.equipoId}', 'Denegada')">✕ NO</button></div>` : "";
                     return `<div style="${estiloBase}"><strong style="color: ${colorEquipo}; font-size: 1.1rem;">📋 ${item.nombreEquipo}</strong><p style="margin: 8px 0 0 0; color: var(--text-secondary); line-height: 1.5;">${item.detalle}</p><span style="display: inline-block; margin-top: 8px; padding: 4px 10px; background: rgba(255,255,255,0.1); border-radius: 4px; font-size: 0.8rem; color: var(--text-secondary);">[${badge}]</span>${btns}</div>`;
@@ -470,6 +446,8 @@ async function cargarActividad() {
                     return `<div style="${estiloBase}"><strong style="color: ${colorEquipo}; font-size: 1.1rem;">🚀 ${item.nombreEquipo}</strong><p style="margin: 8px 0 0 0; color: var(--text-secondary); line-height: 1.5;">${item.detalle}</p></div>`;
                 } else if (item.tipoActividad === "contrato_sponsor") {
                     return `<div style="${estiloBase}"><strong style="color: ${colorEquipo}; font-size: 1.1rem;">💎 ${item.nombreEquipo}</strong><p style="margin: 8px 0 0 0; color: var(--text-secondary); line-height: 1.5;">${item.detalle}</p></div>`;
+                } else if (item.tipoActividad === "estrategia") {
+                    return `<div style="${estiloBase}"><strong style="color: ${colorEquipo}; font-size: 1.1rem;">🏁 ${item.nombreEquipo}</strong><p style="margin: 8px 0 0 0; color: var(--text-secondary); line-height: 1.5;">${item.detalle}</p></div>`;
                 }
                 return "";
             };
@@ -498,20 +476,16 @@ window.cobrarSueldosPilotos = async function() {
 
     console.log("Iniciando cobro de sueldos...");
     
-    // Objeto para llevar la cuenta de cuánto hay que restar a cada equipo
     const gastosPorEquipo = {};
-    
-    // Inicializar el objeto con los equipos existentes
     equiposList.forEach(eq => {
         gastosPorEquipo[eq.id] = {
             nombre: eq.nombre,
             presupuestoActual: eq.presupuesto || 0,
             totalASumar: 0,
-            pilotos: [] // Para el log/detalle
+            pilotos: [] 
         };
     });
 
-    // Calcular el gasto por piloto para cada equipo
     pilotosList.forEach(piloto => {
         if (piloto.equipoId && piloto.salario > 0 && gastosPorEquipo[piloto.equipoId]) {
             gastosPorEquipo[piloto.equipoId].totalASumar += piloto.salario;
@@ -522,18 +496,13 @@ window.cobrarSueldosPilotos = async function() {
     let equiposAfectados = 0;
     const promesas = [];
 
-    // Procesar los pagos
     for (const eqId in gastosPorEquipo) {
         const info = gastosPorEquipo[eqId];
-        
         if (info.totalASumar > 0) {
             equiposAfectados++;
             const nuevoPresupuesto = info.presupuestoActual - info.totalASumar;
             
-            // 1. Actualizar el presupuesto del equipo en Firestore
             promesas.push(updateDoc(doc(db, "equipos", eqId), { presupuesto: nuevoPresupuesto }));
-            
-            // 2. Registrar en la actividad del equipo
             promesas.push(addDoc(collection(db, "actividad_equipos"), {
                 equipoId: eqId,
                 nombreEquipo: info.nombre,
@@ -541,15 +510,12 @@ window.cobrarSueldosPilotos = async function() {
                 detalle: `Pago de sueldos de pilotos por carrera: -$${info.totalASumar.toLocaleString()} (${info.pilotos.join(", ")})`,
                 fecha: serverTimestamp()
             }));
-
-            // 3. Enviar notificación al equipo
             promesas.push(addDoc(collection(db, "notificaciones"), {
                 equipoId: eqId,
                 remitente: "Sistema Financiero",
                 texto: `💸 Se ha deducido el sueldo de tus pilotos por carrera: -$${info.totalASumar.toLocaleString()}.`,
                 fecha: serverTimestamp()
             }));
-            
             console.log(`Equipo ${info.nombre}: -$${info.totalASumar} (Nuevo pres: ${nuevoPresupuesto})`);
         }
     }
@@ -560,14 +526,15 @@ window.cobrarSueldosPilotos = async function() {
     }
 
     try {
-        await Promise.all(promesas); // Ejecutar todas las actualizaciones a la vez
+        await Promise.all(promesas); 
         alert(`Sueldos cobrados con éxito. Se actualizó el presupuesto de ${equiposAfectados} equipos.`);
-        await refrescarDatosGlobales(); // Recargar datos para ver los cambios
+        await refrescarDatosGlobales(); 
     } catch (error) {
         console.error("Error al cobrar sueldos:", error);
         alert("Ocurrió un error al intentar cobrar los sueldos. Revisa la consola.");
     }
 };
+
 // ==========================================
 // FUNCIONES DE TABLAS Y EDICIÓN
 // ==========================================
@@ -587,21 +554,17 @@ async function pintarTablaCarreras() {
                 <td><strong>${c.nombre}</strong></td>
                 <td>${status}</td>
                 <td>
-                    <button class="btn-outline" style="padding:5px 10px; font-size:0.8rem;" onclick='editarCarrera(${JSON.stringify(cData)})'>Editar Resultados</button>
+                    <button class="btn-outline" style="padding:5px 10px; font-size:0.8rem;" onclick='editarCarrera(${JSON.stringify(cData).replace(/'/g, "&#39;")})'>Editar Resultados</button>
                     <button class="btn-solid" style="background:var(--danger); border:none; padding:5px 10px; font-size:0.8rem;" onclick="eliminarDoc('carreras', '${d.id}')">X</button>
                 </td>
             </tr>`;
     });
 }
 
-// FUNCIÓN DE EDICIÓN ACTUALIZADA PARA 3 PESTAÑAS
 window.editarCarrera = (data) => {
-    // reset flag a cada apertura
     esTestCarrera = false;
-    // restaurar texto del botón test
     const btn = document.getElementById('car-btn-test');
     if (btn) btn.textContent = 'Test';
-    // asegurar que todas las pestañas estén visibles
     document.querySelectorAll('.modal-tab-btn').forEach(b => b.style.display = 'inline-block');
     document.querySelectorAll('.session-content').forEach(c => c.style.display = 'block');
 
@@ -622,7 +585,6 @@ window.editarCarrera = (data) => {
     if(data.pole) poleSelect.value = data.pole;
     if(data.vr) vrSelect.value = data.vr;
 
-  // Generar 20 selects para cada pestaña
     const generarSelects = (containerId, prefijo, datosGuardados, tiemposGuardados, vueltasGuardados) => {
         const container = document.getElementById(containerId);
         container.innerHTML = "";
@@ -645,13 +607,11 @@ window.editarCarrera = (data) => {
     generarSelects("container-clasificacion", "pos-qual", data.clasificacion, data.clasificacion_tiempo, data.clasificacion_vueltas);
     generarSelects("container-carrera", "pos-race", data.resultados_20, data.resultados_tiempo, data.resultados_vueltas);
 
-    // si el documento ya venía marcado como test (o no tiene qualy/carrera y no está completada)
     if (data.test || (!data.completada && (!data.clasificacion || data.clasificacion.every(v=>!v)) && (!data.resultados_20 || data.resultados_20.every(v=>!v)))) {
         esTestCarrera = true;
         marcarCarreraTest();
     }
 
-    // Asignar valores después de generar el HTML
     for (let i = 1; i <= 20; i++) {
         if(data.entrenamientos && data.entrenamientos[i-1]) document.getElementById(`pos-prac-${i}`).value = data.entrenamientos[i-1];
         if(data.entrenamientos_tiempo && data.entrenamientos_tiempo[i-1]) document.getElementById(`pos-prac-${i}-tiempo`).value = data.entrenamientos_tiempo[i-1];
@@ -667,7 +627,6 @@ window.editarCarrera = (data) => {
     document.getElementById("modal-carrera").style.display = "flex";
 }
 
-// marca la carrera como “test”: borra qualy/carrera, oculta pestañas no-práctica y asegura que no se calculen puntos
 function marcarCarreraTest() {
     const btn = document.getElementById('car-btn-test');
     const hideExtras = (hide) => {
@@ -681,7 +640,6 @@ function marcarCarreraTest() {
         });
     };
 
-    // toggle
     if (esTestCarrera) {
         esTestCarrera = false;
         hideExtras(false);
@@ -692,7 +650,6 @@ function marcarCarreraTest() {
 
     esTestCarrera = true;
     if (btn) btn.textContent = 'Test (activo)';
-    // limpiar selects de clasificación y carrera y sus tiempos/vueltas
     for (let i = 1; i <= 20; i++) {
         const q = document.getElementById(`pos-qual-${i}`);
         const r = document.getElementById(`pos-race-${i}`);
@@ -706,14 +663,11 @@ function marcarCarreraTest() {
         });
     }
     document.getElementById('car-completada').checked = false;
-    // ocultar pestañas no prácticas
     hideExtras(true);
-    // forzar vista de práctica
     cambiarPestanaSesion('practica');
     alert('Carrera marcada como TEST: sólo prácticas y no contará para puntos.');
 }
 
-// ... (Resto de funciones pintarTablaEquipos, Pilotos, Media, etc. igual que antes) ...
 function pintarTablaEquipos() {
     const tbody = document.getElementById("tabla-equipos");
     tbody.innerHTML = "";
@@ -721,11 +675,13 @@ function pintarTablaEquipos() {
         tbody.innerHTML += `<tr>
             <td>${eq.logo ? `<img src="${eq.logo}" style="width:30px;">` : ''}</td>
             <td>${eq.nombre}</td>
+            <td style="font-weight: bold; color: var(--accent);">${eq.tokens || 0}</td>
             <td><div style="width:20px;height:20px;background:${eq.color};"></div></td>
-            <td><button onclick='editarEquipo(${JSON.stringify(eq)})'>Editar</button><button onclick="eliminarDoc('equipos','${eq.id}')">X</button></td>
+            <td><button onclick='editarEquipo(${JSON.stringify(eq).replace(/'/g, "&#39;")})'>Editar</button><button onclick="eliminarDoc('equipos','${eq.id}')">X</button></td>
         </tr>`;
     });
 }
+
 function pintarTablaPilotos() {
     const tbody = document.getElementById("tabla-pilotos");
     tbody.innerHTML = "";
@@ -736,10 +692,11 @@ function pintarTablaPilotos() {
             <td>${p.apellido}</td>
             <td>${p.moral}</td>
             <td>${p.pais}</td>
-            <td><button onclick='editarPiloto(${JSON.stringify(p)})'>Editar</button><button onclick="eliminarDoc('pilotos','${p.id}')">X</button></td>
+            <td><button onclick='editarPiloto(${JSON.stringify(p).replace(/'/g, "&#39;")})'>Editar</button><button onclick="eliminarDoc('pilotos','${p.id}')">X</button></td>
         </tr>`;
     });
 }
+
 async function pintarTablaMedia() {
     const tbody = document.getElementById("tabla-media");
     const q = query(collection(db, "publicaciones"), orderBy("fecha", "desc"));
@@ -750,27 +707,49 @@ async function pintarTablaMedia() {
         tbody.innerHTML += `<tr><td>${m.tipo}</td><td>${m.titulo}</td><td>${m.fecha?new Date(m.fecha.toDate()).toLocaleDateString():''}</td><td><button onclick="eliminarDoc('publicaciones','${d.id}')">X</button></td></tr>`;
     });
 }
+
+// Nueva función para pintar las estrategias S2
+function pintarTablaEstrategias() {
+    const tbody = document.getElementById("tabla-estrategias");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+    
+    equiposList.forEach(eq => {
+        const est = eq.estrategia || { paradas: 'No definida', motor: 'No definida', ordenes: 'No definida' };
+        tbody.innerHTML += `<tr>
+            <td style="color: ${eq.color}; font-weight: bold;">${eq.nombre}</td>
+            <td><span style="background: var(--bg-tertiary); padding: 4px 8px; border-radius: 4px;">${est.paradas.toUpperCase()}</span></td>
+            <td><span style="background: var(--bg-tertiary); padding: 4px 8px; border-radius: 4px;">${est.motor.toUpperCase()}</span></td>
+            <td><span style="background: var(--bg-tertiary); padding: 4px 8px; border-radius: 4px;">${est.ordenes.toUpperCase()}</span></td>
+        </tr>`;
+    });
+}
+
 window.editarEquipo = (data) => {
-    document.getElementById("eq-id").value = data.id; document.getElementById("eq-nombre").value = data.nombre; document.getElementById("eq-color").value = data.color; document.getElementById("eq-coche").value = data.imagenCoche||""; document.getElementById("eq-logo").value = data.logo||"";
+    document.getElementById("eq-id").value = data.id; 
+    document.getElementById("eq-nombre").value = data.nombre; 
+    document.getElementById("eq-color").value = data.color; 
+    document.getElementById("eq-coche").value = data.imagenCoche||""; 
+    document.getElementById("eq-logo").value = data.logo||"";
+    document.getElementById("eq-tokens").value = data.tokens || 0;
     document.getElementById("modal-equipo").style.display = "flex";
 }
 window.editarPiloto = (data) => {
     document.getElementById("pil-id").value = data.id; document.getElementById("pil-nombre").value = data.nombre; document.getElementById("pil-apellido").value = data.apellido; document.getElementById("pil-numero").value = data.numero; document.getElementById("pil-pais").value = data.pais; document.getElementById("pil-edad").value = data.edad; document.getElementById("pil-ritmo").value = data.ritmo; document.getElementById("pil-agresividad").value = data.agresividad; document.getElementById("pil-moral").value = data.moral; document.getElementById("pil-equipo").value = data.equipoId; document.getElementById("pil-foto").value = data.foto;
     document.getElementById("modal-piloto").style.display = "flex";
 }
-window.editarMedia = (data) => { alert("Usa borrar y crear nuevo."); } // Simplificado
+window.editarMedia = (data) => { alert("Usa borrar y crear nuevo."); } 
 
 async function recalcularClasificacion() {
     console.log("Recalculando...");
     const pilotosMap = {}; const equiposMap = {};
     equiposList.forEach(eq => { equiposMap[eq.id] = 0; });
     pilotosList.forEach(p => { pilotosMap[p.id] = { puntos: 0, equipoId: p.equipoId }; });
-    const q = query(collection(db, "carreras"), where("completada", "==", true)); // later skip test races in iteration
+    const q = query(collection(db, "carreras"), where("completada", "==", true)); 
     const carrerasSnap = await getDocs(q);
     const puntosF1 = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
     carrerasSnap.forEach(docSnap => {
         const carrera = docSnap.data();
-        // ignorar carreras marcadas como test
         if (carrera.test) return;
         const resultados = carrera.resultados_20 || [];
         for (let i = 0; i < 10; i++) {
@@ -796,8 +775,6 @@ async function recalcularClasificacion() {
     for (const equipoId in equiposMap) promesas.push(updateDoc(doc(db, "equipos", equipoId), { puntos: equiposMap[equipoId] }));
     await Promise.all(promesas);
 }
-
-// ============== SISTEMAS DE SPONSORS ==============
 
 async function pintarTablaSponsors() {
     const tbody = document.getElementById("tabla-sponsors");
@@ -851,7 +828,6 @@ window.unlockSponsorModalAdmin = async function(teamId) {
                 sponsor_contract_unlocked: true
             });
             
-            // Enviar notificación
             await addDoc(collection(db, "notificaciones"), {
                 equipoId: teamId,
                 remitente: "Admin",
@@ -894,18 +870,15 @@ window.cambiarTipoComunicado = () => {
     const selectDestino = document.getElementById("msg-destinatario");
     
     if (tipo === "oficial") {
-        // Mostrar todos los equipos
         selectDestino.innerHTML = '<option value="todos">A todos los equipos</option>';
         equiposList.forEach(eq => {
             selectDestino.innerHTML += `<option value="${eq.id}">${eq.nombre}</option>`;
         });
     } else {
-        // Tipo piloto - será actualizado cuando se seleccione un piloto
         selectDestino.innerHTML = '<option value="">Selecciona primero un piloto</option>';
     }
     
     if (tipo === "piloto") {
-        // Cargar equipos en el select
         document.getElementById("msg-equipo-piloto").innerHTML = '<option value="">Selecciona un equipo</option>';
         equiposList.forEach(eq => {
             document.getElementById("msg-equipo-piloto").innerHTML += `<option value="${eq.id}">${eq.nombre}</option>`;
@@ -921,7 +894,6 @@ window.actualizarPilotosPorEquipo = () => {
         document.getElementById("msg-piloto-remitente").innerHTML += `<option value="${p.id}|${p.nombre} ${p.apellido}">${p.nombre} ${p.apellido || ''}</option>`;
     });
     
-    // Actualizar el select de destinatario para mostrar todos los equipos, incluyendo el propio
     const selectDestino = document.getElementById("msg-destinatario");
     selectDestino.innerHTML = '<option value="">Selecciona el equipo destinatario</option>';
     equiposList.forEach(eq => {
@@ -929,16 +901,11 @@ window.actualizarPilotosPorEquipo = () => {
     });
 };
 
-// ==========================================
-// CARGAR OFERTAS EN ADMIN
-// ==========================================
 async function cargarOfertasAdmin() {
     const contenedor = document.getElementById("lista-ofertas-admin");
     try {
-        // Obtener todas las ofertas
         const snapshot = await getDocs(collection(db, "ofertas"));
         
-        // Filtrar solo las pendientes
         const ofertasPendientes = Array.from(snapshot.docs)
             .filter(doc => doc.data().estado === "Pendiente")
             .map(doc => ({ id: doc.id, ...doc.data() }));
@@ -953,8 +920,6 @@ async function cargarOfertasAdmin() {
         contenedor.innerHTML = "";
         ofertasPendientes.forEach(oferta => {
             const id = oferta.id;
-            
-            // Buscar nombres de pilotos y equipos
             const equipoOrigen = equiposList.find(e => e.id === oferta.equipoOrigenId);
             const equipoDestino = equiposList.find(e => e.id === oferta.equipoDestinoId);
             const pilotoDestino = pilotosList.find(p => p.id === oferta.pilotoDestinoId);
@@ -995,32 +960,27 @@ window.aceptarOferta = async (ofertaId) => {
             const ofertaDoc = await getDoc(doc(db, "ofertas", ofertaId));
             const oferta = ofertaDoc.data();
             
-            // Actualizar piloto: cambiar de equipo
             await updateDoc(doc(db, "pilotos", oferta.pilotoDestinoId), {
                 equipoId: oferta.equipoOrigenId,
                 salario: oferta.sueldo
             });
             
-            // Restar presupuesto del equipo oferente (compensación + sueldo)
             const equipoOferente = await getDoc(doc(db, "equipos", oferta.equipoOrigenId));
             const nuevoPresupuesto = (equipoOferente.data().presupuesto || 0) - (oferta.compensacion * 1000000 + oferta.sueldo);
             await updateDoc(doc(db, "equipos", oferta.equipoOrigenId), {
                 presupuesto: nuevoPresupuesto
             });
             
-            // Sumar presupuesto al equipo que pierde al piloto
             const equipoDestino = await getDoc(doc(db, "equipos", oferta.equipoDestinoId));
             const presupuestoDestino = (equipoDestino.data().presupuesto || 0) + (oferta.compensacion * 1000000);
             await updateDoc(doc(db, "equipos", oferta.equipoDestinoId), {
                 presupuesto: presupuestoDestino
             });
             
-            // Marcar oferta como aceptada
             await updateDoc(doc(db, "ofertas", ofertaId), {
                 estado: "Aceptada"
             });
             
-            // Notificar a ambos equipos
             await addDoc(collection(db, "notificaciones"), {
                 equipoId: oferta.equipoOrigenId,
                 remitente: "Admin",
@@ -1044,7 +1004,6 @@ window.rechazarOferta = async (ofertaId) => {
                 estado: "Rechazada"
             });
             
-            // Notificar al equipo oferente
             const ofertaDoc = await getDoc(doc(db, "ofertas", ofertaId));
             const oferta = ofertaDoc.data();
             
@@ -1090,7 +1049,6 @@ async function cargarRespuestas() {
             `;
             listaRespuestas.appendChild(msgEl);
             
-            // Cargar respuestas para este mensaje
             const respuestasSnap = await getDocs(query(collection(db, "respuestas_mensajes"), where("mensajeId", "==", msgDoc.id)));
             const respuestasDiv = document.getElementById(`respuestas-${msgDoc.id}`);
             respuestasDiv.innerHTML = "";
@@ -1118,3 +1076,101 @@ async function cargarRespuestas() {
         listaRespuestas.innerHTML = "<p>Error al cargar las respuestas.</p>";
     }
 }
+
+// ==========================================
+// FUNCIONES DEL MERCADO DE AGENTES S2 (ADMIN)
+// ==========================================
+
+window.generarMercadoDiario = async function() {
+    if (!confirm("¿Generar un nuevo mercado? Esto borrará cualquier agente que esté actualmente sin vender.")) return;
+    
+    // 1. Limpiar mercado actual
+    const mercadoSnap = await getDocs(collection(db, "mercado_agentes"));
+    for (const docSnap of mercadoSnap.docs) {
+        await deleteDoc(doc(db, "mercado_agentes", docSnap.id));
+    }
+
+    // 2. Nombres falsos aleatorios para darle inmersión
+    const nombresPilotos = ["M. Dubois", "A. Silva", "K. Tanaka", "J. Rossi", "L. Weber"];
+    const nombresJuniors = ["T. Rookie", "S. Veloce", "N. Promesa", "E. Fast", "O. Talent"];
+    const nombresIngenieros = ["Dr. Aero", "H. Motor", "G. Setup", "V. Chasis", "B. Pista"];
+
+    const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+    // 3. Crear 2 Pilotos, 2 Juniors y 2 Ingenieros
+    const agentesNuevos = [
+        { tipo: "piloto", nombre: getRandom(nombresPilotos) + " (Piloto Libre)", stats: "Ritmo: 75 | Agresividad: 80", precioBase: 2000000 },
+        { tipo: "piloto", nombre: getRandom(nombresPilotos) + " (Piloto Libre)", stats: "Ritmo: 82 | Agresividad: 60", precioBase: 3000000 },
+        { tipo: "junior", nombre: getRandom(nombresJuniors) + " (Junior F2)", stats: "Potencial Alto | Sueldo Anual", precioBase: 1000000 },
+        { tipo: "junior", nombre: getRandom(nombresJuniors) + " (Junior F3)", stats: "Diamante en bruto", precioBase: 500000 },
+        { tipo: "ingeniero", nombre: getRandom(nombresIngenieros) + " (Ing. Pista)", stats: "Mejora ritmo + Moral", precioBase: 1500000 },
+        { tipo: "ingeniero", nombre: getRandom(nombresIngenieros) + " (Ing. Mesa)", stats: "Mejora curva de fallos", precioBase: 2500000 }
+    ];
+
+    try {
+        for (const agente of agentesNuevos) {
+            await addDoc(collection(db, "mercado_agentes"), {
+                ...agente,
+                pujaActual: 0,
+                mejorPostorId: null,
+                mejorPostorNombre: null,
+                fechaCreacion: serverTimestamp()
+            });
+        }
+        
+        // Notificar a todos los equipos que el mercado abrió
+        for (const eq of equiposList) {
+            await addDoc(collection(db, "notificaciones"), {
+                equipoId: eq.id,
+                remitente: "FIA",
+                texto: `🛒 ¡El Mercado de Agentes ha abierto! Tienes 24h para pujar por pilotos e ingenieros libres.`,
+                fecha: serverTimestamp()
+            });
+        }
+        
+        alert("✅ Mercado generado. Los equipos ya pueden pujar.");
+    } catch (e) {
+        console.error(e);
+        alert("Error generando mercado.");
+    }
+};
+
+window.cerrarMercadoDiario = async function() {
+    if (!confirm("¿Cerrar el mercado? Se asignarán los derechos a los ganadores y se vaciará la lista.")) return;
+
+    try {
+        const mercadoSnap = await getDocs(collection(db, "mercado_agentes"));
+        
+        for (const docSnap of mercadoSnap.docs) {
+            const agente = docSnap.data();
+            
+            // Si alguien ganó la puja
+            if (agente.mejorPostorId) {
+                // Notificar al ganador
+                await addDoc(collection(db, "notificaciones"), {
+                    equipoId: agente.mejorPostorId,
+                    remitente: "Mercado FIA",
+                    texto: `🏆 ¡Has ganado la subasta por ${agente.nombre} (Por $${agente.pujaActual.toLocaleString()})! Tienes los derechos para negociar su contrato.`,
+                    fecha: serverTimestamp()
+                });
+                
+                // Registrar en actividad
+                await addDoc(collection(db, "actividad_equipos"), {
+                    equipoId: agente.mejorPostorId,
+                    nombreEquipo: agente.mejorPostorNombre,
+                    tipo: "mercado",
+                    detalle: `Ganó la subasta por ${agente.nombre} pagando $${agente.pujaActual.toLocaleString()}`,
+                    fecha: serverTimestamp()
+                });
+            }
+            
+            // Borrar el agente del mercado
+            await deleteDoc(doc(db, "mercado_agentes", docSnap.id));
+        }
+
+        alert("🛑 Mercado cerrado correctamente. Ganadores notificados.");
+    } catch (e) {
+        console.error(e);
+        alert("Error cerrando mercado.");
+    }
+};
